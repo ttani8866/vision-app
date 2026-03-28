@@ -1,0 +1,15 @@
+# Nested git repositories (managed independently)
+KPR-AgentOS/
+puyo-puyo/
+sl-proposal-agent/
+
+# Node modules
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
