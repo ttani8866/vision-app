@@ -1,0 +1,55 @@
+# Strength Vision（vision-retreat/app）を GitHub Pages に公開する
+# 初回: リポジトリ Settings → Pages → Build and deployment で Source を「GitHub Actions」に変更
+
+name: Deploy Strength Vision
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'vision-retreat/app/**'
+      - '.github/workflows/deploy-strength-vision.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-strength-vision
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: vision-retreat/app/package-lock.json
+
+      - name: Install and build
+        working-directory: vision-retreat/app
+        env:
+          # プロジェクトページ: https://<user>.github.io/<repo>/
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: vision-retreat/app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
