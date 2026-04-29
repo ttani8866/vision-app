@@ -1,0 +1,24 @@
+# 署名テンプレート（appointment-scheduler）
+# signature_mode に応じて該当ブロックを採用する。コメント行（#）は本文に含めない。
+
+[mode: shinto]
+――――――――――――――――――――
+新東通信グループ
+代表取締役 谷 鉄也
+Email: tetsuya.tani@kyodo-pr.co.jp
+――――――――――――――――――――
+
+[mode: kyodopr]
+――――――――――――――――――――
+共同ピーアール株式会社
+取締役会長 谷 鉄也
+Email: tetsuya.tani@kyodo-pr.co.jp
+――――――――――――――――――――
+
+[mode: both]
+――――――――――――――――――――
+谷 鉄也
+新東通信グループ 代表取締役
+共同ピーアール株式会社 取締役会長
+Email: tetsuya.tani@kyodo-pr.co.jp
+――――――――――――――――――――
