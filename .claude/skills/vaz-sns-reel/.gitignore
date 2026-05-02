@@ -1,0 +1,5 @@
+node_modules/
+out/
+templates/*/public/voice.mp3
+templates/*/public/captions.json
+*.log
