@@ -785,10 +785,116 @@ textarea::placeholder { color: #56688a; }
   margin-top: 0.2rem;
 }
 
+/* ===== gift card ===== */
+
+.gift-card {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(168, 85, 247, 0.06));
+}
+.gift-note {
+  margin: 0.5rem 0 0;
+  color: #fbbf24;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+/* ===== unified CTA / gender chips / commentary ===== */
+
+.unified-cta {
+  margin: 0.4rem 0 1.2rem;
+  padding: 1rem 1rem 0.9rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(56,189,248,0.12), rgba(168,85,247,0.12));
+  border: 1px solid rgba(255,255,255,0.10);
+  text-align: center;
+}
+.cta-large {
+  width: 100%;
+  padding: 0.95rem 1.1rem;
+  font-size: 0.98rem;
+  letter-spacing: 0.02em;
+}
+.cta-hint {
+  color: #a3b3cc;
+  font-size: 0.78rem;
+  margin: 0.55rem 0 0;
+  line-height: 1.55;
+}
+
+.gender-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0.6rem 0 0.9rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+.gender-label {
+  color: #a3b3cc;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+.chip-group {
+  display: inline-flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.chip {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.04);
+  color: #d6e1f0;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.chip:hover { background: rgba(255,255,255,0.08); }
+.chip.chip-on {
+  background: linear-gradient(135deg, #38bdf8, #a855f7);
+  border-color: transparent;
+  color: #0b1220;
+  font-weight: 600;
+}
+
+.commentary-card {
+  padding: 1rem 1rem;
+  background: rgba(168, 85, 247, 0.06);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+.commentary-eyebrow {
+  color: #c8a2ff;
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 0.55rem;
+}
+.commentary-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #e7eaf2;
+  font-family: inherit;
+  font-size: 0.92rem;
+  line-height: 1.85;
+}
+
 /* ===== prompt card ===== */
 
 .prompt-card {
   padding: 1.1rem 1rem;
+}
+.prompt-eyebrow {
+  color: #8fa5c7;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 0.55rem;
 }
 .prompt-text {
   background: rgba(0,0,0,0.35);
@@ -805,7 +911,12 @@ textarea::placeholder { color: #56688a; }
   margin: 0 0 1rem;
   max-height: 400px;
   overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  display: block;
 }
+textarea.prompt-text { cursor: text; }
 .prompt-actions {
   display: flex;
   gap: 0.6rem;
