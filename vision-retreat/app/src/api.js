@@ -9,6 +9,11 @@ import {
   GIFT_CAP,
   RISK_FLOOR
 } from './data.js'
+import {
+  composeImagePrompt,
+  composeUnifiedImagePrompt,
+  composeVisionCommentary
+} from './imagePrompt.js'
 
 const MODEL = 'claude-sonnet-4-20250514'
 
@@ -162,18 +167,7 @@ function buildFallbackGoalResults({ topLabel, topTraits, secondDomain, goals, gi
   ]
 }
 
-function buildFallbackImagePrompt({ topLabel, topTraits, category, title, desc }) {
-  const quoted = desc.replace(/"/g, '\\"')
-  return [
-    'Photorealistic photograph of a Japanese business leader in their 50s,',
-    `capturing the peak moment of having achieved the goal "${quoted}".`,
-    `The scene should visibly express the strength "${topLabel}" (${topTraits}) in body language and environment.`,
-    `Context: ${category} / ${title}. Modern, believable setting with meaningful props.`,
-    'Include subtle on-image typography instruction: display the goal text in quotes as elegant signage or screen.',
-    'RAW photography, natural light, soft shadows, 85mm lens, shallow depth of field, Fuji film aesthetic, photorealistic, cinematic composition.',
-    'No illustration, no cartoon.'
-  ].join(' ')
-}
+// 旧フォールバックは内蔵コンポーザ（imagePrompt.js）に集約。
 
 function buildProposeGoalsPrompt({ topDomain, topLabel, topTraits, secondDomain, scores, giftScores, riskPenalty, goals }) {
   const g = giftScores || {}
@@ -245,31 +239,23 @@ export async function proposeGoals(params) {
   }
 }
 
+/**
+ * 単一GOAL用画像プロンプト（後方互換）。Claude API は使わず内蔵コンポーザ。
+ */
 export async function generateImagePrompt(params) {
-  const prompt = `あなたはフォトリアリスティック画像のプロンプトエンジニアです。
+  return composeImagePrompt(params)
+}
 
-以下のGOALを達成した経営者の姿を描写する、Gemini画像生成用の英語プロンプトを1本作成してください。
+/**
+ * 全GOALを集約した1枚絵プロンプト。proposed（カテゴリ別GOAL配列）を1シーンに織り込む。
+ */
+export async function generateUnifiedImagePrompt(params) {
+  return composeUnifiedImagePrompt(params)
+}
 
-【経営者の強み】${params.topLabel}（${params.topTraits}）
-【GOALカテゴリ】${params.category} / ${params.title}
-【GOAL内容】${params.desc}
-
-【ルール】
-英語で書く
-50代日本人男性経営者が主人公（ただしユーザーに合わせて変更可能）
-GOALを達成している瞬間を、その人の「強み」が発揮されている場面として描く
-空間と小道具を具体的に設定
-達成感の因果関係を記述
-GOAL内容をダブルクォートで囲んで画像内に表示する指示を含める
-末尾: RAW photography, natural light, soft shadows, 85mm lens, shallow depth of field, Fuji Film aesthetic, photorealistic, cinematic composition
-illustration, painting, cartoon禁止
-否定形禁止（肯定的状態描写のみ）
-プロンプトのみ出力。前置き・解説は不要。`
-
-  try {
-    const text = await callClaude(prompt, 1200)
-    return text.trim().replace(/^```[a-z]*\n?|```$/g, '').trim()
-  } catch {
-    return buildFallbackImagePrompt(params)
-  }
+/**
+ * ビジョンカードに添える日本語解説（「統合されたエネルギー場」narrative）を生成。
+ */
+export async function generateVisionCommentary(params) {
+  return composeVisionCommentary(params)
 }
