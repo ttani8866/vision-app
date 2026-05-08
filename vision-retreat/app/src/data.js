@@ -43,17 +43,281 @@ export const GIFT_CAP = 100
 /** リスク減点後の下限（クランプ） */
 export const RISK_FLOOR = 45
 
+// 設問は3層構成。
+// A: 直感系（10問・weight 1）— 色・性格温度・人生天気・エレメント・故郷・朝の気分・動物・音楽・風景・絵画タッチ
+//    （domain は持たず、attribute で人物像を直接捕捉する）
+// B: 原体験・成功・人生系（8問・weight 1〜2）— 原体験・幼少夢中・最大の喜び・誇れる成功・苦難の越え方・核・クライマックス・残したいレガシー
+// C: 強み系（11問・weight 1〜2）— 4領域へ集約。risks 系のあいまい選択肢は廃止して、4軸を明快に表現
+//
+// 各 option は以下のいずれかを持つ:
+//   - domain: 'executing'|'influencing'|'relationship'|'thinking'  （C層）
+//   - value: 任意の文字列（A・B層、question.attribute と組み合わせて profile に集計）
 export const QUESTIONS = [
+  // ========== A: 直感系（10問）==========
   {
-    weight: 2,
-    q: 'これまでのなかで、「褒められてうれしかった」とよく覚えている経験に、いちばん近いのは？（強みの原体験）',
+    weight: 1,
+    attribute: 'color',
+    q: 'いま心に響く色は？（直感で）',
     options: [
-      { label: '期限や約束を守り切り、難しい仕事をやり遂げたと認められた', domain: 'executing' },
-      { label: '人前で話したり、人を巻き込んで前に進めたと評価された', domain: 'influencing' },
-      { label: '誰かを支えたり、場の空気を和らげたと感謝された', domain: 'relationship' },
-      { label: '分析や構想、先を見越した提案が「よく見えている」と言われた', domain: 'thinking' }
+      { label: '青（深く・冷静・知的）', value: 'blue' },
+      { label: '赤（情熱・推進・闘志）', value: 'red' },
+      { label: '黄／オレンジ（陽気・温度）', value: 'orange' },
+      { label: '緑（成長・癒し・自然）', value: 'green' },
+      { label: '紫（神秘・両面・気品）', value: 'purple' },
+      { label: '金（達成・栄光）', value: 'gold' },
+      { label: '銀／白（清明・純度）', value: 'silver' },
+      { label: '黒（覚悟・極限）', value: 'black' }
     ]
   },
+  {
+    weight: 1,
+    attribute: 'intensity',
+    q: '自分の性格の温度感は？',
+    options: [
+      { label: '燃える赤（激しい・熱量）', value: 'red' },
+      { label: '静かな青（冷静・観察）', value: 'blue' },
+      { label: '両面を持つ紫（場で切り替わる）', value: 'purple' },
+      { label: '透明（場の色に染まる）', value: 'clear' }
+    ]
+  },
+  {
+    weight: 1,
+    attribute: 'life_pattern',
+    q: 'あなたの人生の天気は？',
+    options: [
+      { label: '波乱万丈（嵐・雷・噴火）', value: 'turbulent' },
+      { label: '穏やか（晴天・心地よい風・清流）', value: 'peaceful' },
+      { label: '季節のように移ろう（春夏秋冬）', value: 'cyclical' },
+      { label: '嵐のあとに虹が架かる（再生）', value: 'rebirth' }
+    ]
+  },
+  {
+    weight: 1,
+    attribute: 'element',
+    q: '直感で選ぶエレメントは？',
+    options: [
+      { label: '火（炎・熱）', value: 'fire' },
+      { label: '水（清流・海）', value: 'water' },
+      { label: '風（疾風・そよぎ）', value: 'wind' },
+      { label: '土・大地', value: 'earth' },
+      { label: '光（閃光・神々しさ）', value: 'light' },
+      { label: '雷（稲妻・閃電）', value: 'thunder' },
+      { label: '雪（静寂・凍結）', value: 'snow' },
+      { label: '霧（淡い夢幻）', value: 'mist' },
+      { label: '夜（月光・闇）', value: 'night' }
+    ]
+  },
+  {
+    weight: 1,
+    attribute: 'home',
+    q: 'あなたの心の故郷は？',
+    options: [
+      { label: '都会の灯（ネオン・摩天楼）', value: 'city' },
+      { label: '田舎の風景（田園・森）', value: 'countryside' },
+      { label: '海辺・湾', value: 'sea' },
+      { label: '山岳・高地', value: 'mountain' },
+      { label: '異国の街（海外）', value: 'abroad' },
+      { label: '宇宙・銀河', value: 'cosmos' },
+      { label: '海底・深海', value: 'undersea' },
+      { label: '未来都市（サイバー）', value: 'future_city' },
+      { label: 'ジャングル・熱帯雨林', value: 'jungle' },
+      { label: '雨の街（霧雨と街灯）', value: 'rain_city' }
+    ]
+  },
+  {
+    weight: 1,
+    attribute: 'morning',
+    q: '朝起きてまず感じる気持ちは？',
+    options: [
+      { label: '「やるぞ」と燃える', value: 'ignite' },
+      { label: '静かに整える', value: 'center' },
+      { label: 'ワクワクが広がる', value: 'expand' },
+      { label: '今日は守りたい・整えたい', value: 'protect' }
+    ]
+  },
+  {
+    weight: 1,
+    attribute: 'animal',
+    q: '自分を表す動物は？',
+    options: [
+      { label: '獅子（百獣の王・統率）', value: 'lion' },
+      { label: '鷹（高所から見渡す）', value: 'eagle' },
+      { label: '狼（群れと共に走る）', value: 'wolf' },
+      { label: '鯨（深海の大いなる存在）', value: 'whale' },
+      { label: '梟（夜の知恵）', value: 'owl' },
+      { label: '龍（天を翔ける霊獣）', value: 'dragon' },
+      { label: '虎（猛々しき孤高）', value: 'tiger' },
+      { label: '不死鳥（再生する炎）', value: 'phoenix' },
+      { label: '蝶（変容と優雅）', value: 'butterfly' },
+      { label: '亀（悠久を刻む）', value: 'turtle' },
+      { label: '鹿（神聖な静謐）', value: 'deer' }
+    ]
+  },
+  {
+    weight: 1,
+    attribute: 'music',
+    q: 'テーマソングのジャンルは？',
+    options: [
+      { label: 'ロック／エレクトロニック', value: 'rock' },
+      { label: 'ジャズ／ソウル', value: 'jazz' },
+      { label: 'クラシック／オーケストラ', value: 'classical' },
+      { label: '民族音楽／和', value: 'ethnic' },
+      { label: '静寂・環境音', value: 'silence' }
+    ]
+  },
+  {
+    weight: 1,
+    attribute: 'landscape',
+    q: '旅に出るならどこ？',
+    options: [
+      { label: '絶景の山岳', value: 'mountain' },
+      { label: '離島の海', value: 'sea' },
+      { label: '古都・神社仏閣', value: 'temple' },
+      { label: '異国のメガシティ', value: 'city' },
+      { label: '大砂漠・辺境', value: 'desert' },
+      { label: 'ジャングル・熱帯雨林', value: 'jungle' },
+      { label: '雪山・氷河', value: 'glacier' },
+      { label: '宇宙ステーション・星空', value: 'cosmos' },
+      { label: '海底・サンゴ礁', value: 'undersea' },
+      { label: '雨の森・湿原', value: 'rainforest' }
+    ]
+  },
+  {
+    weight: 1,
+    attribute: 'art_style',
+    q: '描きたい絵のタッチは？',
+    options: [
+      { label: '写実', value: 'realism' },
+      { label: '印象派', value: 'impressionist' },
+      { label: '抽象', value: 'abstract' },
+      { label: '水墨', value: 'sumi-e' },
+      { label: '浮世絵', value: 'ukiyoe' },
+      { label: '油彩・古典絵画', value: 'oil_classical' },
+      { label: 'サイバーパンク', value: 'cyberpunk' },
+      { label: '神話画・宗教画', value: 'mythic' },
+      { label: '幻想的なステンドグラス', value: 'stained_glass' }
+    ]
+  },
+
+  // ========== B: 原体験・成功・人生系（8問）==========
+  {
+    weight: 2,
+    attribute: 'formative',
+    q: 'いちばん影響を受けた原体験は？',
+    options: [
+      { label: '都会への憧れで上京した', value: 'tokyo_dream' },
+      { label: '九州・地方から上京して人の縁に育てられた', value: 'province_to_tokyo' },
+      { label: '父との確執を乗り越えた', value: 'father_conflict' },
+      { label: '母の支えで前に進めた', value: 'mother_support' },
+      { label: '故郷の自然に育てられた', value: 'nature_origin' },
+      { label: '海外／異郷で価値観が変わった', value: 'abroad_awakening' },
+      { label: '大病・事故から再起した', value: 'illness_setback' },
+      { label: '起業の挫折から立ち上がった', value: 'business_failure' },
+      { label: 'メンターとの出会いが転機になった', value: 'mentor_meeting' },
+      { label: '貧しさ・経済的困難を乗り越えた', value: 'poverty_overcome' },
+      { label: 'スポーツや勝負ごとで自分を鍛えた', value: 'competition' },
+      { label: '上記のどれにも当てはまらない・その他', value: 'other' }
+    ]
+  },
+  {
+    weight: 1,
+    attribute: 'childhood',
+    q: '子ども時代いちばん夢中になっていたのは？',
+    options: [
+      { label: 'スポーツ・身体活動', value: 'sports' },
+      { label: '読書・物語の世界', value: 'reading' },
+      { label: 'ものづくり・工作', value: 'making' },
+      { label: '友達と外で遊ぶ', value: 'outdoor' },
+      { label: '絵や音楽', value: 'art' },
+      { label: '自然を観察する', value: 'nature' },
+      { label: '上記のどれにも当てはまらない・その他', value: 'other' }
+    ]
+  },
+  {
+    weight: 2,
+    attribute: 'joy',
+    q: '人生で一番うれしかった瞬間は？',
+    options: [
+      { label: '仕事の大成功・受賞', value: 'work_success' },
+      { label: '家族・愛する人との時間', value: 'family_time' },
+      { label: '誰かに認められた瞬間', value: 'recognition' },
+      { label: '長年の挑戦を成し遂げた', value: 'challenge_done' },
+      { label: '唯一無二の人と出会った', value: 'love_meeting' },
+      { label: '故郷・自然の中で感じた', value: 'nature_joy' },
+      { label: '上記のどれにも当てはまらない・その他', value: 'other' }
+    ]
+  },
+  {
+    weight: 2,
+    attribute: 'success',
+    q: '自分が誇れる成功体験は？',
+    options: [
+      { label: '全国／世界レベルの実績（模試日本一・受賞など）', value: 'national_top' },
+      { label: '会社・組織を一定規模に育てた', value: 'built_org' },
+      { label: '家族や仲間を守り抜いた', value: 'protected' },
+      { label: '長年の夢を叶えた', value: 'dream_realized' },
+      { label: '誰かの人生を救った／変えた', value: 'saved_someone' },
+      { label: '自分の限界を超えた', value: 'surpassed_self' },
+      { label: '上記のどれにも当てはまらない・その他', value: 'other' }
+    ]
+  },
+  {
+    weight: 1,
+    attribute: 'resilience',
+    q: '苦難をどう乗り越えてきましたか？',
+    options: [
+      { label: '自分の根性と努力', value: 'willpower' },
+      { label: '家族・仲間の支え', value: 'kinship' },
+      { label: 'メンター・恩師の言葉', value: 'mentor' },
+      { label: '読書・学問・思索', value: 'study' },
+      { label: '信仰・瞑想・自然', value: 'spirit' },
+      { label: '上記のどれにも当てはまらない・その他', value: 'other' }
+    ]
+  },
+  {
+    weight: 2,
+    attribute: 'core',
+    q: '自分の核（価値観）にあるものは？',
+    options: [
+      { label: '約束は必ず守る', value: 'promise' },
+      { label: '夢は諦めない', value: 'dream' },
+      { label: '人を大切にする', value: 'care' },
+      { label: '真実を追求する', value: 'truth' },
+      { label: '家族と一族の誇り', value: 'family_pride' },
+      { label: '自分との誓い', value: 'self_oath' },
+      { label: '職人としての矜持・腕で生きる', value: 'craftsmanship' },
+      { label: '上記のどれにも当てはまらない・その他', value: 'other' }
+    ]
+  },
+  {
+    weight: 1,
+    attribute: 'climax',
+    q: '人生のクライマックスは？',
+    options: [
+      { label: '大きな勝利の瞬間（もう来た）', value: 'past_victory' },
+      { label: '家族の節目（結婚・誕生など）', value: 'family_moment' },
+      { label: '仕事・事業の達成', value: 'work_achievement' },
+      { label: '出会いと別れの場面', value: 'encounter' },
+      { label: 'これから来る・まだ未来', value: 'yet_to_come' },
+      { label: '上記のどれにも当てはまらない・その他', value: 'other' }
+    ]
+  },
+  {
+    weight: 2,
+    attribute: 'legacy',
+    q: '残したいレガシーは？',
+    options: [
+      { label: '事業・会社・仕組み', value: 'business' },
+      { label: '家族の絆・血筋', value: 'family' },
+      { label: '思想・哲学・本', value: 'philosophy' },
+      { label: '作品・芸術', value: 'art' },
+      { label: '弟子・後輩・人材', value: 'disciples' },
+      { label: '職人技・技術の継承', value: 'craft' },
+      { label: '上記のどれにも当てはまらない・その他', value: 'other' }
+    ]
+  },
+
+  // ========== C: 強み系（11問・4軸へ集約）==========
   {
     weight: 2,
     q: 'チームで最も頼りにされる場面は？',
@@ -66,28 +330,7 @@ export const QUESTIONS = [
   },
   {
     weight: 2,
-    q: '経営判断で最も重視することは？',
-    options: [
-      { label: '実現可能性と確実な実行計画', domain: 'executing' },
-      { label: 'インパクトの大きさと市場での勝ち方', domain: 'influencing' },
-      { label: 'チームの納得感と組織の一体感', domain: 'relationship' },
-      { label: 'データと論理に基づく将来予測', domain: 'thinking' },
-      { label: '長期スライドより、今期のマイルストーン達成に意識が向きやすい', domain: 'executing', risks: { thinking: -10 } }
-    ]
-  },
-  {
-    q: '部下の育成で大切にしていることは？',
-    options: [
-      { label: '目標を設定し、達成まで伴走する', domain: 'executing' },
-      { label: '高い基準を示し、卓越を求める', domain: 'influencing' },
-      { label: 'その人の個性を見抜き、強みを伸ばす', domain: 'relationship' },
-      { label: '考える力を養い、自分で答えを出させる', domain: 'thinking' },
-      { label: '自分の手を動かした方が品質とスピードが出る局面は、手放しにくい', domain: 'executing', risks: { relationship: -10 } }
-    ]
-  },
-  {
-    weight: 2,
-    q: '困難な状況で自分が最初にすることは？',
+    q: '困難な状況で最初にすることは？',
     options: [
       { label: 'やるべきことをリストアップし、即座に動く', domain: 'executing' },
       { label: '自分が前面に立ち、方向を指し示す', domain: 'influencing' },
@@ -96,16 +339,8 @@ export const QUESTIONS = [
     ]
   },
   {
-    q: '休日にエネルギーが湧く過ごし方は？',
-    options: [
-      { label: '積み上げている何かを着実に進める', domain: 'executing' },
-      { label: '新しい人と出会い、刺激を受ける', domain: 'influencing' },
-      { label: '家族や親友とじっくり過ごす', domain: 'relationship' },
-      { label: '読書や思索にふける', domain: 'thinking' }
-    ]
-  },
-  {
-    q: '5年後の自分に期待することは？',
+    weight: 1,
+    q: '5年後の自分への期待は？',
     options: [
       { label: 'やると決めたことを全てやり遂げた自分', domain: 'executing' },
       { label: '業界に影響を与え、名前が知られる自分', domain: 'influencing' },
@@ -115,7 +350,7 @@ export const QUESTIONS = [
   },
   {
     weight: 2,
-    q: '新規プロジェクトの立ち上げで、最初に手をつけるのは？',
+    q: '新規プロジェクトの立ち上げで最初に手をつけるのは？',
     options: [
       { label: 'マイルストーンと担当を決め、週次で進捗を回す', domain: 'executing' },
       { label: 'ビジョンを語り、キーパーソンを一気に巻き込む', domain: 'influencing' },
@@ -124,7 +359,8 @@ export const QUESTIONS = [
     ]
   },
   {
-    q: '会議で自分がいちばん力を発揮するのはどんなとき？',
+    weight: 1,
+    q: '会議で力を発揮するのはどんなとき？',
     options: [
       { label: '決まった論点を短時間で結論まで進める', domain: 'executing' },
       { label: '対立する意見をまとめ、合意形成をリードする', domain: 'influencing' },
@@ -134,51 +370,22 @@ export const QUESTIONS = [
   },
   {
     weight: 2,
-    q: '顧客や取引先との関係で、自分が重視することは？',
+    q: '顧客や取引先との関係で重視するのは？',
     options: [
       { label: '約束した品質・納期を絶対に守ること', domain: 'executing' },
-      { label: '自社の価値を明確に伝え、交渉の主導権を握ること', domain: 'influencing' },
+      { label: '自社の価値を伝え、交渉の主導権を握ること', domain: 'influencing' },
       { label: '長期的な信頼と、相手の事情への配慮', domain: 'relationship' },
       { label: '相手の課題構造を整理し、最適な提案軸を描くこと', domain: 'thinking' }
     ]
   },
   {
-    q: 'ミスや失敗が表面化したとき、自分がまず取る姿勢に近いのは？',
-    options: [
-      { label: '再発防止の手順と責任範囲を即座に固める', domain: 'executing' },
-      { label: '対外的な説明方針と、組織としての姿勢を示す', domain: 'influencing' },
-      { label: '関係者の感情と不安に向き合い、チームを立て直す', domain: 'relationship' },
-      { label: '原因を構造的に分解し、学びを仕組みに落とす', domain: 'thinking' },
-      { label: '再発防止のため、事実関係と責任分界を先に整理したい', domain: 'influencing', risks: { relationship: -6, thinking: -4 } }
-    ]
-  },
-  {
-    q: '情報が不足したまま意思決定が迫っているとき？',
-    options: [
-      { label: '決められる範囲だけ決め、動きながら埋める', domain: 'executing' },
-      { label: '関係者を集め、判断の責任を共有し前に進める', domain: 'influencing' },
-      { label: '現場の肌感と人の合意を優先して暫定決定する', domain: 'relationship' },
-      { label: '仮説を列挙し、検証順と損失の上限を決める', domain: 'thinking' }
-    ]
-  },
-  {
+    weight: 1,
     q: '組織のムードが下がっていると感じたとき？',
     options: [
       { label: '小さな勝ちを積み上げ、達成体験を取り戻す', domain: 'executing' },
       { label: '自分からエネルギーを出し、方向を示して牽引する', domain: 'influencing' },
       { label: '一人ひとりと対話し、孤立を減らす', domain: 'relationship' },
-      { label: '要因を冷静に整理し、構造のどこを変えるか示す', domain: 'thinking' },
-      { label: 'KPIが悪いときは、まず「数字は」と聞くことが多い', domain: 'executing', risks: { relationship: -10 } }
-    ]
-  },
-  {
-    weight: 2,
-    q: 'イノベーションや新しい挑戦について、自分に近いのは？',
-    options: [
-      { label: '試作と検証を回し、早く形にして学ぶ', domain: 'executing' },
-      { label: '社内外を巻き込み、ムーブメントを起こす', domain: 'influencing' },
-      { label: '多様な人の知恵をつなぎ、共創の場をつくる', domain: 'relationship' },
-      { label: 'トレンドと自社資産の接点から、勝ち筋の仮説を立てる', domain: 'thinking' }
+      { label: '要因を冷静に整理し、構造のどこを変えるか示す', domain: 'thinking' }
     ]
   },
   {
@@ -192,30 +399,13 @@ export const QUESTIONS = [
     ]
   },
   {
+    weight: 1,
     q: '後継者や次のリーダーを育てるとしたら？',
     options: [
       { label: '目標管理とフィードバックで、成果行動を定着させる', domain: 'executing' },
       { label: '人前で任せ、失敗しても背中で責任を取る経験を積ませる', domain: 'influencing' },
       { label: '価値観と強みを言語化し、自分らしいリーダーシップを探させる', domain: 'relationship' },
       { label: '判断フレームと思考の型を渡し、自律的に考えさせる', domain: 'thinking' }
-    ]
-  },
-  {
-    q: 'ストレスが高い週の終わり、自分を回復させる近い方法は？',
-    options: [
-      { label: '溜まったタスクを片付け、コントロール感を取り戻す', domain: 'executing' },
-      { label: '人に会って話し、視野を広げる', domain: 'influencing' },
-      { label: '信頼できる誰かと本音で時間を過ごす', domain: 'relationship' },
-      { label: '歩きながら考えを整理し、頭の中の地図を描き直す', domain: 'thinking' }
-    ]
-  },
-  {
-    q: '自分の時間の使い方で、意識的に最優先しがちなのは？',
-    options: [
-      { label: '約束したアウトプットを確実に出す時間', domain: 'executing' },
-      { label: '対外的な発信・交渉・営業に直結する時間', domain: 'influencing' },
-      { label: '人との面談や、関係のメンテナンス', domain: 'relationship' },
-      { label: '読む・考える・構想するための空白時間', domain: 'thinking' }
     ]
   },
   {
@@ -229,96 +419,45 @@ export const QUESTIONS = [
     ]
   },
   {
-    weight: 2,
-    q: '物事が動き出すとき、どちらの役割にいちばん安心する？（深掘り・2択）',
-    options: [
-      { label: 'タスクを切ってスケジュールに落とし、回し続ける', domain: 'executing' },
-      { label: '論点と前提を整理し、抜け道をなくしてから進める', domain: 'thinking' }
-    ]
-  },
-  {
-    weight: 2,
-    q: '対人で頼られる場面として、いま近いのは？（深掘り・2択）',
-    options: [
-      { label: '場の空気を決め、背中で見せて前に進める', domain: 'influencing' },
-      { label: '相手の話を深く聞き、信頼の土台を丁寧に作る', domain: 'relationship' }
-    ]
-  },
-  {
-    weight: 2,
-    q: 'チームのパフォーマンスを上げるとき、いちばん手を入れたいのは？（深掘り・3択）',
-    options: [
-      { label: '進め方と期限の徹底', domain: 'executing' },
-      { label: '目指す成果と物語の再提示', domain: 'influencing' },
-      { label: '役割と相性のすり合わせ', domain: 'relationship' }
-    ]
-  },
-  {
-    weight: 2,
-    q: '意思決定の前に、どちらをいちばん丁寧にしたい？（深掘り・2択）',
-    options: [
-      { label: '選択肢とトレードオフを言語化する', domain: 'thinking' },
-      { label: '関係者の納得プロセスを丁寧に取る', domain: 'relationship' }
-    ]
-  },
-  {
-    weight: 2,
-    q: '改革を進めるなら、まず借りる力は？（深掘り・2択）',
-    options: [
-      { label: '実行のテンポと詰まりの解消', domain: 'executing' },
-      { label: '巻き込みと熱量の伝播', domain: 'influencing' }
-    ]
-  },
-  {
-    weight: 2,
-    q: '長期の組織づくりで、いちばん情熱を向けやすいのは？（深掘り・3択）',
-    options: [
-      { label: '心理的安全性と継続的な対話', domain: 'relationship' },
-      { label: '事業ポートフォリオと人材の配置', domain: 'thinking' },
-      { label: '外界とのつながりとブランド', domain: 'influencing' }
-    ]
-  },
-  {
-    weight: 2,
-    q: '圧力が高い場面で、自分の判断がどちらに寄りやすいか近いものは？',
-    options: [
-      { label: 'どれも強く片寄らない、または場面でバランスを取れている', domain: 'thinking' },
-      { label: '業績が悪化するときは、説明より対策の筋と数字の順番を先に決めたい', domain: 'executing', risks: { relationship: -10, influencing: -4 } },
-      { label: '数年先より、今四半期のキャッシュと稼働が先に来る場面が多い', domain: 'executing', risks: { thinking: -10 } },
-      { label: '議論が長引くなら、一度自分の筋で切って進めたいと思うことがある', domain: 'influencing', risks: { relationship: -8, thinking: -6 } }
-    ]
-  },
-  {
     weight: 1,
-    q: '関係性の扱いで、自分のデフォルトに近いものは？',
+    attribute: 'identity',
+    q: '自分のリーダーシップ・アーキタイプは？',
     options: [
-      { label: '信頼は積み上げるものだと肝に銘じている', domain: 'relationship' },
-      { label: '適度な距離がないと仕事が回らない', domain: 'thinking' },
-      { label: '仕事では感情より成果の方が説得力があると感じることがある', domain: 'influencing', risks: { relationship: -10 } },
-      { label: '期待値が合わない関係は、早期に線を引く方が双方のためだと思う', domain: 'executing', risks: { relationship: -8 } }
-    ]
-  },
-  {
-    weight: 1,
-    q: '時間軸と思考の癖で、自分に近いものは？',
-    options: [
-      { label: 'シナリオを複数持つことに価値を感じる', domain: 'thinking' },
-      { label: '計画より、現場の変化に合わせた即応の方が価値が出やすいと感じる', domain: 'executing', risks: { thinking: -8 } },
-      { label: 'ビジョンの言語化より、今期の打ち手の解像度を上げる方を優先しがちだ', domain: 'executing', risks: { thinking: -12 } },
-      { label: '不完全なデータより、経験からの仮説で動いて検証する方が早いと信じている', domain: 'influencing', risks: { thinking: -6 } }
-    ]
-  },
-  {
-    weight: 1,
-    q: '意思決定と指示の出し方で、自分に近いものは？',
-    options: [
-      { label: '相手の背中を押すより、道を示すことが多い', domain: 'influencing' },
-      { label: '緊急時は説明より指示の方が早いと割り切ることがある', domain: 'influencing', risks: { relationship: -8 } },
-      { label: '方向が定まった後の異論は、コストが大きいと感じることがある', domain: 'influencing', risks: { relationship: -6, thinking: -8 } },
-      { label: '自分が責任を取る決断なら、合意形成より決裁のスピードを取りたいことがある', domain: 'executing', risks: { influencing: -4, relationship: -6 } }
+      { label: '戦士（前線で戦う）', value: 'warrior' },
+      { label: '賢者（智慧で導く）', value: 'sage' },
+      { label: '育成者（人を引き出す）', value: 'mentor' },
+      { label: '開拓者（道を切り開く）', value: 'pioneer' },
+      { label: '守護者（仲間を守る）', value: 'guardian' }
     ]
   }
 ]
+
+/**
+ * answerLog から profile（属性ごとの最頻値）を抽出する。
+ * 各 attribute タイプについて value を集計し、最多のものを返す。
+ */
+export function extractProfileFromAnswers(answerLog) {
+  const counts = {}
+  for (const a of answerLog || []) {
+    if (a?.attribute && a?.attrValue) {
+      counts[a.attribute] = counts[a.attribute] || {}
+      counts[a.attribute][a.attrValue] = (counts[a.attribute][a.attrValue] || 0) + 1
+    }
+  }
+  const out = {}
+  for (const t of Object.keys(counts)) {
+    let bestVal = null
+    let bestCnt = -1
+    for (const v of Object.keys(counts[t])) {
+      if (counts[t][v] > bestCnt) {
+        bestCnt = counts[t][v]
+        bestVal = v
+      }
+    }
+    out[t] = bestVal
+  }
+  return out
+}
 
 /** 1問あたりの重みの合計（設問本体の重みのみ） */
 export function getTotalQuestionWeight() {
@@ -510,6 +649,16 @@ export const CATEGORIES = {
     hints: '健康 / 教養 / 財産 / 趣味 / ライフスタイル',
     placeholder: '例）週3運動、月2冊読書、資産運用開始…'
   }
+}
+
+// ざっくり目標画面で別途取得する「ギフト」自由記述
+export const GIFT_FIELD = {
+  id: 'gift',
+  symbol: '✦',
+  color: '#fbbf24',
+  title: 'あなたのギフト（強み・才能）',
+  hints: '人から勇気づけられた誉め言葉・励ましの言葉をそのまま書いてください',
+  placeholder: '例）父から「お前は人を惹きつける目を持っている」と言われた／恩師の「君は最後までやり抜く」という言葉が支えになっている／妻が「あなたの優しさが家族の太陽」と言ってくれた…'
 }
 
 export const CATEGORY_ORDER = ['事業', '人', '個人']

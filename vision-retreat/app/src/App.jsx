@@ -16,9 +16,40 @@ import {
   maxPrimaryWeightForDomain,
   questionsWhereDomainCannotBePrimary,
   CATEGORIES,
-  CATEGORY_ORDER
+  CATEGORY_ORDER,
+  extractProfileFromAnswers,
+  GIFT_FIELD
 } from './data.js'
-import { proposeGoals, generateImagePrompt } from './api.js'
+import { proposeGoals, generateImagePrompt, generateUnifiedImagePrompt, generateVisionCommentary } from './api.js'
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {
+      // フォーカス・許可・iframe 等で失敗した場合は execCommand にフォールバック
+    }
+  }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.setAttribute('readonly', '')
+    ta.style.position = 'fixed'
+    ta.style.top = '0'
+    ta.style.left = '0'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.focus()
+    ta.select()
+    ta.setSelectionRange(0, text.length)
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
+  }
+}
 
 function newScores() {
   return { executing: 0, influencing: 0, relationship: 0, thinking: 0 }
@@ -39,7 +70,7 @@ export default function App() {
   const [step, setStep] = useState(1)
   const [qIndex, setQIndex] = useState(0)
   const [scores, setScores] = useState(newScores())
-  const [roughGoals, setRoughGoals] = useState({ biz: '', ppl: '', self: '' })
+  const [roughGoals, setRoughGoals] = useState({ biz: '', ppl: '', self: '', gift: '' })
   const [proposed, setProposed] = useState([])
   const [selectedGoal, setSelectedGoal] = useState(null)
   const [imagePrompt, setImagePrompt] = useState('')
@@ -49,6 +80,8 @@ export default function App() {
   const [answerLog, setAnswerLog] = useState([])
   const [riskPenalty, setRiskPenalty] = useState(newRiskPenalty)
   const [showCover, setShowCover] = useState(true)
+  const [gender, setGender] = useState('male')
+  const [commentary, setCommentary] = useState('')
 
   const ranking = useMemo(() => rankDomains(scores), [scores])
   const topId = ranking[0]
@@ -59,10 +92,12 @@ export default function App() {
   const pickOption = (option) => {
     const q = QUESTIONS[qIndex]
     const w = q.weight ?? 1
-    setScores(prev => ({
-      ...prev,
-      [option.domain]: (prev[option.domain] ?? 0) + w
-    }))
+    if (option.domain) {
+      setScores(prev => ({
+        ...prev,
+        [option.domain]: (prev[option.domain] ?? 0) + w
+      }))
+    }
     if (option.risks) {
       setRiskPenalty(prev => {
         const next = { ...prev }
@@ -79,9 +114,11 @@ export default function App() {
       qIndex,
       qText: q.q,
       selectedLabel: option.label,
-      primaryDomain: option.domain,
+      primaryDomain: option.domain || null,
       weight: w,
-      risksApplied: option.risks || null
+      risksApplied: option.risks || null,
+      attribute: q.attribute || null,
+      attrValue: option.value || null
     }])
     if (qIndex + 1 < QUESTIONS.length) {
       setQIndex(qIndex + 1)
@@ -140,16 +177,33 @@ export default function App() {
     setSelectedGoal({ category, ...goal })
     setLoading(true)
     setImagePrompt('')
+    setCommentary('')
     setErrorMsg('')
     try {
+      const profile = extractProfileFromAnswers(answerLog)
+      const gift = roughGoals.gift || ''
       const prompt = await generateImagePrompt({
+        topDomain: top.id,
+        secondDomain: second?.id,
         topLabel: top.label,
         topTraits: top.traits,
         category,
         title: goal.title,
-        desc: goal.desc
+        desc: goal.desc,
+        gender,
+        profile,
+        gift
+      })
+      const note = await generateVisionCommentary({
+        topLabel: top.label,
+        secondLabel: second?.label,
+        proposed: [{ category, goals: [goal] }],
+        gender,
+        profile,
+        gift
       })
       setImagePrompt(prompt)
+      setCommentary(note)
       setStep(5)
     } catch (err) {
       setErrorMsg(`画像プロンプト生成に失敗しました。(${err.message})`)
@@ -159,19 +213,88 @@ export default function App() {
     }
   }
 
-  const regenerateImagePrompt = async () => {
+  const chooseAllGoals = async () => {
+    setSelectedGoal({ category: '人生の集大成', title: '人生の護符', desc: '来歴・縁・職業観・強み・使命を1枚絵に封じる' })
+    setLoading(true)
+    setImagePrompt('')
+    setCommentary('')
+    setErrorMsg('')
+    try {
+      const profile = extractProfileFromAnswers(answerLog)
+      const gift = roughGoals.gift || ''
+      const prompt = await generateUnifiedImagePrompt({
+        topDomain: top.id,
+        secondDomain: second?.id,
+        topLabel: top.label,
+        topTraits: top.traits,
+        proposed,
+        gender,
+        profile,
+        gift
+      })
+      const note = await generateVisionCommentary({
+        topLabel: top.label,
+        secondLabel: second?.label,
+        proposed,
+        gender,
+        profile,
+        gift
+      })
+      setImagePrompt(prompt)
+      setCommentary(note)
+      setStep(5)
+    } catch (err) {
+      setErrorMsg(`画像プロンプト生成に失敗しました。(${err.message})`)
+      setStep(4)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const regenerateImagePrompt = async (overrides = {}) => {
     if (!selectedGoal) return
     setLoading(true)
     setErrorMsg('')
     try {
-      const prompt = await generateImagePrompt({
+      const isUnified = selectedGoal.category === '人生の集大成'
+      const profile = extractProfileFromAnswers(answerLog)
+      const gift = roughGoals.gift || ''
+      const prompt = isUnified
+        ? await generateUnifiedImagePrompt({
+            topDomain: top.id,
+            secondDomain: second?.id,
+            topLabel: top.label,
+            topTraits: top.traits,
+            proposed,
+            gender,
+            profile,
+            gift,
+            ...overrides
+          })
+        : await generateImagePrompt({
+            topDomain: top.id,
+            secondDomain: second?.id,
+            topLabel: top.label,
+            topTraits: top.traits,
+            category: selectedGoal.category,
+            title: selectedGoal.title,
+            desc: selectedGoal.desc,
+            gender,
+            profile,
+            gift,
+            ...overrides
+          })
+      const note = await generateVisionCommentary({
         topLabel: top.label,
-        topTraits: top.traits,
-        category: selectedGoal.category,
-        title: selectedGoal.title,
-        desc: selectedGoal.desc
+        secondLabel: second?.label,
+        proposed: isUnified ? proposed : [{ category: selectedGoal.category, goals: [selectedGoal] }],
+        gender,
+        profile,
+        gift,
+        ...overrides
       })
       setImagePrompt(prompt)
+      setCommentary(note)
     } catch (err) {
       setErrorMsg(`再生成に失敗しました。(${err.message})`)
     } finally {
@@ -179,13 +302,19 @@ export default function App() {
     }
   }
 
+  const onGenderChange = (g) => {
+    setGender(g)
+    if (selectedGoal) regenerateImagePrompt({ gender: g })
+  }
+
   const copyPrompt = async () => {
-    try {
-      await navigator.clipboard.writeText(imagePrompt)
+    const ok = await copyTextToClipboard(imagePrompt)
+    if (ok) {
+      setErrorMsg('')
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch {
-      setErrorMsg('クリップボードコピーに失敗しました')
+    } else {
+      setErrorMsg('クリップボードコピーに失敗しました。下のテキストを手動でコピーしてください。')
     }
   }
 
@@ -229,7 +358,7 @@ export default function App() {
             proposed={proposed}
             top={top}
             onEdit={updateProposedGoal}
-            onChoose={chooseGoal}
+            onChooseAll={chooseAllGoals}
             onBack={() => setStep(3)}
             errorMsg={errorMsg}
           />
@@ -238,11 +367,15 @@ export default function App() {
           <ImagePromptScreen
             selectedGoal={selectedGoal}
             prompt={imagePrompt}
+            commentary={commentary}
             top={top}
             copied={copied}
             onCopy={copyPrompt}
-            onRegenerate={regenerateImagePrompt}
+            onRegenerate={() => regenerateImagePrompt()}
             onBack={() => setStep(4)}
+            errorMsg={errorMsg}
+            gender={gender}
+            onGenderChange={onGenderChange}
           />
         )}
         {loading && (step === 3 || step === 4) && (
@@ -556,6 +689,26 @@ function RoughGoalsScreen({ roughGoals, onChange, onSubmit, onBack, errorMsg }) 
         )
       })}
 
+      <article
+        className="card category-card gift-card"
+        style={{ borderColor: `${GIFT_FIELD.color}66` }}
+      >
+        <div className="cat-head">
+          <span className="cat-symbol" style={{ color: GIFT_FIELD.color }}>{GIFT_FIELD.symbol}</span>
+          <div>
+            <div className="cat-title" style={{ color: GIFT_FIELD.color }}>{GIFT_FIELD.title}</div>
+            <div className="cat-hints">{GIFT_FIELD.hints}</div>
+          </div>
+        </div>
+        <textarea
+          value={roughGoals.gift || ''}
+          onChange={e => onChange({ ...roughGoals, gift: e.target.value })}
+          placeholder={GIFT_FIELD.placeholder}
+          rows={4}
+        />
+        <p className="gift-note">この言葉はビジョンカードに必ず反映されます。</p>
+      </article>
+
       {errorMsg && <div className="error-banner">{errorMsg}</div>}
 
       <div className="action-row">
@@ -568,18 +721,27 @@ function RoughGoalsScreen({ roughGoals, onChange, onSubmit, onBack, errorMsg }) 
   )
 }
 
-function ProposedGoalsScreen({ proposed, top, onEdit, onChoose, onBack, errorMsg }) {
+function ProposedGoalsScreen({ proposed, top, onEdit, onChooseAll, onBack, errorMsg }) {
   return (
     <section className="fade-in">
       <header className="hero-mini">
         <div className="eyebrow">Proposed Goals</div>
         <h1>あなたの強みを活かす目標</h1>
         <p className="hero-sub">
-          設問でいちばんクリックが集まった「{top.label}」を軸に、事業・人・個人の目標たたきを並べました。他領域が劣るという意味ではありません。気に入ったところから編集し、達成イメージを作りましょう。
+          設問でいちばんクリックが集まった「{top.label}」を軸に、事業・人・個人の目標たたきを並べました。気に入ったところから編集し、すべて揃ったら下のボタンで全GOALを「人生の集大成」として1枚絵に統合します。
         </p>
       </header>
 
       {errorMsg && <div className="error-banner">{errorMsg}</div>}
+
+      <div className="unified-cta">
+        <button className="btn-primary cta-large" onClick={onChooseAll} type="button">
+          人生の護符（Life Talisman）を生成 →
+        </button>
+        <p className="cta-hint">
+          ビジョンボードではなく、あなたの来歴・原体験・縁・職業観・強み・未来の使命を一枚に封じた「護符」を作ります。書き込まれた目標とギフトの言葉が、すべての象徴の根拠になります。
+        </p>
+      </div>
 
       {proposed.map((cat, ci) => {
         const meta = CATEGORIES[cat.category]
@@ -602,14 +764,6 @@ function ProposedGoalsScreen({ proposed, top, onEdit, onChoose, onBack, errorMsg
                   <div className="strength-note" style={{ color: top.color }}>
                     {g.strength_note}
                   </div>
-                  <button
-                    className="btn-outline sm"
-                    style={{ borderColor: meta.color, color: meta.color }}
-                    onClick={() => onChoose(cat.category, g)}
-                    type="button"
-                  >
-                    達成イメージを生成 →
-                  </button>
                 </li>
               ))}
             </ul>
@@ -624,16 +778,38 @@ function ProposedGoalsScreen({ proposed, top, onEdit, onChoose, onBack, errorMsg
   )
 }
 
-function ImagePromptScreen({ selectedGoal, prompt, top, copied, onCopy, onRegenerate, onBack }) {
-  const meta = selectedGoal ? CATEGORIES[selectedGoal.category] : null
+function ImagePromptScreen({ selectedGoal, prompt, commentary, top, copied, onCopy, onRegenerate, onBack, errorMsg, gender, onGenderChange }) {
+  const isUnified = selectedGoal && selectedGoal.category === '人生の集大成'
+  const meta = !isUnified && selectedGoal ? CATEGORIES[selectedGoal.category] : null
+  const selectAll = (e) => {
+    e.currentTarget.focus()
+    e.currentTarget.select()
+  }
+  const genderOptions = [
+    ['male', '男性'],
+    ['female', '女性'],
+    ['androgynous', '中性的']
+  ]
   return (
     <section className="fade-in">
       <header className="hero-mini">
-        <div className="eyebrow">Image Prompt</div>
-        <h1>達成イメージのプロンプト</h1>
+        <div className="eyebrow">Life Talisman</div>
+        <h1>{isUnified ? 'あなたの人生の護符' : '達成イメージのプロンプト'}</h1>
       </header>
 
-      {selectedGoal && meta && (
+      {isUnified && (
+        <article className="card" style={{ borderColor: '#a855f744' }}>
+          <div className="cat-head">
+            <span className="cat-symbol" style={{ color: '#a855f7' }}>✦</span>
+            <div>
+              <div className="cat-title" style={{ color: '#a855f7' }}>人生の護符 / Life Talisman</div>
+              <div className="goal-desc-read">来歴・原体験・縁・職業観・強み・未来の使命を一枚に封じます。</div>
+            </div>
+          </div>
+        </article>
+      )}
+
+      {!isUnified && selectedGoal && meta && (
         <article className="card" style={{ borderColor: `${meta.color}44` }}>
           <div className="cat-head">
             <span className="cat-symbol" style={{ color: meta.color }}>{meta.symbol}</span>
@@ -645,8 +821,42 @@ function ImagePromptScreen({ selectedGoal, prompt, top, copied, onCopy, onRegene
         </article>
       )}
 
+      <div className="gender-row">
+        <span className="gender-label">本人の性別（年齢は固定しません）</span>
+        <div className="chip-group" role="radiogroup" aria-label="本人の性別">
+          {genderOptions.map(([k, v]) => (
+            <button
+              key={k}
+              type="button"
+              role="radio"
+              aria-checked={gender === k}
+              className={'chip' + (gender === k ? ' chip-on' : '')}
+              onClick={() => onGenderChange(k)}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {commentary && (
+        <article className="card commentary-card">
+          <div className="commentary-eyebrow">この絵が伝えていること</div>
+          <pre className="commentary-text">{commentary}</pre>
+        </article>
+      )}
+
       <article className="card prompt-card">
-        <pre className="prompt-text">{prompt}</pre>
+        <div className="prompt-eyebrow">Gemini / ChatGPT 用 英語プロンプト</div>
+        <textarea
+          className="prompt-text"
+          value={prompt}
+          readOnly
+          onFocus={selectAll}
+          onClick={selectAll}
+          rows={12}
+          aria-label="生成プロンプト"
+        />
         <div className="prompt-actions">
           <button className="btn-primary" onClick={onCopy} type="button">
             {copied ? 'コピーしました' : 'プロンプトをコピー'}
@@ -655,8 +865,9 @@ function ImagePromptScreen({ selectedGoal, prompt, top, copied, onCopy, onRegene
             ↻ 再生成
           </button>
         </div>
+        {errorMsg && <div className="error-banner" role="status">{errorMsg}</div>}
         <p className="prompt-hint">
-          Gemini または ChatGPT に貼り付けて達成した自分の画像を生成してください
+          Gemini または ChatGPT に貼り付けて達成した自分の1枚絵を生成してください。コピーが効かない時は上のテキストをタップ→自動全選択 → 手動コピーできます。
         </p>
       </article>
 
