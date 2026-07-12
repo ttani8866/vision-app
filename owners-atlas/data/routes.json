@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "aging-journey",
+    "name": "熟成を巡る旅",
+    "nameEn": "The Aging Journey",
+    "concept": "樽の中で、田んぼの上で、時間が味に変わる場所を巡る4泊5日。",
+    "cases": ["kamui-whisky", "adopt-a-vine", "sake-tanada", "crowdfarming-olive"],
+    "stampName": "熟成の旅 踏破印"
+  },
+  {
+    "slug": "forest-regeneration",
+    "name": "森と再生の旅",
+    "nameEn": "Forests & Regeneration",
+    "concept": "伐られた森を買い戻し、荒れた山に手を入れる。再生の現場を巡る3泊4日。",
+    "cases": ["shiretoko-100", "highland-titles", "forest-sharing"],
+    "stampName": "森と再生の旅 踏破印"
+  },
+  {
+    "slug": "titles-and-deeds",
+    "name": "称号と権利書の旅",
+    "nameEn": "Titles & Deeds",
+    "concept": "卿の称号、月の権利書、城主の名。紙一枚に宿る物語を集める3泊4日。",
+    "cases": ["highland-titles", "luna-embassy", "kumamoto-castle"],
+    "stampName": "称号と権利書の旅 踏破印"
+  },
+  {
+    "slug": "japanese-countryside",
+    "name": "日本の田園の旅",
+    "nameEn": "The Japanese Countryside",
+    "concept": "棚田の畦道から里山の尾根へ。日本の原風景のオーナーを訪ねる2泊3日。",
+    "cases": ["oyama-senmaida", "sake-tanada", "shiroyone-senmaida", "asuka-tanada", "forest-sharing"],
+    "stampName": "日本の田園の旅 踏破印"
+  },
+  {
+    "slug": "living-creatures",
+    "name": "生きものたちの旅",
+    "nameEn": "Living Creatures",
+    "concept": "動物園の獣舎から競馬場のパドック、南の海のサンゴまで。命を見守るオーナーを巡る5泊6日。",
+    "cases": ["chester-zoo-adopt", "owners-group-racehorse", "hachi-kobo-bee", "coral-guardian"],
+    "stampName": "生きものたちの旅 踏破印"
+  }
+]

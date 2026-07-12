@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #faf6ef;
+  --ink: #1e2a3a;
+  --accent: #f5d547;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+  /* 極薄の等高線パターン（opacity 0.04相当を stroke 色で表現） */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420' viewBox='0 0 420 420'%3E%3Cg fill='none' stroke='%231E2A3A' stroke-opacity='0.04' stroke-width='1'%3E%3Cpath d='M60 210c0-70 60-120 150-120s150 50 150 120-60 120-150 120S60 280 60 210z'/%3E%3Cpath d='M95 210c0-50 45-90 115-90s115 40 115 90-45 90-115 90-115-40-115-90z'/%3E%3Cpath d='M130 210c0-32 32-60 80-60s80 28 80 60-32 60-80 60-80-28-80-60z'/%3E%3Cpath d='M-40 40c40-30 100-30 140 0s100 30 140 0 100-30 140 0 100 30 140 0'/%3E%3Cpath d='M-40 400c40-30 100-30 140 0s100 30 140 0 100-30 140 0 100 30 140 0'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* 版画風二重枠: 影を使わず罫線オフセットで立体感を出す */
+.plate {
+  position: relative;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+}
+.plate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--ink);
+  transform: translate(4px, 4px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* 証明書カード: 二重飾り罫＋ミシン目 */
+.certificate {
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  position: relative;
+}
+.certificate .certificate-inner {
+  border: 1px solid var(--ink);
+  margin: 5px;
+}
+.perforation {
+  border-top: 2px dashed rgba(30, 42, 58, 0.45);
+}
+
+/* マーカー引き風ハイライト */
+.marker-highlight {
+  background: linear-gradient(transparent 62%, rgba(245, 213, 71, 0.75) 62%, rgba(245, 213, 71, 0.75) 94%, transparent 94%);
+}
+
+/* ホバーで枠が2pxずれるカード */
+.shift-hover {
+  transition: transform 180ms ease;
+}
+@media (hover: hover) {
+  .shift-hover:hover {
+    transform: translate(-2px, -2px);
+  }
+}
+
+/* 渡航印スタンプ */
+.travel-stamp {
+  transform: rotate(-15deg);
+  /* かすれテクスチャ */
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.6 -0.35'/%3E%3C/filter%3E%3Crect width='120' height='120' fill='white' filter='url(%23n)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.6 -0.35'/%3E%3C/filter%3E%3Crect width='120' height='120' fill='white' filter='url(%23n)'/%3E%3C/svg%3E");
+  mask-size: cover;
+  -webkit-mask-size: cover;
+}
+
+@keyframes stamp-press {
+  0% {
+    transform: rotate(-15deg) scale(2.2);
+    opacity: 0;
+  }
+  60% {
+    transform: rotate(-15deg) scale(0.92);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(-15deg) scale(1);
+    opacity: 1;
+  }
+}
+.stamp-pressing {
+  animation: stamp-press 400ms cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+}
+
+/* スクロール連動フェードイン（1回のみ） */
+.fade-in-once {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.fade-in-once.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* 地図ピンの点灯 */
+@keyframes pin-light {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.pin-light {
+  animation: pin-light 300ms ease both;
+  transform-origin: center;
+}
+
+/* 渡航線の描画 */
+@keyframes draw-flight {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.flight-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw-flight 600ms ease-in-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .fade-in-once {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .stamp-pressing,
+  .pin-light,
+  .flight-line {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .shift-hover,
+  .shift-hover:hover {
+    transition: none;
+    transform: none;
+  }
+}
