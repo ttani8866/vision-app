@@ -2,6 +2,11 @@
 KPR-AgentOS/
 puyo-puyo/
 sl-proposal-agent/
+aicompany-agents/
+
+# Agent definitions (junction -> aicompany-agents/.claude/agents, git-managed there)
+# 2026-07-12にセッション切替の自動stash(-u)が未追跡のagents定義を巻き込んで消失した事故の再発防止
+.claude/agents/
 
 # Node modules
 node_modules/
