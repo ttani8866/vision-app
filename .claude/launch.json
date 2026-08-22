@@ -57,6 +57,19 @@
       "port": 3300
     },
     {
+      "name": "workstyle-evolution-lp",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "-y",
+        "http-server",
+        "workstyle-evolution-lp",
+        "-p",
+        "8130",
+        "-c-1"
+      ],
+      "port": 8130
+    },
+    {
       "name": "agent-dashboard",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
