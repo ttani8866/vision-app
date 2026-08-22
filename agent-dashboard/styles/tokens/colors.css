@@ -1,0 +1,127 @@
+/* ============================================================
+   Navy & Gold — カラートークン
+   出典：ハンドオフバンドル project/tokens/colors.css
+   §1 は原本のまま。§2 は本実装で追加したダークシェル面のレイヤー。
+   ============================================================ */
+
+:root {
+  /* ---------- §1 原本（Navy & Gold デザインシステム） ---------- */
+
+  /* ネイビー（プライマリ）ramp — #0A0F1E 基準 */
+  --navy-900: #0A0F1E;
+  --navy-800: #111A30;
+  --navy-700: #1A2745;
+  --navy-600: #24345C;
+  --navy-500: #2F4374;
+  --navy-100: #E2E7F0;
+  --navy-50:  #F2F4F9;
+
+  /* ゴールド（アクセント） */
+  --gold-700: #8C7020;
+  --gold-600: #B3922B;
+  --gold-500: #D4AF37;
+  --gold-400: #DFC262;
+  --gold-100: #F7EFD5;
+  --gold-50:  #FBF7E9;
+
+  /* 班カラー */
+  --team-signal:       #2563EB;
+  --team-signal-700:   #1D4ED8;
+  --team-signal-100:   #DBEAFE;
+  --team-craft:        #16A34A;
+  --team-craft-700:    #15803D;
+  --team-craft-100:    #DCFCE7;
+  --team-optimize:     #EA580C;
+  --team-optimize-700: #C2410C;
+  --team-optimize-100: #FFEDD5;
+
+  /* ステータス */
+  --status-active: #16A34A;  /* 稼働中：グリーンドット */
+  --status-idle:   #9CA3AF;  /* 休眠：グレードット */
+
+  /* セマンティック */
+  --success-500: #16A34A; --success-700: #15803D; --success-100: #DCFCE7;
+  --warning-500: #CA8A04; --warning-700: #A16207; --warning-100: #FEF9C3;
+  --danger-500:  #DC2626; --danger-700:  #B91C1C; --danger-100:  #FEE2E2;
+  --info-500:    #2563EB; --info-700:    #1D4ED8; --info-100:    #DBEAFE;
+
+  /* ニュートラル（ネイビー寄りのクール系） */
+  --ink-900: #0A0F1E;
+  --ink-700: #333B4E;
+  --ink-500: #5B6474;
+  --ink-400: #7C8494;
+  --ink-300: #A9AFBC;
+  --ink-200: #D2D6DE;
+  --ink-100: #E8EAEF;
+  --ink-50:  #F5F6F9;
+
+  /* サーフェス・セマンティックエイリアス */
+  --surface-page:  #F5F6F9;
+  --surface-card:  #FFFFFF;
+  --surface-shell: var(--navy-900);
+  --surface-accent-soft: var(--gold-50);
+  --text-strong:  var(--ink-900);
+  --text-body:    var(--ink-700);
+  --text-muted:   var(--ink-500);
+  --text-inverse: #FFFFFF;
+  --text-on-shell: #C7CDDA;
+  --border-subtle:  #DFE2E9;
+  --border-default: #C4C9D4;
+  --border-accent:  var(--gold-500);
+  --focus-ring: 0 0 0 3px rgba(212, 175, 55, .35);
+
+  /* チャート系列 */
+  --chart-1: #2563EB;
+  --chart-2: #16A34A;
+  --chart-3: #EA580C;
+  --chart-4: #D4AF37;
+  --chart-5: #7A5AF0;
+  --chart-6: #0E7490;
+
+  /* ---------- §2 追加：ダークシェル面レイヤー ----------
+     原本のセマンティック色は白背景前提のため、ダークネイビー上では
+     コントラストが立たない。ダッシュボードは全面がシェル面なので、
+     シェル上で使う面・線・文字・状態色をここで定義する。
+     プロトタイプで生hexだったものはすべてこの層に吸収した。         */
+
+  /* 面 */
+  --shell-bg:             var(--navy-900);      /* ページ地 */
+  --shell-surface:        var(--navy-800);      /* 標準カード */
+  --shell-surface-raised: #141F3A;              /* 強調カード（KANBEI） */
+  --shell-surface-sunken: rgba(17, 26, 48, .6); /* 沈めたカード（Prism） */
+  --shell-chip:           var(--navy-700);      /* チップ地 */
+  --shell-scrim:          rgba(4, 7, 15, .55);  /* ダイアログスクリム */
+
+  /* 線 */
+  --shell-border:        var(--navy-600);  /* 標準ヘアライン */
+  --shell-border-subtle: var(--navy-700);  /* タブ下線など弱い区切り */
+  --shell-border-strong: var(--navy-500);  /* 強調カードの縁 */
+
+  /* 文字（strong → faint の5段） */
+  --shell-text-strong: var(--navy-50);       /* 見出し・エージェント名 */
+  --shell-text-body:   var(--text-on-shell); /* 本文 */
+  --shell-text-muted:  #8A93A8;              /* 説明文。シェル面で最多 */
+  --shell-text-subtle: var(--ink-400);       /* メタ情報 */
+  --shell-text-faint:  var(--ink-500);       /* アイブロウラベル */
+
+  /* 状態色（原本の -500 を暗背景向けに明度を上げた対応値）
+     success #16A34A → #22C55E ／ warning #CA8A04 → #EAB308
+     danger  #DC2626 → #EF4444 ／ info    #2563EB → #60A5FA   */
+  --shell-success: #22C55E;
+  --shell-warning: #EAB308;
+  --shell-danger:  #EF4444;
+  --shell-info:    #60A5FA;
+  --shell-info-strong: var(--info-500); /* IRISの縁・ボタン地 */
+  --shell-info-text:   #93B8F5;         /* info面のチップ文字 */
+  --shell-idle:    var(--status-idle);
+
+  /* 稼働ステータス4種（StatusPill と凡例が参照する唯一の定義） */
+  --shell-status-auto:   var(--shell-success); /* 自動実行中 */
+  --shell-status-manual: var(--shell-warning); /* 手動トリガー */
+  --shell-status-async:  var(--shell-info);    /* Discord非同期 */
+  --shell-status-idle:   var(--shell-idle);    /* 休眠中 */
+
+  /* シェル面の淡色地（チップ背景） */
+  --shell-tint-gold: rgba(212, 175, 55, .10);
+  --shell-tint-info: rgba(37, 99, 235, .12);
+}

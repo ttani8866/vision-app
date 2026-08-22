@@ -1,0 +1,18 @@
+/* Navy & Gold — スペーシングトークン（原本のまま） */
+:root {
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-pill: 999px;
+  --card-padding: 20px;
+  --card-padding-compact: 14px;
+  --grid-gap: 16px;
+  --section-gap: 32px;
+  --sidebar-width: 248px;
+  --topbar-height: 56px;
+  --content-max: 1440px;
+}

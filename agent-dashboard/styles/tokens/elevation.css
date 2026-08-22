@@ -1,0 +1,15 @@
+/* Navy & Gold — エレベーショントークン */
+:root {
+  --shadow-xs: 0 1px 2px rgba(10, 15, 30, .06);
+  --shadow-sm: 0 1px 3px rgba(10, 15, 30, .08), 0 1px 2px rgba(10, 15, 30, .04);
+  --shadow-md: 0 4px 12px rgba(10, 15, 30, .10), 0 2px 4px rgba(10, 15, 30, .05);
+  --shadow-lg: 0 12px 32px rgba(10, 15, 30, .16), 0 4px 8px rgba(10, 15, 30, .06);
+  --shadow-gold: 0 2px 10px rgba(212, 175, 55, .35); /* ダークシェル上のプライマリボタン専用 */
+  --inset-hairline: inset 0 -1px 0 var(--border-subtle);
+
+  /* 追加：シェル面の影。暗背景では原本のネイビー系が沈むため黒寄りにする */
+  --shell-shadow-card:   0 4px 16px rgba(0, 0, 0, .35);
+  --shell-shadow-panel:  -8px 0 32px rgba(0, 0, 0, .40);
+  --shell-shadow-toast:  0 8px 24px rgba(0, 0, 0, .40);
+  --shell-glow-gold:     0 2px 10px rgba(212, 175, 55, .18); /* CEOカードの縁光 */
+}

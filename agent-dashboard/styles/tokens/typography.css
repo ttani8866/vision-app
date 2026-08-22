@@ -1,0 +1,18 @@
+/* Navy & Gold — タイポグラフィトークン（原本のまま） */
+:root {
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;   /* UI基準 */
+  --text-md: 15px;     /* 本文 */
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-display: 32px; /* メトリクス値のみ */
+  --leading-tight: 1.35;
+  --leading-body: 1.7;   /* 日本語本文 */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --tracking-caps: .1em;
+  --tracking-ja: .02em;  /* 日本語見出しの字間 */
+  --numeric-tabular: "tnum" 1;
+}

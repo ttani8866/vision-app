@@ -1,0 +1,14 @@
+@import "../styles/tokens/colors.css";
+@import "../styles/tokens/typography.css";
+@import "../styles/tokens/spacing.css";
+@import "../styles/tokens/elevation.css";
+@import "../styles/tokens/motion.css";
+@import "../styles/tokens/base.css";
+
+/* フォント。原本は Google Fonts のCDN読み込みだが、社内ネットワークでの
+   外部依存を避けるため next/font でセルフホストし、変数だけ差し替える。
+   ファミリー構成は原本 tokens/fonts.css と同じ。 */
+:root {
+  --font-sans: var(--font-noto-sans-jp), "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "Noto Sans JP", monospace;
+}

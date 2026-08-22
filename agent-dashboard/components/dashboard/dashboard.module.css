@@ -1,0 +1,198 @@
+/* レスポンシブの切り替えはCSSだけで行う。JSで幅を測るとサーバー描画と
+   初回描画がずれるため、表示・非表示はメディアクエリに寄せている。
+
+   1184px以上：原設計どおり1120pxの固定キャンバスでノード図を描く。
+   1184px未満：同じ内容をレイヤー1→6の縦積みに切り替える。
+   1184pxは原設計のヘッダー最大幅と一致し、キャンバス1120px＋左右32pxの
+   余白が成立する下限でもある。 */
+
+.canvasOnly {
+  display: block;
+}
+
+.stackOnly {
+  display: none;
+}
+
+@media (max-width: 1183px) {
+  .canvasOnly {
+    display: none;
+  }
+  .stackOnly {
+    display: block;
+  }
+}
+
+/* 全体タブ：キャンバス側のCXO 7列グリッド */
+.cxoGridCanvas {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+/* 全体タブ：縦積み側のCXOグリッド。列数は幅に追従させる */
+.cxoGridStack {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 8px;
+}
+
+/* KPR-Prismタブのスキルグリッド */
+.prismGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .prismGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .prismGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* SHINTOタブの行。広い画面では原設計どおり1行、狭い画面では折り返す */
+.shintoRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--shell-surface);
+  border: 1px solid var(--shell-border);
+  border-radius: var(--radius-lg);
+  padding: 13px 18px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-family: var(--font-sans);
+}
+
+.shintoName {
+  width: 90px;
+  flex-shrink: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  color: var(--shell-text-strong);
+}
+
+.shintoPost {
+  width: 150px;
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  color: var(--shell-text-muted);
+}
+
+.shintoDesc {
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--shell-text-muted);
+}
+
+.shintoTrigger {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--shell-text-faint);
+  flex-shrink: 0;
+}
+
+@media (max-width: 860px) {
+  .shintoRow {
+    flex-wrap: wrap;
+    gap: 6px 12px;
+  }
+  .shintoName,
+  .shintoPost {
+    width: auto;
+  }
+  .shintoDesc {
+    flex-basis: 100%;
+  }
+  .shintoTrigger {
+    margin-left: auto;
+  }
+}
+
+/* 詳細パネル。狭い画面では画面幅いっぱいにする */
+.detailPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 380px;
+  max-width: 100vw;
+  background: var(--shell-surface);
+  border-left: 1px solid var(--shell-border);
+  padding: 28px 26px;
+  box-shadow: var(--shell-shadow-panel);
+  overflow-y: auto;
+  z-index: 20;
+}
+
+@media (max-width: 520px) {
+  .detailPanel {
+    width: 100vw;
+    padding: 24px 20px;
+  }
+}
+
+/* ヘッダーとタブ。狭い画面では左右padding を詰める */
+.shellWidth {
+  max-width: 1184px;
+  margin: 0 auto;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+@media (max-width: 640px) {
+  .shellWidth {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* タブ列。項目が入りきらない場合は横スクロールさせる */
+.tabList {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--shell-border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabList::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  padding: 10px 16px;
+  color: var(--shell-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.tab:hover {
+  color: var(--shell-text-body);
+}
+
+.tabActive {
+  color: var(--gold-500);
+  border-bottom-color: var(--gold-500);
+}
+
+.tabActive:hover {
+  color: var(--gold-500);
+}

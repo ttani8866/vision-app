@@ -1,0 +1,12 @@
+/* Navy & Gold — モーショントークン（原本のまま） */
+:root {
+  --duration-fast: 140ms;
+  --duration-base: 220ms;
+  --duration-slow: 360ms;
+  --ease-standard: cubic-bezier(.2, 0, .2, 1);
+}
+@keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+:root { --pulse-live: pulse-live 1.8s var(--ease-standard) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

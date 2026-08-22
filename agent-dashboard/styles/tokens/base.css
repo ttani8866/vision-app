@@ -1,0 +1,20 @@
+/* Navy & Gold — ベースリセット
+   原本は白背景前提（--surface-page / --text-body）。本アプリは全面が
+   シェル面のため、body の地と文字はシェル面トークンを充てる。 */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  color: var(--shell-text-body);
+  background: var(--shell-bg);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--gold-400); text-decoration: none; }
+a:hover { color: var(--gold-500); text-decoration: underline; }
+::selection { background: var(--gold-100); color: var(--ink-900); }
+.num, [data-num] { font-family: var(--font-mono); font-feature-settings: var(--numeric-tabular); }
+
+/* フォーカスはゴールド3px。DSの規定どおり枠の差し替えはしない */
+:focus-visible { outline: none; box-shadow: var(--focus-ring); }

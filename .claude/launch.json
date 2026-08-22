@@ -1,0 +1,74 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "misonos-hp",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "-y",
+        "http-server",
+        "misonos-hp",
+        "-p",
+        "8123",
+        "-c-1"
+      ],
+      "port": 8123
+    },
+    {
+      "name": "baemeshi",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "baemeshi/app",
+        "--",
+        "-p",
+        "3100"
+      ],
+      "port": 3100
+    },
+    {
+      "name": "personal-style-os",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "personal-style-os",
+        "--",
+        "-p",
+        "3200"
+      ],
+      "port": 3200
+    },
+    {
+      "name": "news-p-test",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "ニュースPテスト",
+        "--",
+        "-p",
+        "3300"
+      ],
+      "port": 3300
+    },
+    {
+      "name": "agent-dashboard",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "agent-dashboard",
+        "--",
+        "-p",
+        "3400"
+      ],
+      "port": 3400
+    }
+  ]
+}
