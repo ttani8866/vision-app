@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FACE AGE SCORE — App Screen</title>
+<meta name="description" content="FACE AGE SCORE（AI肌診断アプリ）の診断結果画面。Claude Design のプロトタイプを実装したもの。">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<main class="stage">
+  <div class="device" aria-label="FACE AGE SCORE 診断結果">
+    <div class="device__body">
+      <div class="device__screen">
+        <div class="device__scroll">
+          <div class="screen">
+
+            <!-- アプリヘッダー -->
+            <header class="app-header">
+              <div>
+                <h1 class="app-header__brand">FACE AGE SCORE</h1>
+                <p class="app-header__tagline">顔の状態を可視化し、若返りを設計するAI肌診断</p>
+              </div>
+              <div class="app-header__user">
+                <div class="app-header__name">田中 様</div>
+                <div class="app-header__date">2026/09/01 撮影</div>
+              </div>
+            </header>
+
+            <div class="screen__body">
+
+              <!-- 1. 総合スコア -->
+              <section class="card" aria-label="総合スコア">
+                <div class="eyebrow">FACE AGE SCORE — 総合スコア</div>
+                <div class="hero__scores">
+                  <div class="hero__score">82</div>
+                  <div class="hero__max">/ 100</div>
+                  <div class="hero__delta">
+                    <span class="pill pill--ok">+4pt <span class="pill__unit">前回比</span></span>
+                  </div>
+                </div>
+                <div class="hero__bar"><div class="hero__bar-fill" style="width:82%"></div></div>
+                <div class="grid3 hero__grid">
+                  <div class="grid3__cell"><div class="grid3__key">見た目年齢</div><div class="grid3__val">52<span class="grid3__unit">歳相当</span></div></div>
+                  <div class="grid3__cell"><div class="grid3__key">肌年齢</div><div class="grid3__val">50<span class="grid3__unit">歳</span></div></div>
+                  <div class="grid3__cell"><div class="grid3__key">改善率</div><div class="grid3__val grid3__val--ok">+5.1<span class="grid3__unit">%</span></div></div>
+                </div>
+                <p class="hero__note">肌のツヤ・キメは改善。最大の改善余地は<b>目の下</b>。</p>
+              </section>
+
+              <!-- 2. 顔ゾーン診断 -->
+              <section class="card" aria-label="顔ゾーン診断">
+                <div class="row row--baseline row--between">
+                  <h2 class="card__title">顔ゾーン診断</h2>
+                  <span class="card__hint">タップで詳細</span>
+                </div>
+                <div class="legend zone__legend">
+                  <span class="legend__item"><span class="dot dot--ok"></span>良好</span>
+                  <span class="legend__item"><span class="dot dot--warn"></span>注意</span>
+                  <span class="legend__item"><span class="dot dot--imp"></span>改善余地</span>
+                  <span class="legend__item"><span class="dot dot--pri"></span>優先改善</span>
+                </div>
+                <div class="face" id="face">
+                  <div class="slot"><span class="slot__label">正面の顔写真をドロップ</span></div>
+                  <svg class="face__overlay" viewBox="0 0 330 400" preserveAspectRatio="none" aria-hidden="true">
+                    <line x1="86" y1="46" x2="150" y2="82"></line><circle cx="150" cy="82" r="4" fill="var(--warn)"></circle>
+                    <line x1="252" y1="120" x2="203" y2="142"></line><circle cx="203" cy="142" r="4" fill="var(--warn)"></circle>
+                    <line x1="252" y1="176" x2="205" y2="168"></line><circle cx="205" cy="168" r="4" fill="var(--pri)"></circle>
+                    <line x1="78" y1="206" x2="122" y2="206"></line><circle cx="122" cy="206" r="4" fill="var(--ok)"></circle>
+                    <line x1="252" y1="242" x2="196" y2="238"></line><circle cx="196" cy="238" r="4" fill="var(--imp)"></circle>
+                    <line x1="78" y1="308" x2="122" y2="298"></line><circle cx="122" cy="298" r="4" fill="var(--ok)"></circle>
+                  </svg>
+                  <!-- ゾーンチップは main.js が ZONES から生成 -->
+                </div>
+                <div class="zone-detail" id="zone-detail" aria-live="polite">
+                  <div class="row">
+                    <span class="zone-detail__status"></span>
+                    <span class="zone-detail__name"></span>
+                  </div>
+                  <div class="zone-detail__metrics"></div>
+                  <p class="zone-detail__note"></p>
+                </div>
+              </section>
+
+              <!-- 3. 評価バランス（レーダー）＋改善優先順位 -->
+              <section class="card" aria-label="評価バランス">
+                <h2 class="card__title">評価バランス <span class="card__hint">10点満点</span></h2>
+                <div class="legend legend--wide radar__legend">
+                  <span class="legend__item"><span class="legend__line"></span>現在</span>
+                  <span class="legend__item"><span class="legend__line legend__line--target"></span>目標（8.5〜9）</span>
+                </div>
+                <svg class="radar" viewBox="0 0 320 290" role="img" aria-label="10項目のレーダーチャート。ツヤ9.0、ハリ8.0、毛穴7.5、シワ7.5、目袋5.5。目標は8.5〜9。">
+                  <g class="radar__grid">
+                    <polygon points="160,55 212.9,72.2 245.6,117.2 245.6,172.8 212.9,217.8 160,235 107.1,217.8 74.4,172.8 74.4,117.2 107.1,72.2"></polygon>
+                    <polygon points="160,77.5 199.7,90.4 224.2,124.1 224.2,165.9 199.7,199.6 160,212.5 120.3,199.6 95.8,165.9 95.8,124.1 120.3,90.4"></polygon>
+                    <polygon points="160,100 186.5,108.6 202.8,131.1 202.8,158.9 186.5,181.4 160,190 133.5,181.4 117.2,158.9 117.2,131.1 133.5,108.6"></polygon>
+                    <polygon points="160,122.5 173.2,126.8 181.4,138 181.4,152 173.2,163.2 160,167.5 146.8,163.2 138.6,152 138.6,138 146.8,126.8"></polygon>
+                    <line x1="160" y1="145" x2="160" y2="55"></line><line x1="160" y1="145" x2="212.9" y2="72.2"></line><line x1="160" y1="145" x2="245.6" y2="117.2"></line><line x1="160" y1="145" x2="245.6" y2="172.8"></line><line x1="160" y1="145" x2="212.9" y2="217.8"></line><line x1="160" y1="145" x2="160" y2="235"></line><line x1="160" y1="145" x2="107.1" y2="217.8"></line><line x1="160" y1="145" x2="74.4" y2="172.8"></line><line x1="160" y1="145" x2="74.4" y2="117.2"></line><line x1="160" y1="145" x2="107.1" y2="72.2"></line>
+                  </g>
+                  <polygon class="radar__target" points="160,68.5 205,83.2 232.8,121.4 232.8,168.6 205,206.8 160,221.5 115,206.8 87.2,168.6 87.2,121.4 115,83.2"></polygon>
+                  <polygon class="radar__area" points="160,64 202.3,86.8 232.8,121.4 224.2,165.9 197,196 160,212.5 120.3,199.6 112.9,160.3 104.4,126.9 117.7,86.8"></polygon>
+                  <circle class="radar__point" cx="112.9" cy="160.3" r="3.5"></circle>
+                  <circle class="radar__ring" cx="112.9" cy="160.3" r="7"></circle>
+                  <g class="radar__labels">
+                    <text x="160" y="42" text-anchor="middle">ツヤ 9.0</text>
+                    <text x="222" y="60" text-anchor="start">ハリ 8.0</text>
+                    <text x="253" y="114" text-anchor="start">キメ</text>
+                    <text x="253" y="182" text-anchor="start">毛穴 7.5</text>
+                    <text x="220" y="234" text-anchor="start">くすみ</text>
+                    <text x="160" y="252" text-anchor="middle">シミ</text>
+                    <text x="100" y="234" text-anchor="end">シワ 7.5</text>
+                    <text class="radar__label--alert" x="67" y="182" text-anchor="end">目袋 5.5</text>
+                    <text x="67" y="114" text-anchor="end">ほうれい線</text>
+                    <text x="100" y="60" text-anchor="end">フェイスライン</text>
+                  </g>
+                </svg>
+                <div class="prio-section">
+                  <div class="eyebrow eyebrow--tight">改善優先順位 TOP3</div>
+                  <div class="prio-list">
+                    <div class="prio prio--pri"><span class="prio__num">1</span><span class="prio__name">目袋</span><span class="prio__delta">5.5 → 8.5</span></div>
+                    <div class="prio prio--imp"><span class="prio__num">2</span><span class="prio__name">額のシワ</span><span class="prio__delta">7.5 → 8.5</span></div>
+                    <div class="prio prio--warn"><span class="prio__num">3</span><span class="prio__name">毛穴</span><span class="prio__delta">7.5 → 9.0</span></div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 4. AI診断コメント -->
+              <section class="card" aria-label="AI診断コメント">
+                <h2 class="card__title">AI診断コメント</h2>
+                <div class="ai">
+                  <div>
+                    <div class="ai__label">① 現在の状態</div>
+                    <p class="ai__text">肌のツヤとキメは非常に良好。一方、目の下の膨らみと影が顔全体の年齢印象を上げています。</p>
+                  </div>
+                  <div>
+                    <div class="ai__label">② 改善された点</div>
+                    <div class="tags">
+                      <span class="tag tag--num tag--ok">ツヤ +1.5</span>
+                      <span class="tag tag--num tag--ok">くすみ +1.0</span>
+                      <span class="tag tag--num tag--ok">毛穴 +0.5</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="ai__label">③ 現在の課題</div>
+                    <div class="tags">
+                      <span class="tag tag--pri">目袋</span>
+                      <span class="tag tag--imp">額のシワ</span>
+                      <span class="tag tag--warn">軽いほうれい線</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="ai__label">④ 優先順位</div>
+                    <div class="ai__order">目元 <span>＞</span> 額 <span>＞</span> 肌質 <span>＞</span> ほうれい線</div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 5+6. 改善アドバイス（守り／攻め） -->
+              <section class="card" aria-label="改善アドバイス">
+                <h2 class="card__title">改善アドバイス</h2>
+                <div class="tabs" role="tablist" aria-label="アドバイスの種類">
+                  <button class="tab" type="button" role="tab" data-tab="mamori" aria-selected="true" aria-controls="panel-mamori">守り｜ホームケア</button>
+                  <button class="tab" type="button" role="tab" data-tab="seme" aria-selected="false" aria-controls="panel-seme">攻め｜美容施術</button>
+                </div>
+
+                <div class="tabpanel" id="panel-mamori" role="tabpanel" data-panel="mamori">
+                  <div class="routine">
+                    <div class="routine__col">
+                      <div class="routine__when">朝</div>
+                      <div class="routine__steps">洗顔<br>ビタミンC<br>保湿<br>日焼け止め</div>
+                    </div>
+                    <div class="routine__col">
+                      <div class="routine__when routine__when--night">夜</div>
+                      <div class="routine__steps">洗顔<br>保湿<br>レチノール／リンクルケア</div>
+                    </div>
+                  </div>
+                  <div class="product">
+                    <div class="product__head">おすすめ商品</div>
+                    <div class="product__body">
+                      <div class="product__img"><div class="slot slot--r8"><span class="slot__label">商品画像</span></div></div>
+                      <div class="product__info">
+                        <div class="product__name">Obagi C25 Serum Neo</div>
+                        <div class="product__aim">目的：毛穴・ハリ・くすみ・ツヤ</div>
+                        <div class="row" style="margin-top:6px">
+                          <span class="stars">★★★★★</span>
+                          <span class="product__price">¥11,000</span>
+                        </div>
+                      </div>
+                    </div>
+                    <p class="product__why"><b>なぜあなたに合うか：</b>毛穴・くすみの残り課題に高濃度ビタミンCが直接作用。ツヤの維持にも有効です。</p>
+                    <div class="product__cta"><a class="btn-outline" href="#">公式サイトで見る</a></div>
+                  </div>
+                </div>
+
+                <div class="tabpanel tabpanel--seme" id="panel-seme" role="tabpanel" data-panel="seme" hidden>
+                  <p class="seme__lead">現在の状態から、必要な施術のみ提案しています。</p>
+                  <div class="proc">
+                    <div class="row"><span class="proc__name">ケアシス</span><span class="push stars stars--sm">★★★★★</span></div>
+                    <div class="proc__aim">目的：保湿・鎮静・肌質改善　／　改善対象：キメ・くすみ</div>
+                    <div class="proc__grid">
+                      <div class="proc__cell"><div class="proc__key">想定価格</div><div class="proc__val proc__val--price">¥25,000〜</div></div>
+                      <div class="proc__cell"><div class="proc__key">ダウンタイム</div><div class="proc__val">なし</div></div>
+                      <div class="proc__cell"><div class="proc__key">おすすめ時期</div><div class="proc__val proc__val--when">9月</div></div>
+                    </div>
+                  </div>
+                  <div class="proc">
+                    <div class="row"><span class="proc__name">目袋施術（裏ハムラ）</span><span class="push stars stars--sm">★★★★★</span></div>
+                    <div class="proc__aim">目的：目袋・影　／　改善対象：目の下</div>
+                    <div class="proc__grid">
+                      <div class="proc__cell"><div class="proc__key">想定価格</div><div class="proc__val proc__val--price">¥23〜44万</div></div>
+                      <div class="proc__cell"><div class="proc__key">ダウンタイム</div><div class="proc__val">1〜2週間</div></div>
+                      <div class="proc__cell"><div class="proc__key">おすすめ時期</div><div class="proc__val proc__val--when">10月</div></div>
+                    </div>
+                  </div>
+                  <div class="proc">
+                    <div class="row"><span class="proc__name">IPL</span><span class="push stars stars--sm">★★★★☆</span></div>
+                    <div class="proc__aim">目的：くすみ・色ムラ・透明感　／　改善対象：肌全体</div>
+                    <div class="proc__grid">
+                      <div class="proc__cell"><div class="proc__key">想定価格</div><div class="proc__val proc__val--price">¥30,000〜</div></div>
+                      <div class="proc__cell"><div class="proc__key">ダウンタイム</div><div class="proc__val">ほぼなし</div></div>
+                      <div class="proc__cell"><div class="proc__key">おすすめ時期</div><div class="proc__val proc__val--when">9月</div></div>
+                    </div>
+                  </div>
+                  <div class="proc">
+                    <div class="row"><span class="proc__name">額ボトックス</span><span class="push stars stars--sm">★★★★☆</span></div>
+                    <div class="proc__aim">目的：額の横ジワ　／　改善対象：額</div>
+                    <div class="proc__grid">
+                      <div class="proc__cell"><div class="proc__key">想定価格</div><div class="proc__val proc__val--price">¥3〜5万</div></div>
+                      <div class="proc__cell"><div class="proc__key">ダウンタイム</div><div class="proc__val">ほぼなし</div></div>
+                      <div class="proc__cell"><div class="proc__key">おすすめ時期</div><div class="proc__val proc__val--when">10月</div></div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 7. おすすめクリニック -->
+              <section class="card" aria-label="おすすめクリニック">
+                <h2 class="card__title">おすすめクリニック</h2>
+                <div class="clinics">
+                  <div class="clinic">
+                    <div class="row row--baseline"><span class="clinic__name">PERSONAL BEAUTY CLINIC 銀座</span><span class="push stars stars--xs">★★★★★</span></div>
+                    <div class="clinic__tags"><span class="badge">IPL</span><span class="badge">ケアシス</span></div>
+                    <div class="clinic__meta">特徴：肌管理が強い　／　価格：<span class="clinic__price">約3〜5万円</span></div>
+                    <p class="clinic__why"><b>合う理由：</b>肌質系の残り課題（毛穴・くすみ）を1院で継続管理できるため。</p>
+                    <a class="btn-ghost" href="#">公式サイト</a>
+                  </div>
+                  <div class="clinic">
+                    <div class="row row--baseline"><span class="clinic__name">銀座よしえクリニック</span><span class="push stars stars--xs">★★★★☆</span></div>
+                    <div class="clinic__tags"><span class="badge">目袋</span><span class="badge">裏ハムラ</span></div>
+                    <div class="clinic__meta">特徴：術式比較ができる　／　価格：<span class="clinic__price">約23〜44万円</span></div>
+                    <p class="clinic__why"><b>合う理由：</b>最優先課題の目袋について、複数術式を比較して選べるため。</p>
+                    <a class="btn-ghost" href="#">公式サイト</a>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 8. 改善スケジュール -->
+              <section class="card card--flush" aria-label="改善スケジュール">
+                <div class="row row--baseline row--between sched__head">
+                  <h2 class="card__title">改善スケジュール</h2>
+                  <span class="card__hint">3〜6か月ロードマップ</span>
+                </div>
+                <div class="legend legend--pad sched__legend">
+                  <span class="legend__item"><span class="sq sq--navy"></span>施術</span>
+                  <span class="legend__item"><span class="sq sq--acc"></span>ホームケア</span>
+                  <span class="legend__item"><span class="sq sq--blue"></span>チェック</span>
+                </div>
+                <div class="sched">
+                  <div class="month">
+                    <div class="month__name">9月</div>
+                    <div class="month__events">
+                      <span class="evt evt--proc">IPL</span>
+                      <span class="evt evt--proc">ケアシス</span>
+                      <span class="evt evt--check">目袋カウンセリング</span>
+                    </div>
+                  </div>
+                  <div class="month">
+                    <div class="month__name">10月</div>
+                    <div class="month__events">
+                      <span class="evt evt--proc">目袋施術</span>
+                      <span class="evt evt--proc">額ボトックス</span>
+                      <span class="evt evt--care">ホームケア継続</span>
+                    </div>
+                  </div>
+                  <div class="month">
+                    <div class="month__name">11月</div>
+                    <div class="month__events">
+                      <span class="evt evt--check">経過観察</span>
+                      <span class="evt evt--care">ホームケア継続</span>
+                    </div>
+                  </div>
+                  <div class="month month--hl">
+                    <div class="month__name">12月</div>
+                    <div class="month__events">
+                      <span class="evt evt--check">再診断</span>
+                      <span class="evt evt--check">スコア比較</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 9. Before / After -->
+              <section class="card" aria-label="Before / After">
+                <div class="row row--baseline row--between">
+                  <h2 class="card__title">Before / After</h2>
+                  <span class="pill pill--ok pill--sm">スコア +4pt</span>
+                </div>
+                <div class="ba">
+                  <div>
+                    <div class="ba__photo"><div class="slot slot--r10"><span class="slot__label">前回写真</span></div></div>
+                    <div class="ba__date">2026/06/01</div>
+                  </div>
+                  <div>
+                    <div class="ba__photo"><div class="slot slot--r10"><span class="slot__label">現在写真</span></div></div>
+                    <div class="ba__date ba__date--now">2026/09/01</div>
+                  </div>
+                </div>
+                <div class="ba__diffs">
+                  <div class="diff diff--ok"><span class="dot dot--ok"></span>肌のツヤ<span class="diff__val">7.0 → 9.0</span></div>
+                  <div class="diff diff--ok"><span class="dot dot--ok"></span>毛穴<span class="diff__val">7.0 → 7.5</span></div>
+                  <div class="diff diff--pri"><span class="dot dot--pri"></span>目袋<span class="diff__val">6.0 → 5.5</span></div>
+                </div>
+              </section>
+
+              <!-- 10. スコア推移 -->
+              <section class="card" aria-label="スコア推移">
+                <h2 class="card__title">スコア推移</h2>
+                <svg class="history" viewBox="0 0 330 150" role="img" aria-label="6月から9月のスコア推移。9月は82。">
+                  <g class="history__grid"><line x1="20" y1="130" x2="320" y2="130"></line><line x1="20" y1="93.3" x2="320" y2="93.3"></line><line x1="20" y1="56.7" x2="320" y2="56.7"></line><line x1="20" y1="20" x2="320" y2="20"></line></g>
+                  <g class="history__axis"><text x="16" y="133" text-anchor="end">70</text><text x="16" y="96" text-anchor="end">75</text><text x="16" y="60" text-anchor="end">80</text><text x="16" y="23" text-anchor="end">85</text></g>
+                  <path class="history__area" d="M20,100.7 L117.8,86 L179.8,78.7 L248.3,71.3 L264.6,64 L320,42 L320,130 L20,130 Z"></path>
+                  <path class="history__line" d="M20,100.7 L117.8,86 L179.8,78.7 L248.3,71.3 L264.6,64 L320,42"></path>
+                  <g class="history__marks"><circle cx="179.8" cy="78.7" r="4"></circle><circle cx="248.3" cy="71.3" r="4"></circle><circle cx="264.6" cy="64" r="4"></circle></g>
+                  <circle class="history__now" cx="320" cy="42" r="4.5"></circle>
+                  <text class="history__now-label" x="314" y="34" text-anchor="end">82</text>
+                  <g class="history__axis"><text x="20" y="146">6月</text><text x="117.8" y="146" text-anchor="middle">7月</text><text x="218.9" y="146" text-anchor="middle">8月</text><text x="320" y="146" text-anchor="end">9月</text></g>
+                </svg>
+                <div class="timeline">
+                  <div class="timeline__row"><span class="dot dot--acc"></span><span class="timeline__date">7/20</span>Obagi開始</div>
+                  <div class="timeline__row"><span class="dot dot--acc"></span><span class="timeline__date">8/10</span>フェイシャル</div>
+                  <div class="timeline__row"><span class="dot dot--acc"></span><span class="timeline__date">8/15</span>眉アート</div>
+                  <div class="timeline__row"><span class="dot dot--navy"></span><span class="timeline__date">9/10</span>IPL（予定）</div>
+                </div>
+              </section>
+
+              <!-- CTA -->
+              <div class="cta-wrap">
+                <a class="cta" href="#">改善プランを実行する</a>
+                <p class="cta__note">次回の再診断推奨：<span class="cta__date">2026/12/01</span></p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

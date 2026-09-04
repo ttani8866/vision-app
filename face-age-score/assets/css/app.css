@@ -1,0 +1,370 @@
+/* ==========================================================================
+   FACE AGE SCORE — App Screen
+   Claude Design「FACE AGE SCORE.dc.html」の実装。
+   デザインのインラインスタイルを tokens.css のトークンを参照するクラスに整理。
+   ========================================================================== */
+
+:root{
+  --device-bezel:12px;
+  --device-radius:56px;
+  --status-h:54px;
+}
+
+/* ==========================================================================
+   1. ステージ（端末を中央に置く台紙）
+   ========================================================================== */
+.stage{display:flex;justify-content:center;padding:40px 16px}
+
+/* ==========================================================================
+   2. iOS デバイスフレーム（ライト）
+   ========================================================================== */
+.device{width:430px;max-width:100%;flex:none}
+.device__body{
+  position:relative;width:100%;aspect-ratio:430/880;
+  padding:var(--device-bezel);
+  background:#0F1B1E;border-radius:var(--device-radius);
+  box-shadow:var(--shadow-device);
+}
+.device__screen{
+  position:relative;width:100%;height:100%;
+  border-radius:calc(var(--device-radius) - var(--device-bezel));
+  overflow:hidden;background:var(--pg);
+}
+.device__scroll{position:absolute;inset:0;overflow-y:auto;scrollbar-width:none}
+.device__scroll::-webkit-scrollbar{display:none}
+.device__status{
+  position:absolute;top:0;left:0;right:0;height:var(--status-h);z-index:2;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 32px 0;pointer-events:none;
+  font:700 13px/1 var(--font-sans);font-variant-numeric:tabular-nums;color:#000;
+}
+.device__status svg{display:block}
+.device__island{
+  position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  width:118px;height:34px;border-radius:var(--radius-pill);background:#000;z-index:3;
+}
+.device__home{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  width:140px;height:5px;border-radius:var(--radius-pill);
+  background:#000;opacity:.25;z-index:3;
+}
+
+/* ==========================================================================
+   3. 画面シェル
+   ========================================================================== */
+.screen{background:var(--pg);min-height:100%;padding:0 0 24px}
+.app-header{
+  background:var(--white);border-bottom:1px solid var(--line);
+  padding:62px 20px 12px;display:flex;align-items:center;justify-content:space-between;
+}
+.app-header__brand{font:900 15px/1 var(--font-sans);letter-spacing:.06em;color:var(--navy)}
+.app-header__tagline{font:400 10px/1 var(--font-sans);color:var(--mut);margin-top:5px;letter-spacing:.04em}
+.app-header__user{text-align:right}
+.app-header__name{font:700 12px/1 var(--font-sans);color:var(--ink)}
+.app-header__date{font:500 10px/1 var(--font-mono);color:var(--mut);margin-top:4px}
+.screen__body{display:flex;flex-direction:column;gap:14px;padding:14px 14px 0}
+
+/* ==========================================================================
+   4. 汎用
+   ========================================================================== */
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.row{display:flex;align-items:center;gap:8px}
+.row--baseline{align-items:baseline}
+.row--between{justify-content:space-between}
+.push{margin-left:auto}
+.card{
+  background:var(--white);border:1px solid var(--line);
+  border-radius:var(--radius-card);padding:20px;box-shadow:var(--shadow-card);
+}
+.card--flush{padding:20px 0}
+.card__title{font:700 14px/1 var(--font-sans);color:var(--navy)}
+.card__hint{font:500 10px/1 var(--font-sans);color:var(--mut)}
+.eyebrow{font:700 11px/1 var(--font-sans);letter-spacing:.12em;color:var(--mut)}
+.eyebrow--tight{letter-spacing:.1em}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--mut)}
+.dot--ok{background:var(--ok)}
+.dot--warn{background:var(--warn)}
+.dot--imp{background:var(--imp)}
+.dot--pri{background:var(--pri)}
+.dot--acc{background:var(--acc)}
+.dot--navy{background:var(--navy)}
+.sq{width:8px;height:8px;border-radius:2px;flex:none}
+.sq--navy{background:var(--navy)}
+.sq--acc{background:var(--acc)}
+.sq--blue{background:var(--blue)}
+.stars{color:var(--acc);font-size:12px;letter-spacing:2px}
+.stars--sm{font-size:11px}
+.stars--xs{font-size:10.5px;flex:none}
+
+/* ピル・タグ ------------------------------------------------------------- */
+.pill{
+  display:inline-flex;align-items:center;gap:4px;border-radius:var(--radius-pill);
+  padding:4px 10px;font:700 12px/1 var(--font-mono);
+}
+.pill--ok{background:var(--ok-bg);color:var(--ok-fg)}
+.pill--sm{font-size:11px}
+.pill__unit{font:500 10px/1 var(--font-sans)}
+.tag{border-radius:var(--radius-pill);padding:5px 12px;font:700 11.5px var(--font-sans)}
+.tag--num{font-family:var(--font-mono)}
+.tag--ok{background:var(--ok-bg);color:var(--ok-fg)}
+.tag--pri{background:var(--pri-bg);color:var(--pri-fg)}
+.tag--imp{background:var(--imp-bg);color:var(--imp-fg)}
+.tag--warn{background:var(--warn-bg);color:var(--warn-fg)}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.badge{background:var(--acc-soft);color:var(--acc-deep);border-radius:var(--radius-sm);padding:3px 8px;font:700 10px var(--font-sans)}
+
+/* 凡例 ------------------------------------------------------------------ */
+.legend{display:flex;gap:10px;flex-wrap:wrap;font:500 9.5px/1 var(--font-sans);color:var(--mut)}
+.legend--wide{gap:14px;font-size:10px}
+.legend--pad{padding:0 20px;gap:12px}
+.legend__item{display:inline-flex;align-items:center;gap:4px}
+.legend--wide .legend__item{gap:5px}
+.legend__line{width:14px;height:2px;background:var(--navy)}
+.legend__line--target{height:0;background:none;border-top:2px dashed var(--acc)}
+
+/* 3分割インセットグリッド ------------------------------------------------- */
+.grid3{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;
+}
+.grid3__cell{background:var(--white);padding:10px 8px;text-align:center}
+.grid3__key{font:500 10px/1 var(--font-sans);color:var(--mut)}
+.grid3__val{font:700 18px/1 var(--font-mono);color:var(--ink);margin-top:6px}
+.grid3__val--ok{color:var(--ok)}
+.grid3__unit{font:500 11px var(--font-sans);color:var(--mut)}
+
+/* 画像スロット（読み取り専用プレースホルダー） ------------------------------- */
+.slot{
+  position:relative;display:block;width:100%;height:100%;
+  border:1px dashed #C5CDD9;border-radius:var(--radius-xl);
+  background:var(--pg);overflow:hidden;
+}
+.slot--r8{border-radius:var(--radius-md)}
+.slot--r10{border-radius:var(--radius-lg)}
+.slot__label{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:8px;text-align:center;
+  font:500 11px/1.4 var(--font-sans);color:var(--axis);
+}
+.slot img{position:relative;z-index:1;width:100%;height:100%;object-fit:cover;display:block}
+
+/* ==========================================================================
+   5. スコアヒーロー
+   ========================================================================== */
+.hero__scores{display:flex;align-items:flex-end;gap:10px;margin-top:10px}
+.hero__score{font:700 56px/1 var(--font-mono);color:var(--navy)}
+.hero__max{font:500 18px/1 var(--font-mono);color:var(--mut);padding-bottom:6px}
+.hero__delta{margin-left:auto;padding-bottom:6px;text-align:right}
+.hero__bar{height:6px;background:var(--pg);border-radius:var(--radius-pill);margin-top:14px;overflow:hidden}
+.hero__bar-fill{height:100%;background:linear-gradient(90deg,var(--navy),var(--acc));border-radius:var(--radius-pill)}
+.hero__grid{margin-top:16px}
+.hero__note{
+  margin-top:14px;font:400 12px/1.7 var(--font-sans);color:var(--ink);
+  background:var(--acc-soft);border-radius:var(--radius-lg);padding:10px 12px;
+}
+
+/* ==========================================================================
+   6. 顔ゾーン診断
+   ========================================================================== */
+.zone__legend{margin-top:10px}
+.face{position:relative;width:100%;height:400px;margin-top:12px}
+.face__overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.face__overlay line{stroke:#fff;stroke-width:1.5;opacity:.9}
+.face__overlay circle{stroke:#fff;stroke-width:1.5}
+.chip{
+  position:absolute;display:inline-flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.94);color:var(--ink);
+  border:1px solid var(--line);border-radius:var(--radius-pill);
+  padding:5px 9px;font:700 10.5px var(--font-sans);
+  box-shadow:var(--shadow-chip);cursor:pointer;white-space:nowrap;
+  transition:background-color var(--dur-fast) var(--ease-standard),color var(--dur-fast) var(--ease-standard),border-color var(--dur-fast) var(--ease-standard);
+}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chip__score{font-family:var(--font-mono);font-weight:700}
+.zone-detail{
+  margin-top:12px;border:1px solid var(--line);border-radius:var(--radius-lg);
+  padding:12px 14px;background:var(--pg);
+}
+.zone-detail__status{color:#fff;border-radius:var(--radius-pill);padding:3px 9px;font:700 10px var(--font-sans)}
+.zone-detail__name{font:700 13px/1 var(--font-sans);color:var(--ink)}
+.zone-detail__metrics{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.zone-detail__key{font:500 10.5px var(--font-sans);color:var(--mut)}
+.zone-detail__val{font:700 15px var(--font-mono);color:var(--navy)}
+.zone-detail__note{margin-top:8px;font:400 11.5px/1.6 var(--font-sans);color:var(--mut)}
+
+/* ==========================================================================
+   7. レーダーチャート・改善優先順位
+   ========================================================================== */
+.radar__legend{margin-top:8px}
+.radar{width:100%;margin-top:4px}
+.radar__grid{fill:none;stroke:var(--line);stroke-width:1}
+.radar__target{fill:none;stroke:var(--acc);stroke-width:1.5;stroke-dasharray:5 4}
+.radar__area{fill:var(--radar-area);stroke:var(--navy);stroke-width:2;stroke-linejoin:round}
+.radar__point{fill:var(--navy)}
+.radar__ring{fill:none;stroke:var(--pri);stroke-width:1.5;animation:var(--pulse)}
+.radar__labels{font-family:var(--font-sans);font-size:11px;fill:var(--mut)}
+.radar__label--alert{fill:var(--pri);font-weight:700}
+.prio-section{border-top:1px solid var(--line);margin-top:6px;padding-top:14px}
+.prio-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.prio{
+  display:flex;align-items:center;gap:10px;
+  border:1px solid var(--line);border-radius:var(--radius-lg);padding:10px 12px;
+}
+.prio__num{
+  width:22px;height:22px;border-radius:var(--radius-sm);color:#fff;
+  font:700 12px/22px var(--font-mono);text-align:center;flex:none;
+}
+.prio__name{font:700 12.5px var(--font-sans)}
+.prio__delta{margin-left:auto;font:500 11px var(--font-mono)}
+.prio--pri .prio__num{background:var(--pri)}   .prio--pri .prio__delta{color:var(--pri)}
+.prio--imp .prio__num{background:var(--imp)}   .prio--imp .prio__delta{color:var(--imp)}
+.prio--warn .prio__num{background:var(--warn)} .prio--warn .prio__delta{color:var(--warn)}
+
+/* ==========================================================================
+   8. AI診断コメント
+   ========================================================================== */
+.ai{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+.ai__label{font:700 11px/1 var(--font-sans);letter-spacing:.08em;color:var(--acc-deep)}
+.ai__text{font:400 12.5px/1.8 var(--font-sans);color:var(--ink);margin-top:6px}
+.ai__order{display:flex;align-items:center;gap:6px;margin-top:8px;font:700 12.5px var(--font-sans);color:var(--navy)}
+.ai__order span{color:var(--mut);font-weight:400}
+
+/* ==========================================================================
+   9. 改善アドバイス（タブ）
+   ========================================================================== */
+.tabs{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  background:var(--pg);border-radius:var(--radius-lg);padding:4px;margin-top:12px;
+}
+.tab{
+  border:none;border-radius:var(--radius-md);padding:9px 4px;
+  font:700 12px var(--font-sans);cursor:pointer;
+  background:transparent;color:var(--mut);
+  transition:all var(--dur-fast) var(--ease-standard);
+}
+.tab[aria-selected="true"]{background:var(--navy);color:#fff;box-shadow:var(--shadow-tab)}
+.tabpanel{display:flex;flex-direction:column;gap:14px;margin-top:16px}
+.tabpanel--seme{gap:10px}
+.routine{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.routine__col{border:1px solid var(--line);border-radius:var(--radius-lg);padding:12px}
+.routine__when{font:700 11px/1 var(--font-sans);letter-spacing:.08em;color:var(--acc-deep)}
+.routine__when--night{color:var(--navy)}
+.routine__steps{margin-top:8px;font:400 12px/2 var(--font-sans);color:var(--ink)}
+
+.product{border:1px solid var(--line);border-radius:var(--radius-xl);overflow:hidden}
+.product__head{background:var(--acc-soft);padding:8px 14px;font:700 10.5px/1 var(--font-sans);letter-spacing:.1em;color:var(--acc-deep)}
+.product__body{display:flex;gap:14px;padding:14px}
+.product__img{width:84px;height:84px;flex:none}
+.product__info{min-width:0}
+.product__name{font:700 13px/1.4 var(--font-sans);color:var(--ink)}
+.product__aim{font:400 11px/1.5 var(--font-sans);color:var(--mut);margin-top:3px}
+.product__price{font:700 13px var(--font-mono);color:var(--navy)}
+.product__why{
+  margin:0 14px;padding:10px 12px;background:var(--pg);border-radius:var(--radius-md);
+  font:400 11px/1.7 var(--font-sans);color:var(--mut);
+}
+.product__why b{color:var(--ink)}
+.product__cta{padding:12px 14px}
+.btn-outline{
+  display:block;text-align:center;border:1px solid var(--navy);color:var(--navy);
+  border-radius:var(--radius-md);padding:10px;font:700 12px var(--font-sans);
+  transition:background-color var(--dur-fast) var(--ease-standard);
+}
+.btn-outline:hover{background:var(--acc-soft);color:var(--navy)}
+.btn-ghost{
+  display:block;text-align:center;margin-top:10px;border:1px solid var(--line);
+  border-radius:var(--radius-md);padding:8px;font:700 11px var(--font-sans);color:var(--navy);
+  transition:background-color var(--dur-fast) var(--ease-standard);
+}
+.btn-ghost:hover{background:var(--pg);color:var(--navy)}
+
+.seme__lead{font:400 11.5px/1.6 var(--font-sans);color:var(--mut)}
+.proc{border:1px solid var(--line);border-radius:var(--radius-xl);padding:14px}
+.proc__name{font:700 13.5px var(--font-sans);color:var(--ink)}
+.proc__aim{font:400 11px/1.5 var(--font-sans);color:var(--mut);margin-top:4px}
+.proc__grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden;margin-top:10px;
+}
+.proc__cell{background:var(--pg);padding:7px 6px;text-align:center}
+.proc__key{font:500 9px var(--font-sans);color:var(--mut)}
+.proc__val{font:700 11px var(--font-sans);color:var(--ink);margin-top:3px}
+.proc__val--price{font-family:var(--font-mono);color:var(--navy)}
+.proc__val--when{font-family:var(--font-mono);color:var(--acc-deep)}
+
+/* ==========================================================================
+   10. おすすめクリニック
+   ========================================================================== */
+.clinics{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.clinic{border:1px solid var(--line);border-radius:var(--radius-xl);padding:14px}
+.clinic__name{font:700 12.5px/1.4 var(--font-sans);color:var(--ink)}
+.clinic__tags{display:flex;gap:6px;margin-top:8px}
+.clinic__meta{font:400 11px/1.7 var(--font-sans);color:var(--mut);margin-top:8px}
+.clinic__price{font-family:var(--font-mono);font-weight:700;color:var(--navy)}
+.clinic__why{
+  margin-top:8px;background:var(--pg);border-radius:var(--radius-md);padding:8px 10px;
+  font:400 10.5px/1.6 var(--font-sans);color:var(--mut);
+}
+.clinic__why b{color:var(--ink)}
+
+/* ==========================================================================
+   11. 改善スケジュール
+   ========================================================================== */
+.sched__head{padding:0 20px}
+.sched__legend{margin-top:10px}
+.sched{display:flex;gap:10px;overflow-x:auto;padding:14px 20px 4px;scrollbar-width:none}
+.sched::-webkit-scrollbar{display:none}
+.month{flex:none;width:140px;border:1px solid var(--line);border-radius:var(--radius-xl);padding:12px}
+.month--hl{border-color:var(--acc);background:var(--acc-soft)}
+.month__name{font:700 14px/1 var(--font-mono);color:var(--navy)}
+.month--hl .month__name{color:var(--acc-deep)}
+.month__events{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.evt{border-radius:var(--radius-sm);padding:6px 8px;font:700 10.5px var(--font-sans)}
+.evt--proc{background:var(--navy);color:#fff}
+.evt--care{background:var(--acc-soft);color:var(--acc-deep)}
+.evt--check{background:var(--check-bg);color:var(--check-fg)}
+
+/* ==========================================================================
+   12. Before / After
+   ========================================================================== */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.ba__photo{width:100%;height:150px}
+.ba__date{font:500 10px/1 var(--font-mono);color:var(--mut);text-align:center;margin-top:6px}
+.ba__date--now{color:var(--navy);font-weight:700}
+.ba__diffs{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.diff{display:flex;align-items:center;gap:8px;font:500 12px var(--font-sans)}
+.diff__val{margin-left:auto;font:700 12px var(--font-mono)}
+.diff--ok .diff__val{color:var(--ok)}
+.diff--pri .diff__val{color:var(--pri)}
+
+/* ==========================================================================
+   13. スコア推移
+   ========================================================================== */
+.history{width:100%;margin-top:10px}
+.history__grid{stroke:var(--line);stroke-width:1}
+.history__axis{font-family:var(--font-mono);font-size:9px;fill:var(--axis)}
+.history__area{fill:var(--history-area)}
+.history__line{fill:none;stroke:var(--navy);stroke-width:2;stroke-linejoin:round}
+.history__marks{fill:var(--acc);stroke:#fff;stroke-width:1.5}
+.history__now{fill:var(--navy);stroke:#fff;stroke-width:1.5}
+.history__now-label{font-family:var(--font-mono);font-size:12px;font-weight:700;fill:var(--navy)}
+.timeline{
+  display:flex;flex-direction:column;gap:6px;margin-top:10px;
+  border-top:1px solid var(--line);padding-top:12px;
+}
+.timeline__row{display:flex;gap:8px;align-items:center;font:400 11px var(--font-sans);color:var(--mut)}
+.timeline__date{font:500 10.5px var(--font-mono);color:var(--ink)}
+
+/* ==========================================================================
+   14. CTA
+   ========================================================================== */
+.cta-wrap{padding:4px 2px 8px}
+.cta{
+  display:block;text-align:center;background:var(--navy);color:#fff;
+  border-radius:var(--radius-xl);padding:15px;font:700 14px var(--font-sans);
+  letter-spacing:.04em;box-shadow:var(--shadow-cta);
+  transition:background-color var(--dur-fast) var(--ease-standard);
+}
+.cta:hover{background:var(--navy-deep);color:#fff}
+.cta__note{text-align:center;font:400 10.5px/1 var(--font-sans);color:var(--mut);margin-top:10px}
+.cta__date{font-family:var(--font-mono);font-weight:700;color:var(--ink)}

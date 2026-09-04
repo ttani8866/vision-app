@@ -430,3 +430,6 @@ body{background:var(--ink-100)}
 .radar__point{fill:var(--chart-1)}
 .radar__labels{font-family:var(--font-sans);font-size:var(--size-11);fill:var(--text-muted)}
 .radar__label--alert{fill:var(--chart-5);font-weight:var(--weight-bold)}
+
+/* 要件定義書へのリンク（ボタンと同じ見た目のアンカー） */
+.toolbar__link--doc{display:inline-block;text-decoration:none;margin-left:var(--space-3)}

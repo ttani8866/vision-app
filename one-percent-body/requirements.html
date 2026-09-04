@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1% BODY — 要件定義書 v0.1</title>
+<meta name="description" content="肉体改造支援アプリ「1% BODY」の要件定義書（MVP版 v0.1、2026/09/04）。">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/doc.css">
+</head>
+<body>
+
+<header class="docbar">
+  <div class="docbar__brand">1% BODY — 要件定義書</div>
+  <nav class="docbar__nav" aria-label="ページ">
+    <a class="docbar__link" href="index.html">App Screens</a>
+    <a class="docbar__link" href="requirements.html" aria-current="page">要件定義書</a>
+  </nav>
+</header>
+
+<main class="desk">
+<article class="sheet">
+
+<div class="eyebrow">要件定義書 v0.1 ｜ 2026/09/04 ｜ MVP版</div>
+<h1>1% BODY — 肉体改造支援アプリ 要件定義</h1>
+<p class="lead">体型・筋力・心肺・機能性・見た目を総合評価し、「上位1%級の身体」への現在地・課題・進捗・改善施策を可視化するアプリ。</p>
+
+<h2>1. プロダクト概要</h2>
+<p>「1% BODY」は、50代男性を中心としたユーザーが自身の身体を6領域で定量評価し、AIが生成する改善プランに沿って肉体改造を進めるための支援アプリ。本アプリの「1% BODY」は統計的な上位1.00%の証明ではなく、複数指標を高水準で満たす独自の複合評価基準である。</p>
+<div class="callout"><b>コア価値：</b>現在地 → 課題 → 改善方法 → 実行 → 再測定、の改善サイクルを回すこと。AIは1週間の重点課題を最大3つまでに絞り、「やることを増やしすぎない」ことを設計原則とする。</div>
+<p>評価6領域：①体組成（体脂肪率・FFMI・ウエスト÷身長・腹直筋視認性）②絶対筋力・相対筋力（BIG3・懸垂・ディップス）③心肺・回復（VO2max・5km・安静時心拍・睡眠）④可動域・機能（閉眼片脚立ち・フルスクワット保持・壁バンザイ）⑤見た目（肩幅÷ウエスト・上背部の厚み・シルエット・写真評価）⑥総合スコア（100点満点）。</p>
+
+<h2>2. ターゲットユーザー</h2>
+<ul>
+<li>40〜60代男性。中心は50代の経営者・管理職。</li>
+<li>トレーニング経験は初〜中級。時間は限られる（週2〜4日）。</li>
+<li>数値・データで判断したい層。曖昧な「頑張りましょう」ではなく、基準値と差分を求める。</li>
+</ul>
+
+<h2>3. ユーザーストーリー</h2>
+<ul>
+<li>ユーザーとして、現在の身体を6領域でスコア化し、1%基準までの差分を一目で知りたい。</li>
+<li>ユーザーとして、今週やるべきことを最大3つに絞って提示してほしい。</li>
+<li>ユーザーとして、写真と数値の履歴を比較し、改善・停滞・悪化を確認したい。</li>
+<li>ユーザーとして、3か月・6か月の計画と目標到達予測を確認したい。</li>
+</ul>
+
+<h2>4. 機能要件（MVP）</h2>
+<table><thead><tr><th style="width:26%">機能</th><th>要件</th></tr></thead><tbody>
+<tr><td>プロフィール入力</td><td>年齢・性別・身長・体重・目標・期限・トレーニング歴・週の運動可能日数を登録（STEP1）。</td></tr>
+<tr><td>身体データ入力</td><td>体脂肪率・ウエスト・筋力記録（BIG3/懸垂/ディップス）・VO2max・心拍・睡眠・可動域テスト結果を入力（STEP2）。単位検証・異常値warning付き。</td></tr>
+<tr><td>写真アップロード</td><td>正面・側面・背面（必須）＋力を入れた写真・脱力写真（任意）。撮影ガイド（距離・照明・姿勢）を表示（STEP3）。</td></tr>
+<tr><td>AI画像分析</td><td>肩とウエストの比率・筋肉のボリューム感・左右差・姿勢・腹部の見え方・背中の広がり・部位バランスを<b>推定・参考評価</b>として出力。体脂肪率等の断定はしない（STEP4）。</td></tr>
+<tr><td>スコアリング</td><td>6領域を0〜100でスコア化し、重み付けで総合100点に統合。達成率・ランク・前回比・目標差を算出（§8）。</td></tr>
+<tr><td>レーダーチャート</td><td>5カテゴリの現在値（実線）と1%基準（点線）を重ねて表示。</td></tr>
+<tr><td>AI課題分析・週間プラン</td><td>強み/課題TOP3・最優先課題・今月KPI・今週の重点（最大3）・3/6か月計画・到達予測・注意点を生成（§9）。</td></tr>
+<tr><td>履歴比較</td><td>1週間前・1か月前・3か月前・開始時と比較。改善／停滞／悪化項目・改善速度・目標到達予測を表示。</td></tr>
+</tbody></table>
+<p class="note">通知（測定リマインド・週間プラン更新）、管理画面、詳細なセキュリティ要件はMVPでは最小構成（§5）。</p>
+
+<h2>5. 非機能要件</h2>
+<ul>
+<li><b>性能：</b>スコア計算・画面表示は2秒以内。AI分析は非同期処理＋進捗表示（目安30秒以内）。</li>
+<li><b>セキュリティ：</b>通信TLS 1.2以上。写真・身体データは保存時暗号化。認証はメール＋パスコードまたはOAuth。</li>
+<li><b>プライバシー：</b>写真は本人の明示同意なく学習・第三者提供に利用しない。削除要求で完全削除。データエクスポート提供。</li>
+<li><b>可用性：</b>入力データはローカル一時保存し、通信断でも消失しない。</li>
+</ul>
+
+<h2>6. 画面一覧</h2>
+<table><thead><tr><th style="width:22%">画面</th><th>主要素</th></tr></thead><tbody>
+<tr><td>ログイン</td><td>メール／OAuth、パスコード再設定</td></tr>
+<tr><td>初期設定</td><td>STEP1〜3のウィザード（プロフィール→身体データ→写真）</td></tr>
+<tr><td>ホーム</td><td>1% BODY SCORE・前回比・レーダーチャート・今月の重点3項目・目標達成率・次回測定日</td></tr>
+<tr><td>総合スコア</td><td>総合点・ランク・カテゴリ別スコア／達成率／前回比／目標差</td></tr>
+<tr><td>レーダーチャート</td><td>現在値 vs 1%基準、カテゴリタップで詳細</td></tr>
+<tr><td>身体写真分析</td><td>正面・側面・背面、AI参考評価、左右差・姿勢・バランス</td></tr>
+<tr><td>進捗</td><td>スコア推移グラフ、イベント（測定・プラン変更）</td></tr>
+<tr><td>トレーニング記録</td><td>種目・重量・回数・セット、基準値との比較</td></tr>
+<tr><td>AIコーチ</td><td>診断コメント（§9のフォーマット）、今週の重点3つ</td></tr>
+<tr><td>目標設定</td><td>目標値・期限・週の運動可能日数の変更</td></tr>
+<tr><td>履歴比較</td><td>期間選択、写真Before/After、項目別増減</td></tr>
+<tr><td>設定</td><td>通知・連携（将来版）・プライバシー・退会</td></tr>
+</tbody></table>
+
+<h2>7. データモデル（主要エンティティ）</h2>
+<table><thead><tr><th style="width:24%">エンティティ</th><th>主なフィールド</th></tr></thead><tbody>
+<tr><td>User</td><td>id, email, age, sex, height, goal, deadline, training_history, weekly_days</td></tr>
+<tr><td>BodyMetric</td><td>user_id, date, weight, body_fat_pct, waist, resting_hr, sleep_hours, vo2max</td></tr>
+<tr><td>StrengthRecord</td><td>user_id, date, exercise(bench/squat/deadlift/pullup/dips), weight, reps, sets, est_1rm</td></tr>
+<tr><td>MobilityTest</td><td>user_id, date, one_leg_eyes_closed_sec, full_squat_hold_sec, wall_banzai(pass/partial/fail)</td></tr>
+<tr><td>Photo</td><td>user_id, date, angle(front/side/back), type(flex/relax), url, ai_report_id</td></tr>
+<tr><td>ScoreSnapshot</td><td>user_id, date, total, body_comp, strength, cardio, mobility, appearance, rank</td></tr>
+<tr><td>Plan</td><td>user_id, week, focus_items(max 3), training_json, nutrition_policy, cardio, recovery</td></tr>
+<tr><td>AdviceReport</td><td>user_id, date, strengths, issues, top_priority, kpi, forecast, cautions</td></tr>
+</tbody></table>
+
+<h2>8. スコア計算ロジック</h2>
+<h3>8.1 配点（総合100点）</h3>
+<table><thead><tr><th>カテゴリ</th><th style="width:14%">配点</th><th>主な指標</th></tr></thead><tbody>
+<tr><td>体組成</td><td class="num">25</td><td>体脂肪率・FFMI・ウエスト÷身長・腹直筋視認性</td></tr>
+<tr><td>筋力</td><td class="num">30</td><td>ベンチ・スクワット・デッドリフト・懸垂・ディップス（体重比）</td></tr>
+<tr><td>心肺・回復</td><td class="num">15</td><td>VO2max・5km・安静時心拍・睡眠</td></tr>
+<tr><td>可動域・機能</td><td class="num">10</td><td>閉眼片脚立ち・フルスクワット保持・壁バンザイ</td></tr>
+<tr><td>見た目</td><td class="num">20</td><td>肩幅÷ウエスト・上背部厚み・シルエット・写真評価</td></tr>
+</tbody></table>
+<h3>8.2 計算式</h3>
+<p>指標達成率 = min(現在値 ÷ 基準値, 1.2) を正規化（低いほど良い指標は逆数）。カテゴリスコア = 指標達成率の加重平均 × 100。総合 = Σ(カテゴリスコア × 配点 ÷ 100)。各項目は達成率・スコア・ランク・前回比・目標差を保持する。</p>
+<h3>8.3 評価ランク</h3>
+<table><thead><tr><th>ランク</th><th>S</th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+<tr><td>スコア</td><td class="num">90–100</td><td class="num">80–89</td><td class="num">70–79</td><td class="num">60–69</td><td class="num">〜59</td></tr>
+</tbody></table>
+<h3>8.4 基準値例（1%基準）</h3>
+<table><thead><tr><th>指標</th><th>基準</th><th>指標</th><th>基準</th></tr></thead><tbody>
+<tr><td>体脂肪率</td><td class="num">12%以下</td><td>懸垂</td><td class="num">自重10回 or 加重20kg×1</td></tr>
+<tr><td>FFMI</td><td class="num">21以上</td><td>ディップス</td><td class="num">加重20kg×5</td></tr>
+<tr><td>ウエスト÷身長</td><td class="num">0.45以下</td><td>VO2max</td><td class="num">45以上</td></tr>
+<tr><td>ベンチプレス</td><td class="num">体重×1.5</td><td>5km走</td><td class="num">25分以内</td></tr>
+<tr><td>スクワット</td><td class="num">体重×2.0</td><td>安静時心拍数</td><td class="num">55以下</td></tr>
+<tr><td>デッドリフト</td><td class="num">体重×2.5</td><td>閉眼片脚立ち</td><td class="num">30秒</td></tr>
+<tr><td>肩幅÷ウエスト</td><td class="num">1.6以上</td><td>—</td><td>—</td></tr>
+</tbody></table>
+
+<h2>9. AI処理フロー</h2>
+<p>入力（数値＋写真）→ 正規化 → カテゴリスコア算出 → 総合統合 → 1%基準との差分分析（あと何%・ボトルネック）→ 改善プラン生成 → レポート出力。</p>
+<div class="callout"><b>AIアドバイス出力フォーマット（固定）：</b>①現在の総合評価 ②強みTOP3 ③課題TOP3 ④最優先課題 ⑤今月のKPI ⑥今週やること（<b>重点は最大3つ</b>）⑦3か月計画 ⑧6か月計画 ⑨目標達成予測 ⑩注意点</div>
+<p>写真分析はフィットネス・見た目評価に限定する：肩とウエストの比率、筋肉のボリューム感、左右差、姿勢、腹部の見え方、背中の広がり、部位バランス。写真から体脂肪率等を断定せず、常に「推定」「参考評価」と明示する。</p>
+
+<h2>10. MVP範囲と将来拡張</h2>
+<table><thead><tr><th style="width:50%">MVP</th><th>将来版</th></tr></thead><tbody>
+<tr><td>プロフィール入力／身体データ入力／写真アップロード／スコアリング／レーダーチャート／AI課題分析／週間改善プラン／履歴比較</td><td>Apple Health連携／Garmin連携／スマート体組成計連携／トレーニングアプリ連携／食事画像解析／動画フォーム分析／大会ピーキング／パーソナルトレーナー共有／ランキング／年代別ベンチマーク</td></tr>
+</tbody></table>
+
+<h2>11. 開発優先順位</h2>
+<ul>
+<li><b>P0：</b>プロフィール／データ入力／スコアリング／総合スコア画面／レーダーチャート／ホーム</li>
+<li><b>P1：</b>写真アップロード＋AI画像分析／AIコーチ（週間プラン）／履歴比較</li>
+<li><b>P2：</b>進捗グラフ／通知／目標設定変更／管理画面</li>
+</ul>
+
+<h2>12. 想定リスク</h2>
+<ul>
+<li>写真評価の精度・再現性（照明・距離で変動）→ 撮影ガイドと信頼度表示で緩和。</li>
+<li>50代ユーザーの過負荷・怪我 → プランに回復日を必須組み込み、痛み申告で自動減量。</li>
+<li>「1%」表現の誤解 → 独自基準である旨をオンボーディングと画面内に常時明示。</li>
+<li>入力負荷による離脱 → 週1回のミニ測定＋月1回のフル測定に分離。</li>
+</ul>
+
+<h2>13. 医療・法務上の注意点</h2>
+<ul>
+<li>本アプリは<b>医療機器・医療診断ではない</b>。診断・治療・疾病予防を目的とする表現を用いない。</li>
+<li>写真・数値からの評価はすべて「推定」「参考評価」と表記し、断定表現を禁止する。</li>
+<li>健康上の異常値（安静時心拍の急変等）は医療機関への受診を促す文言のみ表示。</li>
+<li>身体データ・写真は要配慮個人情報に準じて扱い、利用目的を明示し同意を取得する。</li>
+<li>景品表示法上、「上位1%」が統計的事実と誤認されない表記ルールを定める。</li>
+</ul>
+
+</article>
+</main>
+
+</body>
+</html>

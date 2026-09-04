@@ -1,0 +1,92 @@
+/* ==========================================================================
+   FACE AGE SCORE — design tokens
+   出典: Claude Design「FACE AGE SCORE.dc.html」の :root 変数と、
+   インラインで使われていた補助色を名前付きトークンに整理したもの。
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+:root{
+  /* --- ブランド（アクセント：ゴールド） --- */
+  --acc:#A8873B;
+  --acc-soft:#F6F0E1;
+  --acc-deep:#8C6F2C;
+
+  /* --- ネイビー --- */
+  --navy:#16305B;
+  --navy-deep:#0F2344;
+
+  /* --- ニュートラル --- */
+  --ink:#1C2B45;
+  --mut:#6B7A93;
+  --line:#E3E8EF;
+  --pg:#F2F4F7;
+  --white:#FFFFFF;
+  --desk:#E7EBF0;
+  --axis:#9AA6B8;
+
+  /* --- ステータス（4段階） --- */
+  --ok:#2E9E6B;
+  --warn:#D9A514;
+  --imp:#E07B2E;
+  --pri:#D24A38;
+
+  /* --- ステータスの淡色チップ --- */
+  --ok-bg:#E7F4EE;    --ok-fg:#17936B;
+  --pri-bg:#FBEAE7;   --pri-fg:#D24A38;
+  --imp-bg:#FCF1E6;   --imp-fg:#C05F14;
+  --warn-bg:#FBF4DC;  --warn-fg:#A17C0A;
+  --check-bg:#E8EFFC; --check-fg:#2358B8;
+  --blue:#2C6FE0;
+
+  /* --- チャート --- */
+  --radar-area:rgba(22,48,91,.12);
+  --history-area:rgba(22,48,91,.06);
+
+  /* --- タイポグラフィ --- */
+  --font-sans:"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SFMono-Regular",Menlo,monospace;
+
+  /* --- 角丸・影 --- */
+  --radius-sm:6px;--radius-md:8px;--radius-lg:10px;--radius-xl:12px;--radius-card:14px;--radius-pill:999px;
+  --shadow-card:0 1px 3px rgba(15,27,30,.05);
+  --shadow-chip:0 1px 4px rgba(15,27,30,.15);
+  --shadow-tab:0 1px 3px rgba(15,27,30,.15);
+  --shadow-cta:0 4px 12px rgba(22,48,91,.25);
+  --shadow-device:0 16px 32px -8px rgba(15,27,30,.14),0 2px 6px rgba(15,27,30,.06);
+
+  /* --- モーション --- */
+  --ease-standard:cubic-bezier(.2,0,.2,1);
+  --dur-fast:140ms;
+  --pulse:fas-pulse 1.8s ease-in-out infinite;
+}
+
+/* アクセントを青に切り替える場合（デザインの accent="blue" 相当） */
+:root[data-accent="blue"]{
+  --acc:#2C6FE0;
+  --acc-soft:#E8EFFC;
+  --acc-deep:#2358B8;
+}
+
+@keyframes fas-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+@media (prefers-reduced-motion:reduce){
+  :root{--dur-fast:0ms;--pulse:none}
+}
+
+/* --- ベースリセット --- */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  font-family:var(--font-sans);
+  font-weight:400;
+  color:var(--ink);
+  background:var(--desk);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,p,figure{margin:0}
+a{color:var(--navy);text-decoration:none}
+a:hover{color:var(--acc)}
+button{font-family:inherit;font-size:inherit}
+:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(22,48,91,.3)}

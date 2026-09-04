@@ -83,6 +83,19 @@
       "port": 8140
     },
     {
+      "name": "face-age-score",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "-y",
+        "http-server",
+        "face-age-score",
+        "-p",
+        "8150",
+        "-c-1"
+      ],
+      "port": 8150
+    },
+    {
       "name": "agent-dashboard",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
