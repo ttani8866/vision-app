@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1% BODY — App Screens</title>
+<meta name="description" content="1% BODY（肉体改造支援アプリ）の主要4画面。Claude Design の App Screens を実装したもの。">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<header class="toolbar">
+  <div class="toolbar__brand">1% BODY — APP SCREENS</div>
+  <nav class="toolbar__nav" aria-label="画面一覧">
+    <button class="toolbar__link" type="button" data-goto="screen-score">01 総合スコア</button>
+    <button class="toolbar__link" type="button" data-goto="screen-photo">02 身体写真分析</button>
+    <button class="toolbar__link" type="button" data-goto="screen-coach">03 AIコーチ</button>
+    <button class="toolbar__link" type="button" data-goto="screen-training">04 トレーニング記録</button>
+  </nav>
+</header>
+
+<main class="canvas">
+
+  <!-- ============ 01 総合スコア ============ -->
+  <section class="artboard" id="screen-score" aria-label="総合スコア">
+    <h2 class="artboard__label">01 — 総合スコア</h2>
+    <div class="device device--dark">
+      <div class="device__body">
+        <div class="device__screen">
+          <div class="device__scroll">
+            <div class="screen">
+
+              <div class="screen__head--shell">
+                <div class="row row--between">
+                  <div class="hero__brand">1% BODY</div>
+                  <div class="hero__stamp">2026/09/04 測定</div>
+                </div>
+                <div class="hero__scores">
+                  <div class="hero__score">68</div>
+                  <div class="hero__max">/ 100</div>
+                  <span class="rank rank--solid-c hero__rank">C</span>
+                  <div class="hero__delta">+3pt <span>前回比</span></div>
+                </div>
+                <p class="hero__disclaimer">1% BODY SCORE — 独自の複合評価基準（統計的な上位1%の証明ではありません）</p>
+              </div>
+
+              <div class="screen__body">
+
+                <!-- レーダーチャート -->
+                <div class="card">
+                  <div class="row row--baseline row--between">
+                    <h3 class="card__title">カテゴリバランス</h3>
+                    <div class="legend">
+                      <span class="legend__item"><span class="legend__swatch"></span>現在</span>
+                      <span class="legend__item"><span class="legend__swatch legend__swatch--target"></span>1%基準（90）</span>
+                    </div>
+                  </div>
+                  <svg class="radar" viewBox="0 0 320 265" role="img" aria-label="5カテゴリのレーダーチャート。体組成62、筋力71、心肺74、可動域80、見た目58。1%基準は各90。">
+                    <g class="radar__grid">
+                      <polygon points="160,50 245.6,112.2 212.9,212.8 107.1,212.8 74.4,112.2"></polygon>
+                      <polygon points="160,72.5 224.2,119.1 199.7,194.6 120.3,194.6 95.8,119.1"></polygon>
+                      <polygon points="160,95 202.8,126.1 186.5,176.4 133.5,176.4 117.2,126.1"></polygon>
+                      <polygon points="160,117.5 181.4,133 173.2,158.2 146.8,158.2 138.6,133"></polygon>
+                      <line x1="160" y1="140" x2="160" y2="50"></line>
+                      <line x1="160" y1="140" x2="245.6" y2="112.2"></line>
+                      <line x1="160" y1="140" x2="212.9" y2="212.8"></line>
+                      <line x1="160" y1="140" x2="107.1" y2="212.8"></line>
+                      <line x1="160" y1="140" x2="74.4" y2="112.2"></line>
+                    </g>
+                    <polygon class="radar__target" points="160,59 237,115 207.6,205.5 112.4,205.5 83,115"></polygon>
+                    <polygon class="radar__area" points="160,84.2 220.8,120.3 199.1,193.9 117.7,198.3 110.4,123.9"></polygon>
+                    <circle class="radar__point" cx="110.4" cy="123.9" r="3.5"></circle>
+                    <g class="radar__labels">
+                      <text x="160" y="38" text-anchor="middle">体組成 62</text>
+                      <text x="252" y="108" text-anchor="start">筋力 71</text>
+                      <text x="219" y="232" text-anchor="start">心肺 74</text>
+                      <text x="101" y="232" text-anchor="end">可動域 80</text>
+                      <text class="radar__label--alert" x="68" y="108" text-anchor="end">見た目 58</text>
+                    </g>
+                  </svg>
+                </div>
+
+                <!-- カテゴリ別スコア -->
+                <div class="card">
+                  <h3 class="card__title">カテゴリ別スコア <span class="card__hint">配点重み付け後に総合へ統合</span></h3>
+                  <div class="stack stack--5" style="margin-top:var(--space-5)">
+
+                    <div>
+                      <div class="metric__head">
+                        <span class="metric__name">体組成</span>
+                        <span class="metric__weight">25pt</span>
+                        <span class="metric__value">62</span>
+                        <span class="rank rank--c">C</span>
+                      </div>
+                      <div class="meter">
+                        <div class="meter__fill" style="width:62%"></div>
+                        <div class="meter__target"></div>
+                      </div>
+                      <div class="meter-note"><span>前回比 +2</span><span>基準まで −28</span></div>
+                    </div>
+
+                    <div>
+                      <div class="metric__head">
+                        <span class="metric__name">筋力</span>
+                        <span class="metric__weight">30pt</span>
+                        <span class="metric__value">71</span>
+                        <span class="rank rank--b">B</span>
+                      </div>
+                      <div class="meter">
+                        <div class="meter__fill" style="width:71%"></div>
+                        <div class="meter__target"></div>
+                      </div>
+                      <div class="meter-note"><span>前回比 +4</span><span>基準まで −19</span></div>
+                    </div>
+
+                    <div>
+                      <div class="metric__head">
+                        <span class="metric__name">心肺・回復</span>
+                        <span class="metric__weight">15pt</span>
+                        <span class="metric__value">74</span>
+                        <span class="rank rank--b">B</span>
+                      </div>
+                      <div class="meter">
+                        <div class="meter__fill" style="width:74%"></div>
+                        <div class="meter__target"></div>
+                      </div>
+                      <div class="meter-note"><span>前回比 +1</span><span>基準まで −16</span></div>
+                    </div>
+
+                    <div>
+                      <div class="metric__head">
+                        <span class="metric__name">可動域・機能</span>
+                        <span class="metric__weight">10pt</span>
+                        <span class="metric__value">80</span>
+                        <span class="rank rank--a">A</span>
+                      </div>
+                      <div class="meter">
+                        <div class="meter__fill" style="width:80%"></div>
+                        <div class="meter__target"></div>
+                      </div>
+                      <div class="meter-note"><span>前回比 ±0</span><span>基準まで −10</span></div>
+                    </div>
+
+                    <div>
+                      <div class="metric__head">
+                        <span class="metric__name">見た目</span>
+                        <span class="metric__weight">20pt</span>
+                        <span class="metric__value">58</span>
+                        <span class="rank rank--d">D</span>
+                      </div>
+                      <div class="meter">
+                        <div class="meter__fill meter__fill--alert" style="width:58%"></div>
+                        <div class="meter__target"></div>
+                      </div>
+                      <div class="meter-note"><span>前回比 +3</span><span>基準まで −32</span></div>
+                    </div>
+
+                  </div>
+                </div>
+
+                <!-- サマリー -->
+                <div class="card card--tight summary">
+                  <div>
+                    <div class="summary__key">1%基準（総合90）まで</div>
+                    <div class="summary__val">あと 24.4%</div>
+                  </div>
+                  <div class="push" style="text-align:right">
+                    <div class="summary__key">次回測定日</div>
+                    <div class="summary__val summary__val--sm">2026/10/04</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 身体写真分析 ============ -->
+  <section class="artboard" id="screen-photo" aria-label="身体写真分析">
+    <h2 class="artboard__label">02 — 身体写真分析</h2>
+    <div class="device">
+      <div class="device__body">
+        <div class="device__screen">
+          <div class="device__scroll">
+            <div class="screen">
+
+              <div class="screen__head">
+                <h3 class="screen__title">身体写真分析</h3>
+                <p class="screen__lead">AIによる<b>推定・参考評価</b>です。医療診断ではありません。</p>
+              </div>
+
+              <div class="screen__body">
+
+                <!-- 写真 -->
+                <div class="photos">
+                  <div>
+                    <div class="slot"><span class="slot__label">正面</span></div>
+                    <div class="photo__caption">正面</div>
+                  </div>
+                  <div>
+                    <div class="slot"><span class="slot__label">側面</span></div>
+                    <div class="photo__caption">側面</div>
+                  </div>
+                  <div>
+                    <div class="slot"><span class="slot__label">背面</span></div>
+                    <div class="photo__caption">背面</div>
+                  </div>
+                </div>
+
+                <!-- 見た目スコア -->
+                <div class="card">
+                  <div class="row">
+                    <h3 class="card__title">見た目スコア</h3>
+                    <span class="push num" style="font-weight:var(--weight-bold);font-size:var(--size-20)">58</span>
+                    <span class="rank rank--d">D</span>
+                  </div>
+                  <div class="stack stack--4" style="margin-top:var(--space-5)">
+                    <div>
+                      <div class="ratio__head">
+                        <span>肩幅 ÷ ウエスト</span>
+                        <span class="num" style="font-weight:var(--weight-bold)">1.42 <span class="ratio__target">/ 基準 1.6</span></span>
+                      </div>
+                      <div class="meter"><div class="meter__fill" style="width:71%"></div></div>
+                    </div>
+                    <div class="grid-inset grid-inset--2">
+                      <div class="grid-inset__cell">
+                        <div class="grid-inset__key">姿勢</div>
+                        <div class="row" style="gap:5px;margin-top:var(--space-2)">
+                          <span class="dot dot--warn"></span>
+                          <span class="grid-inset__val">軽度の前傾（推定）</span>
+                        </div>
+                      </div>
+                      <div class="grid-inset__cell">
+                        <div class="grid-inset__key">左右差</div>
+                        <div class="row" style="gap:5px;margin-top:var(--space-2)">
+                          <span class="dot dot--warn"></span>
+                          <span class="grid-inset__val">三角筋 右＞左 軽度</span>
+                        </div>
+                      </div>
+                      <div class="grid-inset__cell">
+                        <div class="grid-inset__key">腹部の見え方</div>
+                        <div class="row" style="gap:5px;margin-top:var(--space-2)">
+                          <span class="dot dot--alert"></span>
+                          <span class="grid-inset__val">腹直筋 上部のみ視認</span>
+                        </div>
+                      </div>
+                      <div class="grid-inset__cell">
+                        <div class="grid-inset__key">背中の広がり</div>
+                        <div class="row" style="gap:5px;margin-top:var(--space-2)">
+                          <span class="dot dot--ok"></span>
+                          <span class="grid-inset__val">良好（推定）</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 部位別ボリューム感 -->
+                <div class="card">
+                  <h3 class="card__title">部位別ボリューム感 <span class="card__hint">参考評価・10段階</span></h3>
+                  <div class="stack stack--3" style="margin-top:var(--space-5)">
+                    <div class="bar-row">
+                      <span class="bar-row__label">肩</span>
+                      <div class="bar-row__track"><div class="meter__fill" style="width:60%"></div></div>
+                      <span class="bar-row__value">6.0</span>
+                    </div>
+                    <div class="bar-row">
+                      <span class="bar-row__label">胸</span>
+                      <div class="bar-row__track"><div class="meter__fill" style="width:65%"></div></div>
+                      <span class="bar-row__value">6.5</span>
+                    </div>
+                    <div class="bar-row">
+                      <span class="bar-row__label">腕</span>
+                      <div class="bar-row__track"><div class="meter__fill" style="width:55%"></div></div>
+                      <span class="bar-row__value">5.5</span>
+                    </div>
+                    <div class="bar-row">
+                      <span class="bar-row__label">背中</span>
+                      <div class="bar-row__track"><div class="meter__fill meter__fill--ok" style="width:72%"></div></div>
+                      <span class="bar-row__value">7.2</span>
+                    </div>
+                    <div class="bar-row">
+                      <span class="bar-row__label">脚</span>
+                      <div class="bar-row__track"><div class="meter__fill meter__fill--alert" style="width:48%"></div></div>
+                      <span class="bar-row__value">4.8</span>
+                    </div>
+                  </div>
+                  <p class="callout callout--muted" style="margin-top:var(--space-5)">背中の広がりは強み。脚と肩のボリュームが相対的に不足し、シルエットのV字が弱まっています（推定）。</p>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 AIコーチ ============ -->
+  <section class="artboard" id="screen-coach" aria-label="AIコーチ">
+    <h2 class="artboard__label">03 — AIコーチ</h2>
+    <div class="device">
+      <div class="device__body">
+        <div class="device__screen">
+          <div class="device__scroll">
+            <div class="screen">
+
+              <div class="screen__head">
+                <div class="row">
+                  <span class="dot dot--live"></span>
+                  <h3 class="screen__title">AIコーチ</h3>
+                  <span class="push stamp">2026/09/04 更新</span>
+                </div>
+              </div>
+
+              <div class="screen__body">
+
+                <!-- 総合評価 -->
+                <div class="card">
+                  <div class="card__label">現在の総合評価</div>
+                  <p class="verdict">総合 <b class="num">68点（C）</b>。可動域と心肺は基準に近く、土台は良好。体脂肪率と見た目が総合点を下げています。</p>
+                  <div class="panels">
+                    <div class="panel">
+                      <div class="panel__title panel__title--ok">強み TOP3</div>
+                      <div class="panel__list">1. 可動域・機能<br>2. 心肺・回復<br>3. 背中の広がり</div>
+                    </div>
+                    <div class="panel">
+                      <div class="panel__title panel__title--alert">課題 TOP3</div>
+                      <div class="panel__list">1. 体脂肪率 18%<br>2. 脚のボリューム<br>3. ベンチプレス</div>
+                    </div>
+                  </div>
+                  <div class="callout callout--brand" style="margin-top:var(--space-4)">
+                    <div class="card__label">最優先課題</div>
+                    <div class="callout__title">体脂肪率 18% → 12%</div>
+                    <div class="callout__body">体組成と見た目の両カテゴリに効く、最もレバレッジの高い改善点です。</div>
+                  </div>
+                </div>
+
+                <!-- 今月のKPI -->
+                <div class="card">
+                  <h3 class="card__title">今月のKPI</h3>
+                  <div class="grid-inset grid-inset--3" style="margin-top:var(--space-4)">
+                    <div class="grid-inset__cell grid-inset__cell--center">
+                      <div class="grid-inset__key">体脂肪率</div>
+                      <div class="grid-inset__val--num">−1.5%</div>
+                    </div>
+                    <div class="grid-inset__cell grid-inset__cell--center">
+                      <div class="grid-inset__key">ウエスト</div>
+                      <div class="grid-inset__val--num">−2cm</div>
+                    </div>
+                    <div class="grid-inset__cell grid-inset__cell--center">
+                      <div class="grid-inset__key">ベンチ 5RM</div>
+                      <div class="grid-inset__val--num">+5kg</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 今週やること -->
+                <div class="card">
+                  <div class="row row--baseline">
+                    <h3 class="card__title">今週やること</h3>
+                    <span class="card__hint">重点は最大3つ</span>
+                  </div>
+                  <div class="stack stack--3" style="margin-top:var(--space-4)">
+                    <div class="task">
+                      <span class="task__num">1</span>
+                      <div>
+                        <div class="task__title">摂取カロリー −300kcal／日</div>
+                        <div class="task__detail">タンパク質は体重×1.8g を維持</div>
+                      </div>
+                    </div>
+                    <div class="task">
+                      <span class="task__num">2</span>
+                      <div>
+                        <div class="task__title">スクワット 週2回（5×5）</div>
+                        <div class="task__detail">脚ボリュームと体組成の両方に有効</div>
+                      </div>
+                    </div>
+                    <div class="task">
+                      <span class="task__num">3</span>
+                      <div>
+                        <div class="task__title">Zone2有酸素 30分 × 2回</div>
+                        <div class="task__detail">早朝ウォーク可。心拍110〜125</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 計画と予測 -->
+                <div class="card">
+                  <h3 class="card__title">計画と予測</h3>
+                  <div style="margin-top:10px">
+                    <div class="plan-row">
+                      <span class="plan-row__key">3か月</span>
+                      <span class="plan-row__body">体脂肪 14%台・総合75（B）。減量期を継続し筋力は維持。</span>
+                    </div>
+                    <div class="plan-row">
+                      <span class="plan-row__key">6か月</span>
+                      <span class="plan-row__body">体脂肪 12%・総合80（A）。増量期へ移行し肩・脚を強化。</span>
+                    </div>
+                    <div class="plan-row">
+                      <span class="plan-row__key">予測</span>
+                      <span class="plan-row__body">現在の改善速度なら <b class="num">2027/06</b> に1%基準（90）到達見込み。</span>
+                    </div>
+                  </div>
+                  <p class="callout callout--alert" style="margin-top:10px"><b>注意点：</b>週の回復日を2日確保。肩・腰に痛みが出た場合は該当種目を中止し、プランを再生成してください。</p>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 トレーニング記録 ============ -->
+  <section class="artboard" id="screen-training" aria-label="トレーニング記録">
+    <h2 class="artboard__label">04 — トレーニング記録</h2>
+    <div class="device">
+      <div class="device__body">
+        <div class="device__screen">
+          <div class="device__scroll">
+            <div class="screen">
+
+              <div class="screen__head">
+                <div class="row row--baseline row--between">
+                  <h3 class="screen__title">トレーニング記録</h3>
+                  <span class="stamp">9/4（木）上半身A</span>
+                </div>
+                <div class="week">
+                  <div class="week__day"><div class="week__name">月</div><div class="week__mark week__mark--done">A</div></div>
+                  <div class="week__day"><div class="week__name">火</div><div class="week__mark">休</div></div>
+                  <div class="week__day"><div class="week__name">水</div><div class="week__mark week__mark--done">脚</div></div>
+                  <div class="week__day week__day--today"><div class="week__name">木</div><div class="week__mark week__mark--today">A</div></div>
+                  <div class="week__day"><div class="week__name">金</div><div class="week__mark">休</div></div>
+                  <div class="week__day"><div class="week__name">土</div><div class="week__mark week__mark--plan">B</div></div>
+                  <div class="week__day"><div class="week__name">日</div><div class="week__mark week__mark--plan">有</div></div>
+                </div>
+              </div>
+
+              <div class="screen__body">
+
+                <!-- 今日のログ -->
+                <div class="card">
+                  <h3 class="card__title">今日のログ</h3>
+                  <div style="margin-top:var(--space-3)">
+                    <div class="log-row">
+                      <span class="log-row__name">ベンチプレス</span>
+                      <span class="log-row__set">80kg × 5 × 3</span>
+                      <span class="log-row__note log-row__note--ok">e1RM 93kg</span>
+                    </div>
+                    <div class="log-row">
+                      <span class="log-row__name">懸垂</span>
+                      <span class="log-row__set">自重 × 7 × 3</span>
+                      <span class="log-row__note">前回 6回</span>
+                    </div>
+                    <div class="log-row">
+                      <span class="log-row__name">ディップス</span>
+                      <span class="log-row__set">自重 × 10 × 3</span>
+                      <span class="log-row__note">次回 +5kg</span>
+                    </div>
+                    <div class="log-row">
+                      <span class="log-row__name">サイドレイズ</span>
+                      <span class="log-row__set">10kg × 12 × 3</span>
+                      <span class="log-row__note">—</span>
+                    </div>
+                  </div>
+                  <button class="btn-outline" type="button">種目を追加</button>
+                </div>
+
+                <!-- 筋力 vs 1%基準 -->
+                <div class="card">
+                  <h3 class="card__title">筋力 vs 1%基準 <span class="card__hint">体重比・体重75kg</span></h3>
+                  <div class="stack stack--4" style="margin-top:var(--space-5)">
+                    <div>
+                      <div class="ratio__head">
+                        <span>ベンチプレス</span>
+                        <span class="num" style="font-weight:var(--weight-bold)">×1.24 <span class="ratio__target">/ 1.5</span></span>
+                      </div>
+                      <div class="meter"><div class="meter__fill" style="width:83%"></div></div>
+                    </div>
+                    <div>
+                      <div class="ratio__head">
+                        <span>スクワット</span>
+                        <span class="num" style="font-weight:var(--weight-bold)">×1.60 <span class="ratio__target">/ 2.0</span></span>
+                      </div>
+                      <div class="meter"><div class="meter__fill" style="width:80%"></div></div>
+                    </div>
+                    <div>
+                      <div class="ratio__head">
+                        <span>デッドリフト</span>
+                        <span class="num" style="font-weight:var(--weight-bold)">×1.93 <span class="ratio__target">/ 2.5</span></span>
+                      </div>
+                      <div class="meter"><div class="meter__fill" style="width:77%"></div></div>
+                    </div>
+                    <div>
+                      <div class="ratio__head">
+                        <span>懸垂</span>
+                        <span class="num" style="font-weight:var(--weight-bold)">7回 <span class="ratio__target">/ 10回</span></span>
+                      </div>
+                      <div class="meter"><div class="meter__fill meter__fill--warn" style="width:70%"></div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 進捗フッター -->
+                <div class="card card--tight row" style="gap:10px">
+                  <span class="dot dot--ok" style="width:8px;height:8px"></span>
+                  <span style="font:var(--weight-regular) 11.5px/1.6 var(--font-sans);color:var(--text-strong)">今週の重点3項目のうち <b class="num">2/3</b> 進行中 · 順調</span>
+                  <span class="push stamp">→ AIコーチ</span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

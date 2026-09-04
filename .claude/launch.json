@@ -70,6 +70,19 @@
       "port": 8130
     },
     {
+      "name": "one-percent-body",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "-y",
+        "http-server",
+        "one-percent-body",
+        "-p",
+        "8140",
+        "-c-1"
+      ],
+      "port": 8140
+    },
+    {
       "name": "agent-dashboard",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
