@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* baemeshi.com ブランドトークン */
+  --cream: #fdf6e8;        /* 地のクリーム */
+  --paper: #fffdf8;        /* カードの白 */
+  --ink: #3a2e26;          /* 焦げ茶の文字色 */
+  --ink-soft: #937f6d;     /* 補足テキスト */
+  --hairline: #f0e2c8;     /* 罫線 */
+  --bowl-red: #d7263d;     /* ロゴの茶碗の赤 */
+  --marker: #ffd643;       /* 蛍光マーカー黄 */
+  --grad-a: #ffb800;       /* サンライズグラデ 黄 */
+  --grad-b: #ff7a1a;       /*                橙 */
+  --grad-c: #e9316e;       /*                ピンク */
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  color: var(--ink);
+  background-color: var(--cream);
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(255, 184, 0, 0.10), transparent 28%),
+    radial-gradient(circle at 88% 2%, rgba(233, 49, 110, 0.07), transparent 24%);
+  background-attachment: fixed;
+  font-family: var(--font-body), "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-feature-settings: "palt";
+}
+
+@layer components {
+  .font-display {
+    font-family: var(--font-display), var(--font-body), sans-serif;
+  }
+
+  .card {
+    @apply rounded-2xl border bg-[var(--paper)];
+    border-color: var(--hairline);
+    box-shadow: 0 2px 14px rgba(58, 46, 38, 0.07);
+  }
+
+  .btn-primary {
+    @apply block w-full rounded-full py-3.5 text-center text-base font-bold text-white transition-transform duration-100 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100;
+    font-family: var(--font-display), sans-serif;
+    background: linear-gradient(100deg, var(--grad-a), var(--grad-b) 55%, var(--grad-c));
+    box-shadow: 0 6px 18px rgba(255, 122, 26, 0.35);
+  }
+
+  .btn-secondary {
+    @apply block w-full rounded-full border-2 bg-[var(--paper)] py-3 text-center text-base font-bold transition-transform duration-100 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100;
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+
+  .field {
+    @apply w-full rounded-xl border-2 bg-[var(--paper)] p-3 text-base outline-none transition-colors;
+    border-color: var(--hairline);
+  }
+  .field:focus {
+    border-color: var(--grad-b);
+    box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.15);
+  }
+  .field-error {
+    border-color: #f3b1b1;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-bold;
+    color: var(--ink);
+  }
+
+  .chip {
+    @apply rounded-full border-2 px-3.5 py-1.5 text-sm font-bold transition-transform duration-100 active:scale-95;
+    border-color: var(--hairline);
+    background: var(--paper);
+    color: var(--ink-soft);
+  }
+  .chip-on {
+    border-color: transparent;
+    background: linear-gradient(100deg, var(--grad-a), var(--grad-b) 55%, var(--grad-c));
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(255, 122, 26, 0.3);
+  }
+
+  .note-warn {
+    @apply rounded-xl p-3 text-sm font-medium;
+    background: #fff7dd;
+    border: 1.5px solid #f2dd9a;
+    color: #8a6d1a;
+  }
+  .note-error {
+    @apply rounded-xl p-3 text-sm font-medium;
+    background: #ffefef;
+    border: 1.5px solid #f3b1b1;
+    color: #b3403c;
+  }
+  .note-success {
+    @apply rounded-xl p-3 text-sm font-medium;
+    background: #eefaf0;
+    border: 1.5px solid #b3e0bd;
+    color: #2c7a44;
+  }
+  .note-info {
+    @apply rounded-xl p-3 text-sm font-medium;
+    background: #fdf3e3;
+    border: 1.5px solid var(--hairline);
+    color: var(--ink-soft);
+  }
+
+  /* ロゴ横のキラキラ */
+  .sparkle::before {
+    content: "✦";
+    color: var(--grad-a);
+    margin-right: 0.35rem;
+  }
+}

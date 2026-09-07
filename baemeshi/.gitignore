@@ -1,0 +1,4 @@
+tools/cloudflared.exe
+tools/tunnel.log
+app/data/*.db-shm
+app/data/*.db-wal
