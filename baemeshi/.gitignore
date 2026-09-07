@@ -2,3 +2,5 @@ tools/cloudflared.exe
 tools/tunnel.log
 app/data/*.db-shm
 app/data/*.db-wal
+
+tools/tunnel_url.txt

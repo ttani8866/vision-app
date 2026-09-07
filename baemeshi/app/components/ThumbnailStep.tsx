@@ -146,10 +146,16 @@ export default function ThumbnailStep({
   const [storeName, setStoreName] = useState(store.name);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [appliedSig, setAppliedSig] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const base = media.find((m) => m.key === baseKey) ?? null;
   const baseUrl = base ? (base.originalUrl ?? base.url) : null;
+
+  const hasText = Boolean(title.trim() || catchCopy.trim() || storeName.trim());
+  const currentSig = JSON.stringify({ baseUrl, title, storeName, catchCopy });
+  // 文字が入力されているのに、その内容で「文字入れ」が未確定の状態
+  const dirty = hasText && appliedSig !== currentSig;
 
   // 入力のたびにライブプレビューを再描画
   useEffect(() => {
@@ -166,8 +172,8 @@ export default function ThumbnailStep({
     };
   }, [baseUrl, title, storeName, catchCopy]);
 
-  async function apply() {
-    if (!canvasRef.current || !base) return;
+  async function apply(): Promise<boolean> {
+    if (!canvasRef.current || !base) return false;
     setApplying(true);
     setError(null);
     try {
@@ -193,11 +199,23 @@ export default function ThumbnailStep({
       };
       onChange(media.map((m) => (m.key === base.key ? replaced : m)));
       setBaseKey(replaced.key);
+      setAppliedSig(currentSig);
+      return true;
     } catch (e) {
       setError(String(e instanceof Error ? e.message : e));
+      return false;
     } finally {
       setApplying(false);
     }
+  }
+
+  // 「次へ」時、文字が未適用ならその場で適用してから進む（適用忘れによるサムネ消失防止）
+  async function handleNext() {
+    if (dirty) {
+      const ok = await apply();
+      if (!ok) return;
+    }
+    onNext();
   }
 
   if (images.length === 0) {
@@ -286,17 +304,18 @@ export default function ThumbnailStep({
         <button
           type="button"
           onClick={apply}
-          disabled={applying || (!title.trim() && !catchCopy.trim() && !storeName.trim())}
+          disabled={applying || !hasText}
           className="btn-secondary flex-1"
         >
           {applying ? "適用中…" : applied ? "文字入れをやり直す" : "この写真に文字を入れる"}
         </button>
         <button
           type="button"
-          onClick={onNext}
+          onClick={handleNext}
+          disabled={applying}
           className="btn-primary flex-1"
         >
-          次へ
+          {applying ? "適用中…" : dirty ? "文字を入れて次へ" : "次へ"}
         </button>
       </div>
     </div>

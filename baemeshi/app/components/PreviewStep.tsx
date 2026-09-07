@@ -34,6 +34,7 @@ export default function PreviewStep({
   const [warnLessThan24h, setWarnLessThan24h] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [result, setResult] = useState<PublishResult | null>(null);
 
   useEffect(() => {
@@ -56,13 +57,41 @@ export default function PreviewStep({
           storeName,
         }),
       });
-      const json = await res.json();
-      setResult(json);
-      if (json.ok) onPosted();
+      const started = await res.json();
+      if (!res.ok || !started.ok) {
+        throw new Error(started.error ?? "投稿の開始に失敗しました");
+      }
+
+      setShowModal(false);
+      setPublishing(true);
+
+      // ジョブ完了まで5秒間隔でポーリング（最大12分）
+      const deadline = Date.now() + 12 * 60 * 1000;
+      for (;;) {
+        await new Promise((r) => setTimeout(r, 5000));
+        const statusRes = await fetch(`/api/publish?jobId=${started.jobId}`);
+        const status = await statusRes.json();
+        if (!statusRes.ok || !status.ok) {
+          throw new Error(status.error ?? "投稿状況の取得に失敗しました");
+        }
+        if (status.state === "success") {
+          setResult({ ok: true, mediaId: status.mediaId, permalink: status.permalink });
+          onPosted();
+          break;
+        }
+        if (status.state === "failed") {
+          setResult({ ok: false, error: status.error });
+          break;
+        }
+        if (Date.now() > deadline) {
+          throw new Error("投稿処理がタイムアウトしました。投稿履歴で結果を確認してください。");
+        }
+      }
     } catch (e) {
       setResult({ ok: false, error: String(e instanceof Error ? e.message : e) });
     } finally {
       setSubmitting(false);
+      setPublishing(false);
       setShowModal(false);
     }
   }
@@ -142,7 +171,13 @@ export default function PreviewStep({
         </div>
       )}
 
-      {!result?.ok && (
+      {publishing && (
+        <p className="note-info">
+          投稿処理中…そのままお待ちください（動画は数分かかることがあります）
+        </p>
+      )}
+
+      {!result?.ok && !publishing && (
         <button type="button" onClick={() => setShowModal(true)} className="btn-primary">
           投稿する
         </button>
