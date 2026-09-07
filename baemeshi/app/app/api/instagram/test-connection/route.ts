@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAccountInfo, InstagramApiError } from "@/lib/instagram";
 
+export const dynamic = "force-dynamic";
+
 // トークン・アカウントIDの疎通確認のみ（読み取り専用、投稿には一切関与しない）
 export async function GET() {
   try {

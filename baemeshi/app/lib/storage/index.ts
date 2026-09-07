@@ -1,6 +1,7 @@
 import path from "path";
 import { readFileSync } from "fs";
 import { env } from "@/lib/env";
+import { BlobStorage } from "./blob";
 import { LocalStorage } from "./local";
 import { S3Storage } from "./s3";
 import type { Storage } from "./types";
@@ -9,9 +10,16 @@ export type { Storage, UploadResult } from "./types";
 
 let instance: Storage | null = null;
 
+/** BAEMESHI_STORAGE_DRIVER 指定が最優先。未指定なら Vercel Blob トークンがあれば blob、なければ local */
 export function getStorage(): Storage {
   if (!instance) {
-    instance = env.storageDriver === "s3" ? new S3Storage() : new LocalStorage();
+    const driver =
+      env.storageDriver !== "auto"
+        ? env.storageDriver
+        : process.env.BLOB_READ_WRITE_TOKEN
+          ? "blob"
+          : "local";
+    instance = driver === "s3" ? new S3Storage() : driver === "blob" ? new BlobStorage() : new LocalStorage();
   }
   return instance;
 }

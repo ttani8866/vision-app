@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getRecentMedia, InstagramApiError } from "@/lib/instagram";
 
+export const dynamic = "force-dynamic";
+
 // 診断用: アカウントの直近投稿一覧（読み取り専用）
 export async function GET() {
   try {

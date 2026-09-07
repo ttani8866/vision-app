@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   if (!historyId) {
     return NextResponse.json({ ok: false, error: "historyId が必要です" }, { status: 400 });
   }
-  const history = getHistoryById(historyId);
+  const history = await getHistoryById(historyId);
   if (!history) {
     return NextResponse.json({ ok: false, error: "履歴が見つかりません" }, { status: 404 });
   }
@@ -27,7 +27,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "この履歴には投稿IDがないためレポートを作成できません" }, { status: 400 });
   }
 
-  const cached = getPostReport(historyId);
+  const cached = await getPostReport(historyId);
   if (cached && !refresh) {
     return NextResponse.json({
       ok: true,
@@ -50,7 +50,7 @@ export async function GET(req: Request) {
       metrics,
     });
 
-    const saved = upsertPostReport({
+    const saved = await upsertPostReport({
       history_id: historyId,
       media_id: history.media_id,
       metrics_json: JSON.stringify(metrics),

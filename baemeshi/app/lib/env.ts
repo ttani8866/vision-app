@@ -20,6 +20,6 @@ export const env = {
     return required("ANTHROPIC_API_KEY");
   },
   graphApiVersion: process.env.BAEMESHI_GRAPH_API_VERSION || "v21.0",
-  storageDriver: (process.env.BAEMESHI_STORAGE_DRIVER || "local") as "local" | "s3",
+  storageDriver: (process.env.BAEMESHI_STORAGE_DRIVER || "auto") as "auto" | "local" | "s3" | "blob",
   publicBaseUrl: process.env.BAEMESHI_PUBLIC_BASE_URL || "",
 };

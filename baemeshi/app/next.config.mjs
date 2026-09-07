@@ -15,6 +15,10 @@ const nextConfig = {
       { protocol: "https", hostname: "**" },
     ],
   },
+  experimental: {
+    // better-sqlite3はネイティブモジュールのためバンドルせず外部参照にする（ローカル専用。Vercelでは未使用）
+    serverComponentsExternalPackages: ["better-sqlite3"],
+  },
 };
 
 export default nextConfig;
