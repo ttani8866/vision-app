@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
 import PostReport from "@/components/PostReport";
 import type { PostHistoryRow } from "@/lib/db";
@@ -64,6 +65,12 @@ export default function HistoryPage() {
     <>
       <AppHeader rightHref="/" rightLabel="＋ 新規投稿" />
       <main className="mx-auto max-w-md px-4 pb-16 pt-5">
+        <Link
+          href="/"
+          className="mb-3 inline-flex items-center gap-1 rounded-full border-2 border-[var(--hairline)] bg-[var(--paper)] px-3.5 py-1.5 text-sm font-bold text-[var(--ink)] active:scale-95"
+        >
+          ← 戻る
+        </Link>
         <h1 className="font-display sparkle mb-4 text-xl font-extrabold">投稿履歴</h1>
 
         {loading && <p className="text-sm text-[var(--ink-soft)]">読み込み中…</p>}
