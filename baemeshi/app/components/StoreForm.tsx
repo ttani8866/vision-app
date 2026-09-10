@@ -13,8 +13,8 @@ const FIELDS: { key: keyof StoreInfo; label: string; placeholder: string; multil
   { key: "payment", label: "支払方法", placeholder: "例）現金・クレジットカード・電子マネー" },
   {
     key: "ginzaOnlyReason",
-    label: "この店が銀座でしか成立しない理由",
-    placeholder: "2〜4行で自由記述",
+    label: "コメント",
+    placeholder: "お店の魅力・推しポイントなどを自由に記入（2〜4行）",
     multiline: true,
   },
 ];
