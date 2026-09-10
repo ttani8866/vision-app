@@ -53,16 +53,25 @@ const historyCols = db.prepare("PRAGMA table_info(post_history)").all() as { nam
 if (!historyCols.some((c) => c.name === "caption")) {
   db.exec("ALTER TABLE post_history ADD COLUMN caption TEXT");
 }
+if (!historyCols.some((c) => c.name === "media_urls_json")) {
+  db.exec("ALTER TABLE post_history ADD COLUMN media_urls_json TEXT");
+}
 
 const backend: DbBackend = {
   async insertPostHistory(row) {
     const info = db
       .prepare(`
-        INSERT INTO post_history (posted_at, store_name, media_type, media_count, status, media_id, permalink, error_message, caption)
-        VALUES (@posted_at, @store_name, @media_type, @media_count, @status, @media_id, @permalink, @error_message, @caption)
+        INSERT INTO post_history (posted_at, store_name, media_type, media_count, status, media_id, permalink, error_message, caption, media_urls_json)
+        VALUES (@posted_at, @store_name, @media_type, @media_count, @status, @media_id, @permalink, @error_message, @caption, @media_urls_json)
       `)
       .run(row);
     return db.prepare("SELECT * FROM post_history WHERE id = ?").get(info.lastInsertRowid) as PostHistoryRow;
+  },
+
+  async deletePostHistory(id) {
+    db.prepare("DELETE FROM post_reports WHERE history_id = ?").run(id);
+    const info = db.prepare("DELETE FROM post_history WHERE id = ?").run(id);
+    return info.changes > 0;
   },
 
   async getHistoryById(id) {

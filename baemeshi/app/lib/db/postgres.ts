@@ -21,8 +21,10 @@ function ensureSchema(): Promise<void> {
         permalink TEXT,
         error_message TEXT,
         caption TEXT,
+        media_urls_json TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )`;
+    await sql`ALTER TABLE post_history ADD COLUMN IF NOT EXISTS media_urls_json TEXT`;
     await sql`
       CREATE TABLE IF NOT EXISTS post_reports (
         history_id INTEGER PRIMARY KEY,
@@ -59,11 +61,18 @@ const backend: DbBackend = {
   async insertPostHistory(row) {
     await ensureSchema();
     const rows = await sql`
-      INSERT INTO post_history (posted_at, store_name, media_type, media_count, status, media_id, permalink, error_message, caption)
+      INSERT INTO post_history (posted_at, store_name, media_type, media_count, status, media_id, permalink, error_message, caption, media_urls_json)
       VALUES (${row.posted_at}, ${row.store_name}, ${row.media_type}, ${row.media_count}, ${row.status},
-              ${row.media_id}, ${row.permalink}, ${row.error_message}, ${row.caption})
+              ${row.media_id}, ${row.permalink}, ${row.error_message}, ${row.caption}, ${row.media_urls_json})
       RETURNING *`;
     return toHistoryRow(rows[0]);
+  },
+
+  async deletePostHistory(id) {
+    await ensureSchema();
+    await sql`DELETE FROM post_reports WHERE history_id = ${id}`;
+    const rows = await sql`DELETE FROM post_history WHERE id = ${id} RETURNING id`;
+    return rows.length > 0;
   },
 
   async getHistoryById(id) {

@@ -9,6 +9,8 @@ export interface PostHistoryRow {
   permalink: string | null;
   error_message: string | null;
   caption: string | null;
+  /** 投稿素材の公開URL配列のJSON（履歴一覧のサムネイル表示用） */
+  media_urls_json: string | null;
   created_at: string;
 }
 
@@ -45,6 +47,7 @@ export interface DbBackend {
   insertPostHistory(row: Omit<PostHistoryRow, "id" | "created_at">): Promise<PostHistoryRow>;
   getHistoryById(id: number): Promise<PostHistoryRow | undefined>;
   listPostHistory(limit?: number): Promise<PostHistoryRow[]>;
+  deletePostHistory(id: number): Promise<boolean>;
   msSinceLastSuccessfulPost(): Promise<number | null>;
 
   getPostReport(historyId: number): Promise<PostReportRow | undefined>;

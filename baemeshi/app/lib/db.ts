@@ -21,6 +21,9 @@ export async function getHistoryById(id: number) {
 export async function listPostHistory(limit = 50) {
   return (await getBackend()).listPostHistory(limit);
 }
+export async function deletePostHistory(id: number) {
+  return (await getBackend()).deletePostHistory(id);
+}
 export async function msSinceLastSuccessfulPost() {
   return (await getBackend()).msSinceLastSuccessfulPost();
 }

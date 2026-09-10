@@ -99,6 +99,7 @@ async function failJob(job: PublishJobRow, message: string): Promise<PublishJobR
     permalink: null,
     error_message: message,
     caption: payload.caption,
+    media_urls_json: JSON.stringify(payload.media.map((m) => m.url)),
   });
   await updatePublishJob(job.id, { state: "failed", error_message: message, history_id: hist.id });
   return (await getPublishJob(job.id))!;
@@ -150,6 +151,7 @@ export async function advancePublish(jobId: string): Promise<PublishJobRow | und
         permalink,
         error_message: null,
         caption: payload.caption,
+        media_urls_json: JSON.stringify(payload.media.map((m) => m.url)),
       });
       await updatePublishJob(job.id, {
         state: "success",
