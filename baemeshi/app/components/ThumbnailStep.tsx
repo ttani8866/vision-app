@@ -11,6 +11,8 @@ const FONT_STACK = '"Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Meiryo", sans
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    // Vercel Blob等の別ドメイン画像でもcanvas書き出しできるようにする（Tainted canvas対策）
+    img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = url;
