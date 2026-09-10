@@ -6,7 +6,12 @@ import type { StoreInfo, UploadedMedia } from "@/lib/types";
 const CANVAS_W = 1080;
 const CANVAS_H = 1350; // Instagram フィード 4:5
 
-const FONT_STACK = '"Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif';
+const FONT_STACK =
+  '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif';
+
+// 既存投稿のデザイントーン（水色×白フチ、黄色×白フチ）
+const SORA = "#8ad4f0"; // タイトル・キャッチコピーの水色
+const KIIRO = "#ffd94a"; // 店名の黄色
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -41,19 +46,74 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   return lines;
 }
 
-function drawOutlinedLine(
+/** 既存投稿トーンのポップ文字: 色文字＋太い白フチ＋やわらかい影 */
+function drawPopLine(
   ctx: CanvasRenderingContext2D,
   text: string,
   x: number,
   y: number,
-  strokeWidth: number
+  fontPx: number,
+  fillColor: string,
+  maxWidth: number
 ) {
+  ctx.font = `900 ${fontPx}px ${FONT_STACK}`;
   ctx.lineJoin = "round";
-  ctx.strokeStyle = "rgba(0,0,0,0.9)";
-  ctx.lineWidth = strokeWidth;
-  ctx.strokeText(text, x, y);
-  ctx.fillStyle = "#ffffff";
-  ctx.fillText(text, x, y);
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.35)";
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 5;
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = Math.max(10, fontPx * 0.24);
+  ctx.strokeText(text, x, y, maxWidth);
+  ctx.restore();
+  ctx.fillStyle = fillColor;
+  ctx.fillText(text, x, y, maxWidth);
+}
+
+/** 左上の「ばえめし」ロゴバッジ（白丸＋赤い茶碗＋キラキラ） */
+function drawLogoBadge(ctx: CanvasRenderingContext2D) {
+  const cx = 122;
+  const cy = 122;
+  const r = 88;
+
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.25)";
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = "rgba(255,255,255,0.96)";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // キラキラ（ひし形）
+  const diamond = (dx: number, dy: number, s: number) => {
+    ctx.beginPath();
+    ctx.moveTo(dx, dy - s);
+    ctx.lineTo(dx + s * 0.6, dy);
+    ctx.lineTo(dx, dy + s);
+    ctx.lineTo(dx - s * 0.6, dy);
+    ctx.closePath();
+    ctx.fill();
+  };
+  ctx.fillStyle = "#ffb800";
+  diamond(cx, cy - 52, 14);
+  diamond(cx - 32, cy - 40, 9);
+  diamond(cx + 32, cy - 40, 9);
+
+  // 赤い茶碗（下半円＋高台）
+  ctx.fillStyle = "#d7263d";
+  ctx.beginPath();
+  ctx.arc(cx, cy - 2, 38, 0, Math.PI, false);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillRect(cx - 13, cy + 34, 26, 9);
+
+  // ロゴ文字
+  ctx.fillStyle = "#3a2e26";
+  ctx.font = `800 28px ${FONT_STACK}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText("ばえめし", cx, cy + 48);
 }
 
 export function drawThumbnail(
@@ -72,62 +132,61 @@ export function drawThumbnail(
   const dh = img.height * scale;
   ctx.drawImage(img, (CANVAS_W - dw) / 2, (CANVAS_H - dh) / 2, dw, dh);
 
-  // 上下に可読性用のグラデーション
-  const top = ctx.createLinearGradient(0, 0, 0, 430);
-  top.addColorStop(0, "rgba(0,0,0,0.55)");
-  top.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = top;
-  ctx.fillRect(0, 0, CANVAS_W, 430);
-
-  const bottom = ctx.createLinearGradient(0, 900, 0, CANVAS_H);
-  bottom.addColorStop(0, "rgba(0,0,0,0)");
-  bottom.addColorStop(1, "rgba(0,0,0,0.65)");
-  ctx.fillStyle = bottom;
-  ctx.fillRect(0, 900, CANVAS_W, CANVAS_H - 900);
-
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
 
-  // タイトル（上部・大）
+  // タイトル・店名は左上のロゴバッジを避けて右寄りに置く
+  const headX = 650;
+  const headMax = 780;
+
+  // タイトル（上部・水色×白フチ）
+  let y = 64;
   if (texts.title.trim()) {
-    ctx.font = `900 96px ${FONT_STACK}`;
-    const lines = wrapText(ctx, texts.title, 980);
-    let y = 96;
-    for (const line of lines.slice(0, 3)) {
-      drawOutlinedLine(ctx, line, CANVAS_W / 2, y, 14);
-      y += 116;
-    }
-  }
-
-  // キャッチコピー（下部・中）
-  if (texts.catchCopy.trim()) {
-    ctx.font = `700 58px ${FONT_STACK}`;
-    const lines = wrapText(ctx, texts.catchCopy, 960);
-    let y = 1020;
+    ctx.font = `900 100px ${FONT_STACK}`;
+    const lines = wrapText(ctx, texts.title, headMax);
     for (const line of lines.slice(0, 2)) {
-      drawOutlinedLine(ctx, line, CANVAS_W / 2, y, 10);
-      y += 74;
+      drawPopLine(ctx, line, headX, y, 100, SORA, headMax);
+      y += 118;
     }
   }
 
-  // 店名（最下部・白帯バッジ）
+  // 店名（タイトルの下・黄色×白フチ）
   if (texts.storeName.trim()) {
-    ctx.font = `700 54px ${FONT_STACK}`;
-    const textW = ctx.measureText(texts.storeName).width;
-    const padX = 46;
-    const badgeW = Math.min(textW + padX * 2, 1000);
-    const badgeH = 96;
-    const bx = (CANVAS_W - badgeW) / 2;
-    const by = 1350 - badgeH - 56;
-    ctx.fillStyle = "rgba(255,255,255,0.94)";
-    ctx.beginPath();
-    ctx.roundRect(bx, by, badgeW, badgeH, badgeH / 2);
-    ctx.fill();
-    ctx.fillStyle = "#1a1a1a";
-    ctx.textBaseline = "middle";
-    ctx.fillText(texts.storeName, CANVAS_W / 2, by + badgeH / 2 + 4, badgeW - padX * 2);
-    ctx.textBaseline = "top";
+    ctx.font = `900 84px ${FONT_STACK}`;
+    const lines = wrapText(ctx, texts.storeName, headMax);
+    for (const line of lines.slice(0, 1)) {
+      drawPopLine(ctx, line, headX, y + 10, 84, KIIRO, headMax);
+    }
   }
+
+  // キャッチコピー（下部・水色×白フチ）
+  if (texts.catchCopy.trim()) {
+    ctx.font = `900 76px ${FONT_STACK}`;
+    const lines = wrapText(ctx, texts.catchCopy, 1000);
+    const shown = lines.slice(0, 2);
+    let cy = CANVAS_H - 150 - (shown.length - 1) * 92;
+    for (const line of shown) {
+      drawPopLine(ctx, line, CANVAS_W / 2, cy, 76, SORA, 1000);
+      cy += 92;
+    }
+  }
+
+  // 最下部のクレジット
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = 8;
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `700 36px ${FONT_STACK}`;
+  ctx.textAlign = "left";
+  ctx.fillText("#ばえめし", 40, CANVAS_H - 58);
+  ctx.textAlign = "right";
+  ctx.font = `500 32px ${FONT_STACK}`;
+  ctx.fillText("@baemeshi.official", CANVAS_W - 40, CANVAS_H - 54);
+  ctx.restore();
+  ctx.textAlign = "center";
+
+  // ロゴバッジは最後に描いて最前面へ
+  drawLogoBadge(ctx);
 }
 
 export default function ThumbnailStep({
