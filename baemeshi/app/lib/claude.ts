@@ -195,6 +195,7 @@ export async function generateProposals(performanceText: string): Promise<Genera
 - データが未取得の項目は根拠に使わず、取れている範囲で判断すること
 - 案は「投稿アプリの店舗情報フォーム」に渡せる粒度にすること。店名は指定しない（撮影に行く店は人間が決める）。ジャンルとフック方向と撮り方を指定する
 - 口調は明るくフレンドリーに（「〜してみよう！」など）。ただし数値の扱いは正確に
+- 各項目は簡潔に。summary は3〜4文、各案の hook / shoot / reason / evidence はそれぞれ2文以内
 - 出力は次のJSONのみ。前置き・説明・コードブロック禁止
 
 {
@@ -215,13 +216,16 @@ export async function generateProposals(performanceText: string): Promise<Genera
 ${performanceText}
 --- ここまで ---`;
 
-  const text = await callClaude(prompt, 2048);
-  const jsonText = text.replace(/^```(json)?/m, "").replace(/```$/m, "").trim();
+  const text = await callClaude(prompt, 4096);
+  // コードブロックや前置きが混ざっても、最初の { から最後の } までを JSON として読む
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  const jsonText = start >= 0 && end > start ? text.slice(start, end + 1) : text.trim();
   let parsed: GeneratedProposalSet;
   try {
     parsed = JSON.parse(jsonText);
   } catch {
-    throw new Error(`改善案のJSON解析に失敗しました: ${text.slice(0, 200)}`);
+    throw new Error(`改善案のJSON解析に失敗しました（出力が途中で切れた可能性）: ${text.slice(-200)}`);
   }
   if (!parsed?.summary || !Array.isArray(parsed.proposals) || parsed.proposals.length === 0) {
     throw new Error("改善案の生成結果が不完全です");
