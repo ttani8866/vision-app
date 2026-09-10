@@ -63,7 +63,12 @@ export default function HistoryPage() {
 
   return (
     <>
-      <AppHeader rightHref="/" rightLabel="＋ 新規投稿" />
+      <AppHeader
+        links={[
+          { href: "/", label: "＋ 新規投稿" },
+          { href: "/proposals", label: "改善案" },
+        ]}
+      />
       <main className="mx-auto max-w-md px-4 pb-16 pt-5">
         <Link
           href="/"

@@ -1,7 +1,16 @@
 // DBファサード: DATABASE_URL/POSTGRES_URL があれば Neon Postgres（Vercel）、なければ SQLite（ローカル）
-import type { DbBackend, PostHistoryRow, PostReportRow, PublishJobRow, PublishJobState } from "./db/types";
+import type {
+  DbBackend,
+  PostHistoryRow,
+  PostReportRow,
+  ProposalBatchRow,
+  ProposalRow,
+  ProposalStatus,
+  PublishJobRow,
+  PublishJobState,
+} from "./db/types";
 
-export type { PostHistoryRow, PostReportRow, PublishJobRow, PublishJobState };
+export type { PostHistoryRow, PostReportRow, ProposalBatchRow, ProposalRow, ProposalStatus, PublishJobRow, PublishJobState };
 
 const usePostgres = Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL);
 
@@ -51,4 +60,24 @@ export async function updatePublishJob(
   >
 ) {
   return (await getBackend()).updatePublishJob(id, patch);
+}
+export async function createProposalBatch(row: Omit<ProposalBatchRow, "created_at">) {
+  return (await getBackend()).createProposalBatch(row);
+}
+export async function insertProposals(
+  rows: Omit<ProposalRow, "id" | "status" | "history_id" | "created_at" | "updated_at">[]
+) {
+  return (await getBackend()).insertProposals(rows);
+}
+export async function listProposalBatches(limit = 10) {
+  return (await getBackend()).listProposalBatches(limit);
+}
+export async function listProposals(limit = 60) {
+  return (await getBackend()).listProposals(limit);
+}
+export async function getProposal(id: number) {
+  return (await getBackend()).getProposal(id);
+}
+export async function updateProposal(id: number, patch: { status?: ProposalStatus; history_id?: number | null }) {
+  return (await getBackend()).updateProposal(id, patch);
 }

@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import type { DbBackend, PostHistoryRow, PostReportRow, PublishJobRow } from "./types";
+import type { DbBackend, PostHistoryRow, PostReportRow, ProposalBatchRow, ProposalRow, PublishJobRow } from "./types";
 
 const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 if (!url) throw new Error("DATABASE_URL / POSTGRES_URL が設定されていません");
@@ -45,6 +45,28 @@ function ensureSchema(): Promise<void> {
         media_id TEXT,
         permalink TEXT,
         error_message TEXT,
+        history_id INTEGER,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`;
+    await sql`
+      CREATE TABLE IF NOT EXISTS proposal_batches (
+        id TEXT PRIMARY KEY,
+        source_json TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`;
+    await sql`
+      CREATE TABLE IF NOT EXISTS proposals (
+        id SERIAL PRIMARY KEY,
+        batch_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        genre TEXT NOT NULL,
+        hook TEXT NOT NULL,
+        shoot TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        evidence TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'proposed' CHECK (status IN ('proposed', 'approved', 'posted', 'rejected')),
         history_id INTEGER,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -154,6 +176,64 @@ const backend: DbBackend = {
         updated_at = now()
       WHERE id = ${id}`;
   },
+
+  async createProposalBatch(row) {
+    await ensureSchema();
+    const rows = await sql`
+      INSERT INTO proposal_batches (id, source_json, summary)
+      VALUES (${row.id}, ${row.source_json}, ${row.summary}) RETURNING *`;
+    return toBatchRow(rows[0]);
+  },
+
+  async insertProposals(rows) {
+    await ensureSchema();
+    const out: ProposalRow[] = [];
+    for (const r of rows) {
+      const inserted = await sql`
+        INSERT INTO proposals (batch_id, title, genre, hook, shoot, reason, evidence)
+        VALUES (${r.batch_id}, ${r.title}, ${r.genre}, ${r.hook}, ${r.shoot}, ${r.reason}, ${r.evidence})
+        RETURNING *`;
+      out.push(toProposalRow(inserted[0]));
+    }
+    return out;
+  },
+
+  async listProposalBatches(limit = 10) {
+    await ensureSchema();
+    const rows = await sql`SELECT * FROM proposal_batches ORDER BY created_at DESC LIMIT ${limit}`;
+    return rows.map(toBatchRow);
+  },
+
+  async listProposals(limit = 60) {
+    await ensureSchema();
+    const rows = await sql`SELECT * FROM proposals ORDER BY id DESC LIMIT ${limit}`;
+    return rows.map(toProposalRow);
+  },
+
+  async getProposal(id) {
+    await ensureSchema();
+    const rows = await sql`SELECT * FROM proposals WHERE id = ${id}`;
+    return rows[0] ? toProposalRow(rows[0]) : undefined;
+  },
+
+  async updateProposal(id, patch) {
+    await ensureSchema();
+    const hasHistory = patch.history_id !== undefined;
+    await sql`
+      UPDATE proposals SET
+        status = COALESCE(${patch.status ?? null}, status),
+        history_id = CASE WHEN ${hasHistory} THEN ${patch.history_id ?? null} ELSE history_id END,
+        updated_at = now()
+      WHERE id = ${id}`;
+  },
 };
+
+function toBatchRow(r: Record<string, unknown>): ProposalBatchRow {
+  return { ...(r as unknown as ProposalBatchRow), created_at: String(r.created_at) };
+}
+
+function toProposalRow(r: Record<string, unknown>): ProposalRow {
+  return { ...(r as unknown as ProposalRow), created_at: String(r.created_at), updated_at: String(r.updated_at) };
+}
 
 export default backend;

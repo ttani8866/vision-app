@@ -4,7 +4,7 @@ import type { MediaMetrics } from "@/lib/instagram";
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = process.env.BAEMESHI_CLAUDE_MODEL || "claude-sonnet-4-6";
 
-async function callClaude(prompt: string): Promise<string> {
+async function callClaude(prompt: string, maxTokens = 1024): Promise<string> {
   const res = await fetch(ANTHROPIC_API_URL, {
     method: "POST",
     headers: {
@@ -14,7 +14,7 @@ async function callClaude(prompt: string): Promise<string> {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1024,
+      max_tokens: maxTokens,
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -70,8 +70,17 @@ const CAPTION_TEMPLATE = `{フック（お店の魅力を一言で伝えるキ�
 
 #銀座グルメ #銀座ランチ #ばえめし #{ジャンルに応じたハッシュタグ} #{店名}`;
 
-export async function generateCaption(store: StoreInfo): Promise<string> {
+export async function generateCaption(store: StoreInfo, direction?: string): Promise<string> {
+  const directionBlock = direction?.trim()
+    ? `
+今回の狙い（実績分析から出た改善案の指示）:
+${direction.trim()}
+{フック}と{リード文}はこの狙いに沿った切り口で書くこと。ただし狙いに合わせるために入力にない事実を足すことは禁止。
+`
+    : "";
+
   const prompt = `あなたは銀座グルメInstagramアカウント「ばえめし」（@baemeshi_official）の投稿キャプションを作成するアシスタントです。
+${directionBlock}
 
 以下のテンプレートの構造・改行・絵文字・見出しラベルを一字一句変えずに使い、{}で囲まれた項目のみを実際の店舗情報で置き換えてください。
 
@@ -157,4 +166,73 @@ ${metricsLines || "（指標を取得できませんでした）"}`;
   } catch {
     throw new Error(`レポート生成結果のJSON解析に失敗しました: ${text.slice(0, 200)}`);
   }
+}
+
+export interface GeneratedProposal {
+  title: string;
+  genre: "銀座老舗" | "ハレの日" | "ランチ" | "スイーツ" | "新店";
+  hook: string;
+  shoot: string;
+  reason: string;
+  evidence: string;
+}
+
+export interface GeneratedProposalSet {
+  summary: string;
+  proposals: GeneratedProposal[];
+}
+
+const GENRE_LIST = ["銀座老舗", "ハレの日", "ランチ", "スイーツ", "新店"] as const;
+
+/** 広告・投稿の実績テキストから、次の投稿の企画案3本を生成する */
+export async function generateProposals(performanceText: string): Promise<GeneratedProposalSet> {
+  const prompt = `あなたは銀座グルメInstagramアカウント「ばえめし」（@baemeshi_official）の運用チームの企画担当AIです。
+以下の実績データを読み、「次に作る投稿の企画案」を3本出してください。目的は、フォロワー獲得（広告経由のフォロー転換）と保存・シェアの増加です。
+
+ルール:
+- 3本は互いに切り口が異なること（同じ発想の言い換えを3本並べない）
+- 各案は、与えられた実績データの中の具体的な数値や投稿内容を根拠にすること。データにない数値・事実の捏造は禁止
+- データが未取得の項目は根拠に使わず、取れている範囲で判断すること
+- 案は「投稿アプリの店舗情報フォーム」に渡せる粒度にすること。店名は指定しない（撮影に行く店は人間が決める）。ジャンルとフック方向と撮り方を指定する
+- 口調は明るくフレンドリーに（「〜してみよう！」など）。ただし数値の扱いは正確に
+- 出力は次のJSONのみ。前置き・説明・コードブロック禁止
+
+{
+  "summary": "今週の実績の読み（何が効いていて何が詰まっているか）を3〜4文で",
+  "proposals": [
+    {
+      "title": "案の名前（15字以内）",
+      "genre": "${GENRE_LIST.join(" | ")} のいずれか1つ",
+      "hook": "投稿のフック方向・切り口（1〜2文。キャプション生成AIへの指示として使う）",
+      "shoot": "素材の撮り方・見せ方の指示（1〜2文。スマホ撮影前提。1枚目に何を置くか等）",
+      "reason": "この案を選ぶ改善理由（2〜3文。何を改善するための案か）",
+      "evidence": "根拠となった数値・投稿内容（1〜2文。データ内の数値をそのまま引用）"
+    }
+  ]
+}
+
+--- 実績データ ---
+${performanceText}
+--- ここまで ---`;
+
+  const text = await callClaude(prompt, 2048);
+  const jsonText = text.replace(/^```(json)?/m, "").replace(/```$/m, "").trim();
+  let parsed: GeneratedProposalSet;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch {
+    throw new Error(`改善案のJSON解析に失敗しました: ${text.slice(0, 200)}`);
+  }
+  if (!parsed?.summary || !Array.isArray(parsed.proposals) || parsed.proposals.length === 0) {
+    throw new Error("改善案の生成結果が不完全です");
+  }
+  parsed.proposals = parsed.proposals.slice(0, 3).map((p) => ({
+    title: String(p.title ?? "").slice(0, 30),
+    genre: (GENRE_LIST as readonly string[]).includes(p.genre) ? p.genre : "ランチ",
+    hook: String(p.hook ?? ""),
+    shoot: String(p.shoot ?? ""),
+    reason: String(p.reason ?? ""),
+    evidence: String(p.evidence ?? ""),
+  }));
+  return parsed;
 }

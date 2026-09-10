@@ -23,12 +23,15 @@ export default function PreviewStep({
   target,
   caption,
   storeName,
+  proposalId = null,
   onPosted,
 }: {
   media: UploadedMedia[];
   target: PostTarget;
   caption: string;
   storeName: string;
+  /** 改善案から作った投稿なら、そのID（投稿成功時に改善案へ紐づく） */
+  proposalId?: number | null;
   onPosted: () => void;
 }) {
   const [warnLessThan24h, setWarnLessThan24h] = useState(false);
@@ -55,6 +58,7 @@ export default function PreviewStep({
           media: media.map((m) => ({ url: m.url, kind: m.kind })),
           caption,
           storeName,
+          proposalId,
         }),
       });
       const started = await res.json();

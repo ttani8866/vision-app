@@ -18,13 +18,22 @@ function BowlMark() {
   );
 }
 
+export interface HeaderLink {
+  href: string;
+  label: string;
+}
+
 export default function AppHeader({
   rightHref,
   rightLabel,
+  links,
 }: {
-  rightHref: string;
-  rightLabel: string;
+  rightHref?: string;
+  rightLabel?: string;
+  /** 複数導線を出す場合。指定時は rightHref/rightLabel より優先 */
+  links?: HeaderLink[];
 }) {
+  const items: HeaderLink[] = links ?? (rightHref && rightLabel ? [{ href: rightHref, label: rightLabel }] : []);
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--hairline)] bg-[var(--paper)]/95 backdrop-blur">
       <div className="mx-auto flex max-w-md items-center justify-between px-4 py-2.5">
@@ -39,12 +48,17 @@ export default function AppHeader({
             </span>
           </span>
         </Link>
-        <Link
-          href={rightHref}
-          className="rounded-full border-2 border-[var(--hairline)] bg-[var(--paper)] px-3 py-1.5 text-xs font-bold text-[var(--ink)]"
-        >
-          {rightLabel}
-        </Link>
+        <nav className="flex gap-1.5">
+          {items.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="rounded-full border-2 border-[var(--hairline)] bg-[var(--paper)] px-3 py-1.5 text-xs font-bold text-[var(--ink)]"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </header>
   );

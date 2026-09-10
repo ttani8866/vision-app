@@ -1,0 +1,246 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import AppHeader from "@/components/AppHeader";
+import PostReport from "@/components/PostReport";
+import type { ProposalBatchRow, ProposalRow, ProposalStatus } from "@/lib/db";
+
+const STATUS_LABEL: Record<ProposalStatus, string> = {
+  proposed: "提案中",
+  approved: "作成中",
+  posted: "投稿済み",
+  rejected: "見送り",
+};
+
+const STATUS_CLASS: Record<ProposalStatus, string> = {
+  proposed: "bg-[#fff7dd] text-[#8a6d1a] border-[#f2dd9a]",
+  approved: "bg-[#fdf3e3] text-[var(--grad-b)] border-[var(--hairline)]",
+  posted: "bg-[#eefaf0] text-[#2c7a44] border-[#b3e0bd]",
+  rejected: "bg-[var(--cream)] text-[var(--ink-soft)] border-[var(--hairline)]",
+};
+
+function toDate(s: string): Date {
+  const iso = s.includes("T") ? s : s.replace(" ", "T") + "Z";
+  return new Date(iso);
+}
+
+export default function ProposalsPage() {
+  const router = useRouter();
+  const [batches, setBatches] = useState<ProposalBatchRow[]>([]);
+  const [items, setItems] = useState<ProposalRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [showOld, setShowOld] = useState(false);
+
+  async function load() {
+    const res = await fetch("/api/proposals");
+    const json = await res.json();
+    setBatches(json.batches ?? []);
+    setItems(json.items ?? []);
+  }
+
+  useEffect(() => {
+    load().finally(() => setLoading(false));
+  }, []);
+
+  async function generate() {
+    setGenerating(true);
+    setError(null);
+    setWarnings([]);
+    try {
+      const res = await fetch("/api/proposals/generate", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error ?? "改善案の生成に失敗しました");
+      setWarnings(json.warnings ?? []);
+      await load();
+    } catch (e) {
+      setError(String(e instanceof Error ? e.message : e));
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function setStatus(id: number, status: ProposalStatus) {
+    setBusyId(id);
+    try {
+      const res = await fetch("/api/proposals", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error ?? "更新に失敗しました");
+      setItems((prev) => prev.map((p) => (p.id === id ? json.item : p)));
+      return true;
+    } catch (e) {
+      setError(String(e instanceof Error ? e.message : e));
+      return false;
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function approveAndCreate(id: number) {
+    if (await setStatus(id, "approved")) router.push(`/?proposal=${id}`);
+  }
+
+  const latestBatch = batches[0];
+  const visibleBatches = showOld ? batches : batches.slice(0, 1);
+
+  return (
+    <>
+      <AppHeader
+        links={[
+          { href: "/", label: "＋ 新規投稿" },
+          { href: "/history", label: "投稿履歴" },
+        ]}
+      />
+      <main className="mx-auto max-w-md px-4 pb-16 pt-5">
+        <Link
+          href="/"
+          className="mb-3 inline-flex items-center gap-1 rounded-full border-2 border-[var(--hairline)] bg-[var(--paper)] px-3.5 py-1.5 text-sm font-bold text-[var(--ink)] active:scale-95"
+        >
+          ← 戻る
+        </Link>
+        <h1 className="font-display sparkle mb-1 text-xl font-extrabold">改善案</h1>
+        <p className="mb-4 text-sm leading-relaxed text-[var(--ink-soft)]">
+          直近7日の広告実績と投稿の反応を読んで、次に作る投稿の案を3本出します。気に入った案は「この案で作る」で投稿フローに進みます。
+        </p>
+
+        <button type="button" onClick={generate} disabled={generating} className="btn-primary">
+          {generating ? "実績を読んでいます…（30秒ほど）" : latestBatch ? "最新の実績で作り直す" : "実績を読んで新案を作る"}
+        </button>
+
+        {error && <p className="note-error mt-3">{error}</p>}
+        {warnings.length > 0 && (
+          <div className="note-warn mt-3">
+            <p className="mb-1 text-xs font-bold">一部のデータは取れませんでした</p>
+            {warnings.map((w, i) => (
+              <p key={i} className="text-xs leading-relaxed">
+                {w}
+              </p>
+            ))}
+          </div>
+        )}
+
+        {loading && <p className="mt-4 text-sm text-[var(--ink-soft)]">読み込み中…</p>}
+        {!loading && !latestBatch && !generating && (
+          <div className="card mt-4 p-8 text-center text-sm text-[var(--ink-soft)]">改善案はまだありません</div>
+        )}
+
+        {visibleBatches.map((batch) => {
+          const proposals = items.filter((p) => p.batch_id === batch.id);
+          return (
+            <section key={batch.id} className="mt-5 space-y-3">
+              <div className="card p-4">
+                <p className="mb-1 text-xs font-bold text-[var(--ink-soft)]">
+                  {toDate(batch.created_at).toLocaleString("ja-JP")} の実績の読み
+                </p>
+                <p className="text-sm leading-relaxed">{batch.summary}</p>
+              </div>
+
+              {proposals.map((p) => (
+                <div key={p.id} className="card p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="chip chip-on inline-block text-xs">{p.genre}</span>
+                      <h2 className="font-display mt-1.5 text-lg font-extrabold leading-snug">{p.title}</h2>
+                    </div>
+                    <span className={`flex-none rounded-full border px-2.5 py-0.5 text-xs font-bold ${STATUS_CLASS[p.status]}`}>
+                      {STATUS_LABEL[p.status]}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 space-y-2 text-sm leading-relaxed">
+                    <div>
+                      <p className="text-xs font-bold text-[var(--ink-soft)]">✍️ 切り口</p>
+                      <p>{p.hook}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[var(--ink-soft)]">📷 撮り方</p>
+                      <p>{p.shoot}</p>
+                    </div>
+                    <div className="note-info">
+                      <p className="mb-0.5 text-xs font-bold">💡 改善理由</p>
+                      <p>{p.reason}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[var(--ink-soft)]">📊 根拠</p>
+                      <p className="text-[var(--ink-soft)]">{p.evidence}</p>
+                    </div>
+                  </div>
+
+                  {(p.status === "proposed" || p.status === "rejected") && (
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => approveAndCreate(p.id)}
+                        disabled={busyId === p.id}
+                        className="btn-primary flex-1 py-2.5 text-sm"
+                      >
+                        この案で作る
+                      </button>
+                      {p.status === "proposed" && (
+                        <button
+                          type="button"
+                          onClick={() => setStatus(p.id, "rejected")}
+                          disabled={busyId === p.id}
+                          className="btn-secondary flex-1 py-2.5 text-sm"
+                        >
+                          見送る
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {p.status === "approved" && (
+                    <div className="mt-3 flex gap-2">
+                      <Link href={`/?proposal=${p.id}`} className="btn-primary flex-1 py-2.5 text-sm">
+                        投稿を続ける
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setStatus(p.id, "proposed")}
+                        disabled={busyId === p.id}
+                        className="btn-secondary flex-1 py-2.5 text-sm"
+                      >
+                        提案に戻す
+                      </button>
+                    </div>
+                  )}
+
+                  {p.status === "posted" && p.history_id && (
+                    <>
+                      <p className="mt-3 text-xs text-[var(--ink-soft)]">
+                        この案から投稿しました。
+                        <Link href="/history" className="ml-1 underline underline-offset-2">
+                          投稿履歴を見る
+                        </Link>
+                      </p>
+                      <PostReport historyId={p.history_id} />
+                    </>
+                  )}
+                </div>
+              ))}
+            </section>
+          );
+        })}
+
+        {batches.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setShowOld((v) => !v)}
+            className="mt-5 w-full text-center text-sm font-medium text-[var(--ink-soft)] underline underline-offset-4"
+          >
+            {showOld ? "過去の案を閉じる" : `過去の案を見る（${batches.length - 1}回分）`}
+          </button>
+        )}
+      </main>
+    </>
+  );
+}

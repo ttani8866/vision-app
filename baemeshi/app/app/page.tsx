@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
 import StepNav from "@/components/StepNav";
 import UploadStep from "@/components/UploadStep";
@@ -8,7 +9,8 @@ import StoreForm from "@/components/StoreForm";
 import ThumbnailStep from "@/components/ThumbnailStep";
 import CaptionStep from "@/components/CaptionStep";
 import PreviewStep from "@/components/PreviewStep";
-import { EMPTY_STORE, resolvePostTarget, type StoreInfo, type UploadedMedia } from "@/lib/types";
+import { EMPTY_STORE, GENRES, resolvePostTarget, type StoreInfo, type UploadedMedia } from "@/lib/types";
+import type { ProposalRow } from "@/lib/db";
 
 type Step = "upload" | "form" | "thumbnail" | "caption" | "preview";
 
@@ -26,8 +28,28 @@ export default function Home() {
   const [singleVideoAs, setSingleVideoAs] = useState<"reel" | "feed_video">("reel");
   const [store, setStore] = useState<StoreInfo>(EMPTY_STORE);
   const [caption, setCaption] = useState("");
+  const [proposal, setProposal] = useState<ProposalRow | null>(null);
 
   const target = resolvePostTarget(media, singleVideoAs);
+
+  // /?proposal=ID で開かれたら、改善案のジャンルをプリセットし、狙いをキャプション生成に引き継ぐ
+  useEffect(() => {
+    const id = Number(new URLSearchParams(window.location.search).get("proposal"));
+    if (!id) return;
+    fetch(`/api/proposals?id=${id}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.ok || !j.item) return;
+        const p = j.item as ProposalRow;
+        setProposal(p);
+        if ((GENRES as string[]).includes(p.genre)) {
+          setStore((prev) => ({ ...prev, genre: p.genre as StoreInfo["genre"] }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const direction = proposal ? `${proposal.hook}\n撮り方の指示: ${proposal.shoot}` : undefined;
 
   function reset() {
     setStep("upload");
@@ -35,12 +57,35 @@ export default function Home() {
     setSingleVideoAs("reel");
     setStore(EMPTY_STORE);
     setCaption("");
+    setProposal(null);
+    if (window.location.search) window.history.replaceState(null, "", "/");
   }
 
   return (
     <>
-      <AppHeader rightHref="/history" rightLabel="投稿履歴" />
+      <AppHeader
+        links={[
+          { href: "/proposals", label: "改善案" },
+          { href: "/history", label: "投稿履歴" },
+        ]}
+      />
       <main className="mx-auto max-w-md px-4 pb-16 pt-5">
+        {proposal && (
+          <div className="card mb-4 p-3.5">
+            <p className="text-xs font-bold text-[var(--ink-soft)]">改善案から作成中</p>
+            <p className="font-display mt-0.5 text-base font-extrabold leading-snug">{proposal.title}</p>
+            <p className="mt-1.5 text-xs leading-relaxed">
+              <span className="font-bold">切り口:</span> {proposal.hook}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed">
+              <span className="font-bold">撮り方:</span> {proposal.shoot}
+            </p>
+            <Link href="/proposals" className="mt-1.5 inline-block text-xs text-[var(--ink-soft)] underline underline-offset-2">
+              改善案一覧に戻る
+            </Link>
+          </div>
+        )}
+
         <StepNav steps={STEPS} current={step} />
 
         {step === "upload" && (
@@ -69,6 +114,7 @@ export default function Home() {
           <CaptionStep
             store={store}
             caption={caption}
+            direction={direction}
             onChangeCaption={setCaption}
             onNext={() => setStep("preview")}
           />
@@ -76,7 +122,14 @@ export default function Home() {
 
         {step === "preview" && media.length > 0 && target && (
           <div className="space-y-4">
-            <PreviewStep media={media} target={target} caption={caption} storeName={store.name} onPosted={() => {}} />
+            <PreviewStep
+              media={media}
+              target={target}
+              caption={caption}
+              storeName={store.name}
+              proposalId={proposal?.id ?? null}
+              onPosted={() => {}}
+            />
             <button
               type="button"
               onClick={reset}

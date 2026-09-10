@@ -29,6 +29,20 @@
       "port": 3100
     },
     {
+      "name": "baemeshi-loop",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "baemeshi/app",
+        "--",
+        "-p",
+        "3101"
+      ],
+      "port": 3101
+    },
+    {
       "name": "personal-style-os",
       "runtimeExecutable": "npm",
       "runtimeArgs": [

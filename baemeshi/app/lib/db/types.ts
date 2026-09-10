@@ -43,7 +43,47 @@ export interface PublishJobRow {
   updated_at: string;
 }
 
+/** 改善案の状態: 提案済み → 承認（この案で作る） → 投稿済み。見送りは rejected */
+export type ProposalStatus = "proposed" | "approved" | "posted" | "rejected";
+
+export interface ProposalBatchRow {
+  id: string;
+  /** 生成時に読み込んだ実績データのJSON（広告・投稿・フォロワー） */
+  source_json: string;
+  /** AIによる今週の実績の読み（1段落） */
+  summary: string;
+  created_at: string;
+}
+
+export interface ProposalRow {
+  id: number;
+  batch_id: string;
+  title: string;
+  genre: string;
+  /** 投稿のフック方向（キャプション生成に渡す狙い） */
+  hook: string;
+  /** 素材の撮り方・見せ方の指示 */
+  shoot: string;
+  /** 改善理由（なぜこの案か） */
+  reason: string;
+  /** 根拠となった数値 */
+  evidence: string;
+  status: ProposalStatus;
+  history_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DbBackend {
+  createProposalBatch(row: Omit<ProposalBatchRow, "created_at">): Promise<ProposalBatchRow>;
+  insertProposals(
+    rows: Omit<ProposalRow, "id" | "status" | "history_id" | "created_at" | "updated_at">[]
+  ): Promise<ProposalRow[]>;
+  listProposalBatches(limit?: number): Promise<ProposalBatchRow[]>;
+  listProposals(limit?: number): Promise<ProposalRow[]>;
+  getProposal(id: number): Promise<ProposalRow | undefined>;
+  updateProposal(id: number, patch: { status?: ProposalStatus; history_id?: number | null }): Promise<void>;
+
   insertPostHistory(row: Omit<PostHistoryRow, "id" | "created_at">): Promise<PostHistoryRow>;
   getHistoryById(id: number): Promise<PostHistoryRow | undefined>;
   listPostHistory(limit?: number): Promise<PostHistoryRow[]>;

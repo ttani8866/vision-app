@@ -1,7 +1,7 @@
 import path from "path";
 import { mkdirSync } from "fs";
 import Database from "better-sqlite3";
-import type { DbBackend, PostHistoryRow, PostReportRow, PublishJobRow } from "./types";
+import type { DbBackend, PostHistoryRow, PostReportRow, ProposalBatchRow, ProposalRow, PublishJobRow } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 mkdirSync(DATA_DIR, { recursive: true });
@@ -42,6 +42,28 @@ db.exec(`
     media_id TEXT,
     permalink TEXT,
     error_message TEXT,
+    history_id INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS proposal_batches (
+    id TEXT PRIMARY KEY,
+    source_json TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS proposals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    batch_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    genre TEXT NOT NULL,
+    hook TEXT NOT NULL,
+    shoot TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    evidence TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'proposed' CHECK (status IN ('proposed', 'approved', 'posted', 'rejected')),
     history_id INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -134,6 +156,53 @@ const backend: DbBackend = {
     if (keys.length === 0) return;
     const sets = keys.map((k) => `${k} = @${k}`).join(", ");
     db.prepare(`UPDATE publish_jobs SET ${sets}, updated_at = datetime('now') WHERE id = @id`).run({ ...patch, id });
+  },
+
+  async createProposalBatch(row) {
+    db.prepare("INSERT INTO proposal_batches (id, source_json, summary) VALUES (@id, @source_json, @summary)").run(row);
+    return db.prepare("SELECT * FROM proposal_batches WHERE id = ?").get(row.id) as ProposalBatchRow;
+  },
+
+  async insertProposals(rows) {
+    const stmt = db.prepare(`
+      INSERT INTO proposals (batch_id, title, genre, hook, shoot, reason, evidence)
+      VALUES (@batch_id, @title, @genre, @hook, @shoot, @reason, @evidence)
+    `);
+    const ids: number[] = [];
+    const tx = db.transaction(() => {
+      for (const r of rows) ids.push(Number(stmt.run(r).lastInsertRowid));
+    });
+    tx();
+    return ids.map((id) => db.prepare("SELECT * FROM proposals WHERE id = ?").get(id) as ProposalRow);
+  },
+
+  async listProposalBatches(limit = 10) {
+    return db
+      .prepare("SELECT * FROM proposal_batches ORDER BY datetime(created_at) DESC LIMIT ?")
+      .all(limit) as ProposalBatchRow[];
+  },
+
+  async listProposals(limit = 60) {
+    return db.prepare("SELECT * FROM proposals ORDER BY id DESC LIMIT ?").all(limit) as ProposalRow[];
+  },
+
+  async getProposal(id) {
+    return db.prepare("SELECT * FROM proposals WHERE id = ?").get(id) as ProposalRow | undefined;
+  },
+
+  async updateProposal(id, patch) {
+    const sets: string[] = [];
+    const params: Record<string, unknown> = { id };
+    if (patch.status !== undefined) {
+      sets.push("status = @status");
+      params.status = patch.status;
+    }
+    if (patch.history_id !== undefined) {
+      sets.push("history_id = @history_id");
+      params.history_id = patch.history_id;
+    }
+    if (sets.length === 0) return;
+    db.prepare(`UPDATE proposals SET ${sets.join(", ")}, updated_at = datetime('now') WHERE id = @id`).run(params);
   },
 };
 

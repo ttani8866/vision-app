@@ -6,11 +6,14 @@ import type { StoreInfo } from "@/lib/types";
 export default function CaptionStep({
   store,
   caption,
+  direction,
   onChangeCaption,
   onNext,
 }: {
   store: StoreInfo;
   caption: string;
+  /** 改善案からの狙い（フック方向・撮り方）。あればキャプション生成に渡す */
+  direction?: string;
   onChangeCaption: (c: string) => void;
   onNext: () => void;
 }) {
@@ -24,7 +27,7 @@ export default function CaptionStep({
       const res = await fetch("/api/caption", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ store }),
+        body: JSON.stringify({ store, direction }),
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error ?? "生成に失敗しました");
@@ -47,6 +50,9 @@ export default function CaptionStep({
       <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
         AIがテンプレートに沿って下書きします。自由に手直しできます。
       </p>
+      {direction && (
+        <p className="note-info whitespace-pre-wrap text-xs">改善案の狙いを反映して生成します:{"\n"}{direction}</p>
+      )}
 
       {error && <p className="note-error">{error}</p>}
 

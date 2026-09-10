@@ -16,6 +16,7 @@ import {
   getRunningPublishJob,
   insertPostHistory,
   updatePublishJob,
+  updateProposal,
   type PublishJobRow,
 } from "@/lib/db";
 
@@ -28,6 +29,8 @@ export interface PublishPayload {
   media: { url: string; kind: "image" | "video" }[];
   caption: string;
   storeName: string;
+  /** 改善案から作った投稿の場合、その改善案ID（投稿成功時に posted へ遷移させる） */
+  proposalId?: number | null;
 }
 
 const JOB_TIMEOUT_MS = 10 * 60 * 1000;
@@ -47,6 +50,7 @@ export async function startPublish(
     media,
     caption: input.caption,
     storeName: input.storeName,
+    proposalId: input.proposalId ? Number(input.proposalId) : null,
   };
   const id = randomUUID();
 
@@ -159,6 +163,10 @@ export async function advancePublish(jobId: string): Promise<PublishJobRow | und
         permalink,
         history_id: hist.id,
       });
+      if (payload.proposalId) {
+        // 改善ループを閉じる: 改善案 → 投稿履歴 を紐づけ、結果レポートから遡れるようにする
+        await updateProposal(payload.proposalId, { status: "posted", history_id: hist.id }).catch(() => {});
+      }
       return (await getPublishJob(job.id))!;
     }
 
