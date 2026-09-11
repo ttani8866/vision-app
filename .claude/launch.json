@@ -30,15 +30,11 @@
     },
     {
       "name": "baemeshi-loop",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "pwsh",
       "runtimeArgs": [
-        "run",
-        "dev",
-        "--prefix",
-        "baemeshi/app",
-        "--",
-        "-p",
-        "3101"
+        "-NoProfile",
+        "-Command",
+        "$env:BAEMESHI_DIST_DIR='.next-loop'; npm run dev --prefix baemeshi/app -- -p 3101"
       ],
       "port": 3101
     },

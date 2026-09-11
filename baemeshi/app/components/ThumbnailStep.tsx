@@ -117,7 +117,7 @@ function drawLogoBadge(ctx: CanvasRenderingContext2D, pos: LogoPos, logo: HTMLIm
 
   if (logo) {
     // 実物ロゴを白丸に収める（ロゴは正方形前提。余白を少し取る）
-    const size = r * 2 * 0.78;
+    const size = r * 2 * 0.92;
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, r - 2, 0, Math.PI * 2);
