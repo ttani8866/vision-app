@@ -70,57 +70,103 @@ function drawPopLine(
   ctx.fillText(text, x, y, maxWidth);
 }
 
-/** 左上の「ばえめし」ロゴバッジ（白丸＋赤い茶碗＋キラキラ） */
-function drawLogoBadge(ctx: CanvasRenderingContext2D) {
-  const cx = 122;
-  const cy = 122;
-  const r = 88;
+export type LogoPos = "left" | "right";
+
+/** 実物ロゴ（app/public/baemeshi-logo.png）。無ければ null を返し、ベクター描画にフォールバック */
+let logoImagePromise: Promise<HTMLImageElement | null> | null = null;
+export function loadLogoImage(): Promise<HTMLImageElement | null> {
+  logoImagePromise ??= new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = "/baemeshi-logo.png";
+  });
+  return logoImagePromise;
+}
+
+/** 4点のキラキラ（内側にくぼんだ星形） */
+function drawSparkle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, color: string) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r);
+  ctx.quadraticCurveTo(cx, cy, cx + r, cy);
+  ctx.quadraticCurveTo(cx, cy, cx, cy + r);
+  ctx.quadraticCurveTo(cx, cy, cx - r, cy);
+  ctx.quadraticCurveTo(cx, cy, cx, cy - r);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/**
+ * 「ばえめし」ロゴバッジ（白丸抜き）。既存投稿と同じく左上に置き、文字とのバランスで右上にも置ける。
+ * 実物PNGがあればそれを白丸の中に収め、無ければロゴ（キラキラのピラミッド＋赤い茶碗＋ロゴ文字）をベクターで描く。
+ */
+function drawLogoBadge(ctx: CanvasRenderingContext2D, pos: LogoPos, logo: HTMLImageElement | null) {
+  const r = 105;
+  const cx = pos === "left" ? 130 : CANVAS_W - 130;
+  const cy = 130;
 
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.25)";
   ctx.shadowBlur = 14;
-  ctx.fillStyle = "rgba(255,255,255,0.96)";
+  ctx.fillStyle = "#ffffff";
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // キラキラ（ひし形）
-  const diamond = (dx: number, dy: number, s: number) => {
+  if (logo) {
+    // 実物ロゴを白丸に収める（ロゴは正方形前提。余白を少し取る）
+    const size = r * 2 * 0.78;
+    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(dx, dy - s);
-    ctx.lineTo(dx + s * 0.6, dy);
-    ctx.lineTo(dx, dy + s);
-    ctx.lineTo(dx - s * 0.6, dy);
-    ctx.closePath();
-    ctx.fill();
-  };
-  ctx.fillStyle = "#ffb800";
-  diamond(cx, cy - 52, 14);
-  diamond(cx - 32, cy - 40, 9);
-  diamond(cx + 32, cy - 40, 9);
+    ctx.arc(cx, cy, r - 2, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(logo, cx - size / 2, cy - size / 2, size, size);
+    ctx.restore();
+    return;
+  }
+
+  // ベクター版: 元ロゴ（300x300基準）の座標を s 倍して白丸の中央に置く
+  const s = 0.55;
+  const X = (lx: number) => cx + (lx - 150) * s;
+  const Y = (ly: number) => cy + (ly - 150) * s;
+  const YELLOW = "#ffc400";
+  const ORANGE = "#f7941d";
+
+  // キラキラのピラミッド（1・2・3段）
+  drawSparkle(ctx, X(150), Y(46), 15 * s * 1.9, ORANGE);
+  drawSparkle(ctx, X(119), Y(74), 16 * s * 1.9, YELLOW);
+  drawSparkle(ctx, X(181), Y(74), 16 * s * 1.9, ORANGE);
+  drawSparkle(ctx, X(93), Y(106), 17 * s * 1.9, YELLOW);
+  drawSparkle(ctx, X(150), Y(106), 22 * s * 1.9, YELLOW);
+  drawSparkle(ctx, X(207), Y(106), 17 * s * 1.9, YELLOW);
 
   // 赤い茶碗（下半円＋高台）
-  ctx.fillStyle = "#d7263d";
+  ctx.fillStyle = "#c8102e";
   ctx.beginPath();
-  ctx.arc(cx, cy - 2, 38, 0, Math.PI, false);
+  ctx.arc(X(150), Y(132), 56 * s, 0, Math.PI, false);
   ctx.closePath();
   ctx.fill();
-  ctx.fillRect(cx - 13, cy + 34, 26, 9);
+  const fw = 30 * s;
+  const fh = 9 * s;
+  ctx.fillRect(X(150) - fw / 2, Y(186), fw, fh);
 
   // ロゴ文字
-  ctx.fillStyle = "#3a2e26";
-  ctx.font = `800 28px ${FONT_STACK}`;
+  ctx.fillStyle = "#111111";
+  ctx.font = `900 ${Math.round(40 * s * 1.15)}px ${FONT_STACK}`;
   ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.fillText("ばえめし", cx, cy + 48);
+  ctx.textBaseline = "middle";
+  ctx.fillText("ばえめし", X(150), Y(240));
 }
 
 export function drawThumbnail(
   canvas: HTMLCanvasElement,
   img: HTMLImageElement,
-  texts: { title: string; storeName: string; catchCopy: string }
+  texts: { title: string; storeName: string; catchCopy: string },
+  opts: { logoPos?: LogoPos; logo?: HTMLImageElement | null } = {}
 ) {
+  const logoPos: LogoPos = opts.logoPos ?? "left";
   canvas.width = CANVAS_W;
   canvas.height = CANVAS_H;
   const ctx = canvas.getContext("2d");
@@ -135,8 +181,8 @@ export function drawThumbnail(
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
 
-  // タイトル・店名は左上のロゴバッジを避けて右寄りに置く
-  const headX = 650;
+  // タイトル・店名はロゴバッジを避けて反対側に寄せる
+  const headX = logoPos === "left" ? 650 : CANVAS_W - 650;
   const headMax = 780;
 
   // タイトル（上部・水色×白フチ）
@@ -186,7 +232,7 @@ export function drawThumbnail(
   ctx.textAlign = "center";
 
   // ロゴバッジは最後に描いて最前面へ
-  drawLogoBadge(ctx);
+  drawLogoBadge(ctx, logoPos, opts.logo ?? null);
 }
 
 export default function ThumbnailStep({
@@ -205,6 +251,8 @@ export default function ThumbnailStep({
   const [title, setTitle] = useState("");
   const [catchCopy, setCatchCopy] = useState("");
   const [storeName, setStoreName] = useState(store.name);
+  const [logoPos, setLogoPos] = useState<LogoPos>("left");
+  const [logo, setLogo] = useState<HTMLImageElement | null>(null);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [appliedSig, setAppliedSig] = useState<string | null>(null);
@@ -214,9 +262,13 @@ export default function ThumbnailStep({
   const baseUrl = base ? (base.originalUrl ?? base.url) : null;
 
   const hasText = Boolean(title.trim() || catchCopy.trim() || storeName.trim());
-  const currentSig = JSON.stringify({ baseUrl, title, storeName, catchCopy });
-  // 文字が入力されているのに、その内容で「文字入れ」が未確定の状態
-  const dirty = hasText && appliedSig !== currentSig;
+  const currentSig = JSON.stringify({ baseUrl, title, storeName, catchCopy, logoPos });
+  // ロゴは常に入るため、現在の内容（文字・ロゴ位置）で合成が未確定なら dirty
+  const dirty = appliedSig !== currentSig;
+
+  useEffect(() => {
+    loadLogoImage().then(setLogo);
+  }, []);
 
   // 入力のたびにライブプレビューを再描画
   useEffect(() => {
@@ -225,13 +277,13 @@ export default function ThumbnailStep({
     loadImage(baseUrl)
       .then((img) => {
         if (cancelled || !canvasRef.current) return;
-        drawThumbnail(canvasRef.current, img, { title, storeName, catchCopy });
+        drawThumbnail(canvasRef.current, img, { title, storeName, catchCopy }, { logoPos, logo });
       })
       .catch(() => setError("プレビューの描画に失敗しました"));
     return () => {
       cancelled = true;
     };
-  }, [baseUrl, title, storeName, catchCopy]);
+  }, [baseUrl, title, storeName, catchCopy, logoPos, logo]);
 
   async function apply(): Promise<boolean> {
     if (!canvasRef.current || !base) return false;
@@ -299,8 +351,27 @@ export default function ThumbnailStep({
     <div className="space-y-4">
       <h2 className="font-display sparkle text-xl font-extrabold">サムネイル作成</h2>
       <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
-        写真にタイトル・店名・キャッチコピーを重ねてサムネイル化します。不要な場合はそのまま「次へ」進めます。
+        写真にばえめしロゴと、タイトル・店名・キャッチコピーを重ねてサムネイル化します。文字が不要でもロゴは入ります。
       </p>
+
+      <div>
+        <label className="label">ロゴの位置</label>
+        <div className="flex gap-2">
+          {(["left", "right"] as LogoPos[]).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setLogoPos(p)}
+              className={`chip ${logoPos === p ? "chip-on" : ""}`}
+            >
+              {p === "left" ? "左上（標準）" : "右上"}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1 text-xs text-[var(--ink-soft)]">
+          写真の被写体や文字と重なるときは右上に切り替えてください。タイトル・店名はロゴの反対側に寄ります。
+        </p>
+      </div>
 
       {images.length > 1 && (
         <div>
@@ -358,17 +429,17 @@ export default function ThumbnailStep({
 
       {error && <p className="note-error">{error}</p>}
       {applied && (
-        <p className="note-success">文字入れを適用済みです。文言を変えて「適用」し直すと作り直せます。</p>
+        <p className="note-success">ロゴ・文字入れを適用済みです。内容を変えて「適用」し直すと作り直せます。</p>
       )}
 
       <div className="flex gap-2">
         <button
           type="button"
           onClick={apply}
-          disabled={applying || !hasText}
+          disabled={applying}
           className="btn-secondary flex-1"
         >
-          {applying ? "適用中…" : applied ? "文字入れをやり直す" : "この写真に文字を入れる"}
+          {applying ? "適用中…" : applied ? "やり直す" : hasText ? "ロゴと文字を入れる" : "ロゴを入れる"}
         </button>
         <button
           type="button"
@@ -376,7 +447,7 @@ export default function ThumbnailStep({
           disabled={applying}
           className="btn-primary flex-1"
         >
-          {applying ? "適用中…" : dirty ? "文字を入れて次へ" : "次へ"}
+          {applying ? "適用中…" : dirty ? "ロゴを入れて次へ" : "次へ"}
         </button>
       </div>
     </div>
