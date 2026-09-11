@@ -28,18 +28,12 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 pb-24">
-      <svg viewBox="0 0 44 44" className="h-16 w-16" aria-hidden>
-        <g fill="#ffb800">
-          <path d="M22 2l1.3 3.7L27 7l-3.7 1.3L22 12l-1.3-3.7L17 7l3.7-1.3z" />
-          <path d="M10 8l.8 2.2L13 11l-2.2.8L10 14l-.8-2.2L7 11l2.2-.8z" />
-          <path d="M34 8l.8 2.2L37 11l-2.2.8L34 14l-.8-2.2L31 11l2.2-.8z" />
-        </g>
-        <path
-          d="M8 20h28a1.5 1.5 0 011.5 1.7C36.6 29 30.9 34 22 34S7.4 29 6.5 21.7A1.5 1.5 0 018 20z"
-          fill="#d7263d"
-        />
-        <rect x="17" y="34" width="10" height="4" rx="1.5" fill="#d7263d" />
-      </svg>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/baemeshi-logo.png"
+        alt="ばえめしロゴ"
+        className="h-24 w-24 rounded-full object-cover shadow-[0_4px_16px_rgba(58,46,38,0.12)]"
+      />
 
       <h1 className="font-display mt-3 text-2xl font-extrabold">ばえめし投稿</h1>
       <p className="mt-1 text-sm text-[var(--ink-soft)]">チームのPINコードを入力してください</p>
