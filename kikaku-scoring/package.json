@@ -1,0 +1,29 @@
+{
+  "name": "kikaku-scoring",
+  "version": "0.1.0",
+  "private": true,
+  "description": "企画書AI採点エンジン 段階1（要件定義書 v2.0 準拠）",
+  "scripts": {
+    "dev": "next dev -p 3500",
+    "build": "next build",
+    "start": "next start -p 3500",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.68",
+    "idb": "^8.0.2",
+    "next": "^15.5.0",
+    "openai": "^5.20.0",
+    "pdfjs-dist": "^4.10.38",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tesseract.js": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}
