@@ -6,9 +6,9 @@ export default function PageViewer({ page, onClose }: { page: StoredPage; onClos
   return (
     <div className="modal-bg" onClick={onClose} role="dialog" aria-modal="true">
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="row" style={{ justifyContent: "space-between", marginBottom: 8 }}>
-          <div>
-            {page.pageNumber}ページ目 <small>（ページID: {page.pageId}）</small>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-strong)" }}>
+            {page.pageNumber}ページ目 <span className="mono" style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)" }}>（ページID: {page.pageId}）</span>
           </div>
           <button className="btn secondary" onClick={onClose}>閉じる</button>
         </div>

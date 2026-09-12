@@ -44,3 +44,9 @@ npm run dev                  # http://localhost:3500
 - 採用モデルと実単価は検証後に確定する（`OPENAI_MODEL`、`src/lib/pricing.ts`）
 - AI提供元アカウントのデータ保持・学習共有設定は未確認。実運用前に確認して記録する
 - 安定性（同一資料3回採点で総合点差5点以内）は目標値であり未実測
+
+## デザイン
+
+Claude Design の参照デザイン「企画書AI採点アプリ」（スマホ版・PC版、Workstyle Evolution Design System）に準拠。
+ブランド色ティール #00A3A3、本文 Noto Sans JP、数値は JetBrains Mono、ヘアライン構造・角丸14pxカード・ピル状ステータス。
+PC はサイドバー型（企画一覧・比較・設定）、900px 以下はスマホ版と同じ下部タブバーに切り替わる。トークンは `src/app/globals.css` に定義。
