@@ -7,3 +7,5 @@ out
 data/usage.json
 .tess-cache
 *.log
+tsconfig.tsbuildinfo
+next-env.d.ts
