@@ -36,6 +36,58 @@ async function callClaude(prompt: string, maxTokens = 1024): Promise<string> {
   return text;
 }
 
+/**
+ * 文字列の中に素の二重引用符（例: "ハレの日使い"）が混ざって壊れたJSONを補正する。
+ * 文字列内で出会った " のあとに , } ] : 以外が続く場合は「閉じ引用符ではなく本文」とみなしてエスケープする。
+ */
+function repairJsonQuotes(text: string): string {
+  let out = "";
+  let inString = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (!inString) {
+      if (ch === '"') inString = true;
+      out += ch;
+      continue;
+    }
+    if (ch === "\\") {
+      out += ch + (text[i + 1] ?? "");
+      i++;
+      continue;
+    }
+    if (ch === '"') {
+      let j = i + 1;
+      while (j < text.length && /\s/.test(text[j])) j++;
+      const next = text[j];
+      if (next === undefined || next === "," || next === "}" || next === "]" || next === ":") {
+        inString = false;
+        out += ch;
+      } else {
+        out += '\\"';
+      }
+      continue;
+    }
+    if (ch === "\n") {
+      out += "\\n";
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
+/** コードブロックや前置きを剥がし、壊れた引用符も補正してJSONを読む */
+function parseJsonLenient<T>(text: string): T {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  const body = start >= 0 && end > start ? text.slice(start, end + 1) : text.trim();
+  try {
+    return JSON.parse(body) as T;
+  } catch {
+    return JSON.parse(repairJsonQuotes(body)) as T;
+  }
+}
+
 export interface StoreInfo {
   name: string;
   igHandle: string;
@@ -158,9 +210,8 @@ export async function generateReportCommentary(input: {
 ${metricsLines || "（指標を取得できませんでした）"}`;
 
   const text = await callClaude(prompt);
-  const jsonText = text.replace(/^```(json)?/m, "").replace(/```$/m, "").trim();
   try {
-    const parsed = JSON.parse(jsonText);
+    const parsed = parseJsonLenient<{ seika?: string; kadai?: string; taisaku?: string }>(text);
     if (!parsed.seika || !parsed.kadai || !parsed.taisaku) throw new Error("missing keys");
     return { seika: String(parsed.seika), kadai: String(parsed.kadai), taisaku: String(parsed.taisaku) };
   } catch {
@@ -196,6 +247,7 @@ export async function generateProposals(performanceText: string): Promise<Genera
 - 案は「投稿アプリの店舗情報フォーム」に渡せる粒度にすること。店名は指定しない（撮影に行く店は人間が決める）。ジャンルとフック方向と撮り方を指定する
 - 口調は明るくフレンドリーに（「〜してみよう！」など）。ただし数値の扱いは正確に
 - 各項目は簡潔に。summary は3〜4文、各案の hook / shoot / reason / evidence はそれぞれ2文以内
+- 文章の中で二重引用符（"）は使わないこと。強調や引用は「」を使う
 - 出力は次のJSONのみ。前置き・説明・コードブロック禁止
 
 {
@@ -217,13 +269,9 @@ ${performanceText}
 --- ここまで ---`;
 
   const text = await callClaude(prompt, 4096);
-  // コードブロックや前置きが混ざっても、最初の { から最後の } までを JSON として読む
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  const jsonText = start >= 0 && end > start ? text.slice(start, end + 1) : text.trim();
   let parsed: GeneratedProposalSet;
   try {
-    parsed = JSON.parse(jsonText);
+    parsed = parseJsonLenient<GeneratedProposalSet>(text);
   } catch {
     throw new Error(`改善案のJSON解析に失敗しました（出力が途中で切れた可能性）: ${text.slice(-200)}`);
   }
