@@ -5,7 +5,7 @@ import { generateProposals } from "@/lib/claude";
 import { createProposalBatch, insertProposals } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 // 改善仮説 → 課題・傾向・対策・型3つの生成（読み取り専用。投稿・広告への書き込みは一切しない）。
 // 通常は /api/proposals/collect の結果（snapshot, text）を body で受け取る。

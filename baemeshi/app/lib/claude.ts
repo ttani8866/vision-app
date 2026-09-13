@@ -278,7 +278,7 @@ export async function generateProposals(performanceText: string): Promise<Genera
 - 与えられた実績データの中の具体的な数値や投稿内容を根拠にすること。データにない数値・事実の捏造は禁止
 - データが未取得の項目は根拠に使わず、取れている範囲で判断すること
 - 口調は明るくフレンドリーに（「〜してみよう！」など）。ただし数値の扱いは正確に
-- 各案の hook / shoot / reason / evidence はそれぞれ2文以内
+- 各案の hook / shoot / reason / evidence はそれぞれ2文以内。summary は3文以内、issues は3項目、guidelines の各グループは2項目まで。全体を簡潔にすること（長い出力は不可）
 - 文章の中で二重引用符（"）は使わないこと。強調や引用は「」を使う
 - 出力は次のJSONのみ。前置き・説明・コードブロック禁止
 
@@ -307,7 +307,7 @@ export async function generateProposals(performanceText: string): Promise<Genera
 ${performanceText}
 --- ここまで ---`;
 
-  const text = await callClaude(prompt, 4096);
+  const text = await callClaude(prompt, 3000);
   let parsed: GeneratedProposalSet;
   try {
     parsed = parseJsonLenient<GeneratedProposalSet>(text);
