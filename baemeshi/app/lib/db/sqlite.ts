@@ -79,6 +79,14 @@ if (!historyCols.some((c) => c.name === "media_urls_json")) {
   db.exec("ALTER TABLE post_history ADD COLUMN media_urls_json TEXT");
 }
 
+const batchCols = db.prepare("PRAGMA table_info(proposal_batches)").all() as { name: string }[];
+if (!batchCols.some((c) => c.name === "issues_json")) {
+  db.exec("ALTER TABLE proposal_batches ADD COLUMN issues_json TEXT");
+}
+if (!batchCols.some((c) => c.name === "guidelines_json")) {
+  db.exec("ALTER TABLE proposal_batches ADD COLUMN guidelines_json TEXT");
+}
+
 const backend: DbBackend = {
   async insertPostHistory(row) {
     const info = db
@@ -159,7 +167,9 @@ const backend: DbBackend = {
   },
 
   async createProposalBatch(row) {
-    db.prepare("INSERT INTO proposal_batches (id, source_json, summary) VALUES (@id, @source_json, @summary)").run(row);
+    db.prepare(
+      "INSERT INTO proposal_batches (id, source_json, summary, issues_json, guidelines_json) VALUES (@id, @source_json, @summary, @issues_json, @guidelines_json)"
+    ).run(row);
     return db.prepare("SELECT * FROM proposal_batches WHERE id = ?").get(row.id) as ProposalBatchRow;
   },
 

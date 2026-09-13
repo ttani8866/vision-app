@@ -50,8 +50,12 @@ export interface ProposalBatchRow {
   id: string;
   /** 生成時に読み込んだ実績データのJSON（広告・投稿・フォロワー） */
   source_json: string;
-  /** AIによる今週の実績の読み（1段落） */
+  /** AIによる今週の実績の読み（傾向、1段落） */
   summary: string;
+  /** 現状の課題（string[] のJSON） */
+  issues_json: string | null;
+  /** 対策の指針（{theme: string[], shoot: string[], caption: string[]} のJSON） */
+  guidelines_json: string | null;
   created_at: string;
 }
 

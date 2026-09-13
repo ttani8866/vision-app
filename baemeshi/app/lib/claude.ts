@@ -228,37 +228,62 @@ export interface GeneratedProposal {
   evidence: string;
 }
 
+export interface Guidelines {
+  theme: string[];
+  shoot: string[];
+  caption: string[];
+}
+
 export interface GeneratedProposalSet {
+  /** 現状の課題（2〜4項目） */
+  issues: string[];
+  /** 傾向: 何が効いていて何が詰まっているか */
   summary: string;
+  /** 対策: 次にどの店に行っても使える指針 */
+  guidelines: Guidelines;
+  /** 次の投稿の型3つ（店名を指定しない） */
   proposals: GeneratedProposal[];
 }
 
 const GENRE_LIST = ["銀座老舗", "ハレの日", "ランチ", "スイーツ", "新店"] as const;
 
-/** 広告・投稿の実績テキストから、次の投稿の企画案3本を生成する */
+/** 広告・投稿の実績テキストから、課題・傾向・対策と、次の投稿の型3つを生成する */
 export async function generateProposals(performanceText: string): Promise<GeneratedProposalSet> {
   const prompt = `あなたは銀座グルメInstagramアカウント「ばえめし」（@baemeshi_official）の運用チームの企画担当AIです。
-以下の実績データを読み、「次に作る投稿の企画案」を3本出してください。目的は、フォロワー獲得（広告経由のフォロー転換）と保存・シェアの増加です。
+以下の実績データを読み、「現状の課題」「傾向」「対策の指針」と「次の投稿の型」を出してください。目的は、フォロワー獲得（広告経由のフォロー転換）と保存・シェアの増加です。
+
+運用の前提（重要）:
+- 取材は1回につき1店舗。同じ店に再取材することは基本的にできない。次にどの店に行くかは人間が決める
+- だから対策と型は、過去に当たった投稿の再現ではなく、「次にどの店に行っても当てはめられる指針」として書くこと
+- 複数店のまとめ特集は、すでに取材済みの店の写真を組み合わせる形でのみ可能。まとめ型を出す場合はその前提を明記すること
 
 ルール:
-- 3本は互いに切り口が異なること（同じ発想の言い換えを3本並べない）
-- 各案は、与えられた実績データの中の具体的な数値や投稿内容を根拠にすること。データにない数値・事実の捏造は禁止
+- issues は現状の課題を2〜4項目。データにある数値を根拠に、何が伸び悩んでいるかを1文ずつ
+- summary は傾向。何が効いていて何が詰まっているかを3〜4文で
+- guidelines は対策の指針。theme（テーマ設定の指針）・shoot（撮り方の指針）・caption（キャプションの指針）をそれぞれ2〜3項目、1文ずつ。店名・過去メニュー名を含めない
+- proposals は次の投稿の型を3つ。互いに切り口が異なること。店名や過去のメニュー名を指定せず、ジャンル・切り口・撮り方を「型」として書く。1店舗の取材で成立する型を最低2つ含めること
+- 与えられた実績データの中の具体的な数値や投稿内容を根拠にすること。データにない数値・事実の捏造は禁止
 - データが未取得の項目は根拠に使わず、取れている範囲で判断すること
-- 案は「投稿アプリの店舗情報フォーム」に渡せる粒度にすること。店名は指定しない（撮影に行く店は人間が決める）。ジャンルとフック方向と撮り方を指定する
 - 口調は明るくフレンドリーに（「〜してみよう！」など）。ただし数値の扱いは正確に
-- 各項目は簡潔に。summary は3〜4文、各案の hook / shoot / reason / evidence はそれぞれ2文以内
+- 各案の hook / shoot / reason / evidence はそれぞれ2文以内
 - 文章の中で二重引用符（"）は使わないこと。強調や引用は「」を使う
 - 出力は次のJSONのみ。前置き・説明・コードブロック禁止
 
 {
-  "summary": "今週の実績の読み（何が効いていて何が詰まっているか）を3〜4文で",
+  "issues": ["課題1", "課題2", "課題3"],
+  "summary": "傾向（3〜4文）",
+  "guidelines": {
+    "theme": ["テーマ設定の指針1", "指針2"],
+    "shoot": ["撮り方の指針1", "指針2"],
+    "caption": ["キャプションの指針1", "指針2"]
+  },
   "proposals": [
     {
-      "title": "案の名前（15字以内）",
+      "title": "型の名前（15字以内。例: ハレの日×1店3品まとめ）",
       "genre": "${GENRE_LIST.join(" | ")} のいずれか1つ",
-      "hook": "投稿のフック方向・切り口（1〜2文。キャプション生成AIへの指示として使う）",
+      "hook": "投稿のフック方向・切り口（1〜2文。キャプション生成AIへの指示として使う。店名を含めない）",
       "shoot": "素材の撮り方・見せ方の指示（1〜2文。スマホ撮影前提。1枚目に何を置くか等）",
-      "reason": "この案を選ぶ改善理由（2〜3文。何を改善するための案か）",
+      "reason": "この型を選ぶ改善理由（2〜3文。何を改善するための型か）",
       "evidence": "根拠となった数値・投稿内容（1〜2文。データ内の数値をそのまま引用）"
     }
   ]
@@ -278,6 +303,14 @@ ${performanceText}
   if (!parsed?.summary || !Array.isArray(parsed.proposals) || parsed.proposals.length === 0) {
     throw new Error("改善案の生成結果が不完全です");
   }
+  const strList = (v: unknown, max: number) =>
+    Array.isArray(v) ? v.filter((x) => typeof x === "string" && x.trim()).map(String).slice(0, max) : [];
+  parsed.issues = strList(parsed.issues, 4);
+  parsed.guidelines = {
+    theme: strList(parsed.guidelines?.theme, 3),
+    shoot: strList(parsed.guidelines?.shoot, 3),
+    caption: strList(parsed.guidelines?.caption, 3),
+  };
   parsed.proposals = parsed.proposals.slice(0, 3).map((p) => ({
     title: String(p.title ?? "").slice(0, 30),
     genre: (GENRE_LIST as readonly string[]).includes(p.genre) ? p.genre : "ランチ",

@@ -26,6 +26,44 @@ function toDate(s: string): Date {
   return new Date(iso);
 }
 
+function parseIssues(b: ProposalBatchRow): string[] {
+  try {
+    const v = JSON.parse(b.issues_json ?? "[]");
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseGuidelines(b: ProposalBatchRow): { theme: string[]; shoot: string[]; caption: string[] } | null {
+  try {
+    const v = JSON.parse(b.guidelines_json ?? "null");
+    if (!v) return null;
+    return { theme: v.theme ?? [], shoot: v.shoot ?? [], caption: v.caption ?? [] };
+  } catch {
+    return null;
+  }
+}
+
+function GuideList({ icon, label, items }: { icon: string; label: string; items: string[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div>
+      <p className="text-xs font-bold text-[var(--ink-soft)]">
+        {icon} {label}
+      </p>
+      <ul className="mt-0.5 space-y-1">
+        {items.map((t, i) => (
+          <li key={i} className="flex gap-1.5 text-sm leading-relaxed">
+            <span className="flex-none text-[var(--grad-b)]">・</span>
+            <span>{t}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function ProposalsPage() {
   const router = useRouter();
   const [batches, setBatches] = useState<ProposalBatchRow[]>([]);
@@ -109,7 +147,7 @@ export default function ProposalsPage() {
         </Link>
         <h1 className="font-display sparkle mb-1 text-xl font-extrabold">改善案</h1>
         <p className="mb-4 text-sm leading-relaxed text-[var(--ink-soft)]">
-          直近7日の広告実績と投稿の反応を読んで、次に作る投稿の案を3本出します。気に入った案は「この案で作る」で投稿フローに進みます。
+          直近7日の広告実績と投稿の反応から、現状の課題・傾向・対策の指針と、次の投稿の型を3つ出します。型は店を選ばず使える形で、気に入った型は「この型で作る」で投稿フローに進みます。
         </p>
 
         <button type="button" onClick={generate} disabled={generating} className="btn-primary">
@@ -135,14 +173,45 @@ export default function ProposalsPage() {
 
         {visibleBatches.map((batch) => {
           const proposals = items.filter((p) => p.batch_id === batch.id);
+          const issues = parseIssues(batch);
+          const guides = parseGuidelines(batch);
           return (
             <section key={batch.id} className="mt-5 space-y-3">
-              <div className="card p-4">
-                <p className="mb-1 text-xs font-bold text-[var(--ink-soft)]">
-                  {toDate(batch.created_at).toLocaleString("ja-JP")} の実績の読み
+              <div className="card space-y-3 p-4">
+                <p className="text-xs font-bold text-[var(--ink-soft)]">
+                  {toDate(batch.created_at).toLocaleString("ja-JP")} の実績から
                 </p>
-                <p className="text-sm leading-relaxed">{batch.summary}</p>
+
+                {issues.length > 0 && (
+                  <div className="note-warn">
+                    <p className="mb-1 text-xs font-bold">🤔 現状の課題</p>
+                    <ul className="space-y-1">
+                      {issues.map((t, i) => (
+                        <li key={i} className="flex gap-1.5 leading-relaxed">
+                          <span className="flex-none">・</span>
+                          <span>{t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs font-bold text-[var(--ink-soft)]">📈 傾向</p>
+                  <p className="mt-0.5 text-sm leading-relaxed">{batch.summary}</p>
+                </div>
+
+                {guides && (
+                  <div className="note-info space-y-2.5">
+                    <p className="text-xs font-bold">💪 対策（次にどの店に行っても使える指針）</p>
+                    <GuideList icon="🎯" label="テーマ設定" items={guides.theme} />
+                    <GuideList icon="📷" label="撮り方" items={guides.shoot} />
+                    <GuideList icon="✍️" label="キャプション" items={guides.caption} />
+                  </div>
+                )}
               </div>
+
+              <p className="pt-1 text-xs font-bold text-[var(--ink-soft)]">次の投稿の型（店は選ばず使える）</p>
 
               {proposals.map((p) => (
                 <div key={p.id} className="card p-4">
@@ -183,7 +252,7 @@ export default function ProposalsPage() {
                         disabled={busyId === p.id}
                         className="btn-primary flex-1 py-2.5 text-sm"
                       >
-                        この案で作る
+                        この型で作る
                       </button>
                       {p.status === "proposed" && (
                         <button

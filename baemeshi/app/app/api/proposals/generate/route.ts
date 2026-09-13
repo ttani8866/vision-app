@@ -31,6 +31,8 @@ export async function POST() {
       id: batchId,
       source_json: JSON.stringify({ snapshot, text }),
       summary: generated.summary,
+      issues_json: JSON.stringify(generated.issues),
+      guidelines_json: JSON.stringify(generated.guidelines),
     });
     const items = await insertProposals(
       generated.proposals.map((p) => ({

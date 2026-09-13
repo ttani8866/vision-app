@@ -56,6 +56,8 @@ function ensureSchema(): Promise<void> {
         summary TEXT NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )`;
+    await sql`ALTER TABLE proposal_batches ADD COLUMN IF NOT EXISTS issues_json TEXT`;
+    await sql`ALTER TABLE proposal_batches ADD COLUMN IF NOT EXISTS guidelines_json TEXT`;
     await sql`
       CREATE TABLE IF NOT EXISTS proposals (
         id SERIAL PRIMARY KEY,
@@ -180,8 +182,8 @@ const backend: DbBackend = {
   async createProposalBatch(row) {
     await ensureSchema();
     const rows = await sql`
-      INSERT INTO proposal_batches (id, source_json, summary)
-      VALUES (${row.id}, ${row.source_json}, ${row.summary}) RETURNING *`;
+      INSERT INTO proposal_batches (id, source_json, summary, issues_json, guidelines_json)
+      VALUES (${row.id}, ${row.source_json}, ${row.summary}, ${row.issues_json}, ${row.guidelines_json}) RETURNING *`;
     return toBatchRow(rows[0]);
   },
 
