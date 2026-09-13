@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 """
+【廃止 2026-09-13】このスクリプトは使わない。
+週次改善は投稿アプリの改善案（CPF主軸）に一本化し、baemeshi/weekly_proposals.py が本番APIを呼んで
+reports/weekly_YYYYMMDD.txt を生成する。定期実行 baemeshi-weekly-improvement もそちらを呼ぶ。
+判断軸がCTR中心でアプリ側と重複するため残置のみ。
+
 ばえめし（@baemeshi_official）週次改善レポート生成スクリプト
 
 処理内容:
