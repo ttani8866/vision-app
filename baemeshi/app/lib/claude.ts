@@ -232,6 +232,8 @@ export interface Guidelines {
   theme: string[];
   shoot: string[];
   caption: string[];
+  /** フォロー転換（クリック後にフォローさせる）の指針 */
+  conversion: string[];
 }
 
 export interface GeneratedProposalSet {
@@ -252,15 +254,26 @@ export async function generateProposals(performanceText: string): Promise<Genera
   const prompt = `あなたは銀座グルメInstagramアカウント「ばえめし」（@baemeshi_official）の運用チームの企画担当AIです。
 以下の実績データを読み、「現状の課題」「傾向」「対策の指針」と「次の投稿の型」を出してください。目的は、フォロワー獲得（広告経由のフォロー転換）と保存・シェアの増加です。
 
+判断の軸（重要）:
+- 主軸はCPF（フォロー獲得単価 ＝ 広告消化 ÷ 新規フォロワー数）。CPFが下がる（＝安くフォロワーが増える）ことを最優先で評価する
+- CTRはあくまで従。クリックが取れているかの補助指標として使い、CTRの高さだけで「良い」と判断しない
+- CTRとCPFの組み合わせで原因を切り分けること:
+  - CTRが高いのにCPFが悪い → クリック後にフォローされていない。原因はクリック後の転換側にある（プロフィールの導線、投稿内容と広告の期待値ギャップ、フォローする理由が示せていない、遷移先の不備など）。ここを詰めれば改善できる、という考え方を課題と対策に明示する
+  - CTRが低くCPFも悪い → 訴求そのもの（1枚目・フック）を変える
+  - CTRが低いのにCPFが良い → 訴求は弱いが刺さった人はフォローしている。訴求の量（見せ方・配信）を増やす
+  - CTRもCPFも良い → 勝ちパターン。型として横展開する
+- 広告別のフォロー数はAPIで取れない。広告別の比較はCTR・CPC・リンククリックで行い、CPFはアカウント全体の日別・期間値で判断する
+- CPFの参考水準は8月時点で概ね150〜300円。これより悪ければ課題、良ければ維持・横展開
+
 運用の前提（重要）:
 - 取材は1回につき1店舗。同じ店に再取材することは基本的にできない。次にどの店に行くかは人間が決める
 - だから対策と型は、過去に当たった投稿の再現ではなく、「次にどの店に行っても当てはめられる指針」として書くこと
 - 複数店のまとめ特集は、すでに取材済みの店の写真を組み合わせる形でのみ可能。まとめ型を出す場合はその前提を明記すること
 
 ルール:
-- issues は現状の課題を2〜4項目。データにある数値を根拠に、何が伸び悩んでいるかを1文ずつ
-- summary は傾向。何が効いていて何が詰まっているかを3〜4文で
-- guidelines は対策の指針。theme（テーマ設定の指針）・shoot（撮り方の指針）・caption（キャプションの指針）をそれぞれ2〜3項目、1文ずつ。店名・過去メニュー名を含めない
+- issues は現状の課題を2〜4項目。1項目目は必ずCPFの現状（数値と参考水準との比較）にすること。以降はデータにある数値を根拠に、何が伸び悩んでいるかを1文ずつ
+- summary は傾向。CPFとCTRの組み合わせからどの状態にあるか（上の切り分けのどれか）を最初に述べ、何が効いていて何が詰まっているかを3〜4文で
+- guidelines は対策の指針。theme（テーマ設定）・shoot（撮り方）・caption（キャプション）・conversion（フォロー転換: クリック後にフォローしてもらうための指針。プロフィール導線、期待値の一致、フォローする理由の提示など）をそれぞれ2〜3項目、1文ずつ。店名・過去メニュー名を含めない
 - proposals は次の投稿の型を3つ。互いに切り口が異なること。店名や過去のメニュー名を指定せず、ジャンル・切り口・撮り方を「型」として書く。1店舗の取材で成立する型を最低2つ含めること
 - 与えられた実績データの中の具体的な数値や投稿内容を根拠にすること。データにない数値・事実の捏造は禁止
 - データが未取得の項目は根拠に使わず、取れている範囲で判断すること
@@ -275,7 +288,8 @@ export async function generateProposals(performanceText: string): Promise<Genera
   "guidelines": {
     "theme": ["テーマ設定の指針1", "指針2"],
     "shoot": ["撮り方の指針1", "指針2"],
-    "caption": ["キャプションの指針1", "指針2"]
+    "caption": ["キャプションの指針1", "指針2"],
+    "conversion": ["フォロー転換の指針1", "指針2"]
   },
   "proposals": [
     {
@@ -283,7 +297,7 @@ export async function generateProposals(performanceText: string): Promise<Genera
       "genre": "${GENRE_LIST.join(" | ")} のいずれか1つ",
       "hook": "投稿のフック方向・切り口（1〜2文。キャプション生成AIへの指示として使う。店名を含めない）",
       "shoot": "素材の撮り方・見せ方の指示（1〜2文。スマホ撮影前提。1枚目に何を置くか等）",
-      "reason": "この型を選ぶ改善理由（2〜3文。何を改善するための型か）",
+      "reason": "この型を選ぶ改善理由（2〜3文。CPFをどう下げる型なのかを含める）",
       "evidence": "根拠となった数値・投稿内容（1〜2文。データ内の数値をそのまま引用）"
     }
   ]
@@ -310,6 +324,7 @@ ${performanceText}
     theme: strList(parsed.guidelines?.theme, 3),
     shoot: strList(parsed.guidelines?.shoot, 3),
     caption: strList(parsed.guidelines?.caption, 3),
+    conversion: strList(parsed.guidelines?.conversion, 3),
   };
   parsed.proposals = parsed.proposals.slice(0, 3).map((p) => ({
     title: String(p.title ?? "").slice(0, 30),

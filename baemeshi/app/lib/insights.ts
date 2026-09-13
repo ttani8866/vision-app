@@ -71,13 +71,129 @@ export interface AppPostSummary {
   taisaku: string | null;
 }
 
+export interface DailyKpiRow {
+  date: string;
+  spend: number | null;
+  ctr: number | null;
+  linkClicks: number | null;
+  /** IGの日別新規フォロワー数（広告・オーガニック合算。広告別には取れない） */
+  follows: number | null;
+  /** 消化 ÷ 新規フォロワー。フォロー0または未取得なら null */
+  cpf: number | null;
+}
+
+export interface KpiSummary {
+  /** 集計対象の日付範囲（直近7日。フォロワー数が未反映の末尾日は除外） */
+  from: string;
+  to: string;
+  days: number;
+  spend: number;
+  follows: number;
+  linkClicks: number;
+  /** 期間CPF（円）。フォロー0なら null */
+  cpf: number | null;
+  /** リンククリック→フォロー転換率（%） */
+  followRate: number | null;
+  /** 参考: 期間の平均CTR（%） */
+  ctr: number | null;
+  /** 集計上の注意（末尾日除外など） */
+  note: string | null;
+}
+
 export interface PerformanceSnapshot {
   collectedAt: string;
   period: string;
   account: { username: string | null; followers: number | null; mediaCount: number | null } | null;
+  /** KPI（CPF）: 日別系列と直近7日の集計。取れなければ null */
+  kpi: { daily: DailyKpiRow[]; last7: KpiSummary | null; error: string | null };
   ads: { account: AdAccountSummary | null; creatives: AdCreativeSummary[]; error: string | null };
   organic: { posts: OrganicPostSummary[]; error: string | null };
   appPosts: AppPostSummary[];
+}
+
+/** IGの日別新規フォロワー数（直近14日） */
+async function fetchDailyFollows(): Promise<Map<string, number>> {
+  const until = Math.floor(Date.now() / 1000);
+  const since = until - 14 * 24 * 3600;
+  const qs = new URLSearchParams({
+    metric: "follower_count",
+    period: "day",
+    since: String(since),
+    until: String(until),
+    access_token: env.igUserToken,
+  });
+  const json = await graphGet(`/${env.igAccountId}/insights?${qs.toString()}`);
+  const map = new Map<string, number>();
+  for (const m of json.data ?? []) {
+    if (m.name !== "follower_count") continue;
+    for (const v of m.values ?? []) {
+      const date = String(v.end_time ?? "").slice(0, 10);
+      if (date) map.set(date, Number(v.value ?? 0));
+    }
+  }
+  return map;
+}
+
+/** 広告の日別消化・CTR・リンククリック（直近14日） */
+async function fetchDailySpend(): Promise<Map<string, { spend: number; ctr: number | null; linkClicks: number | null }>> {
+  const qs = new URLSearchParams({
+    access_token: env.igUserToken,
+    date_preset: "last_14d",
+    time_increment: "1",
+    level: "account",
+    fields: "spend,ctr,inline_link_clicks",
+  });
+  const json = await graphGet(`/${env.adAccountId}/insights?${qs.toString()}`);
+  const map = new Map<string, { spend: number; ctr: number | null; linkClicks: number | null }>();
+  for (const r of json.data ?? []) {
+    map.set(String(r.date_start), {
+      spend: Number(r.spend ?? 0),
+      ctr: r.ctr != null ? Number(r.ctr) : null,
+      linkClicks: r.inline_link_clicks != null ? Number(r.inline_link_clicks) : null,
+    });
+  }
+  return map;
+}
+
+/** 日別のフォロワー数と消化額を突き合わせ、直近7日のCPFを集計する */
+async function fetchKpi(): Promise<{ daily: DailyKpiRow[]; last7: KpiSummary | null }> {
+  const [follows, spend] = await Promise.all([fetchDailyFollows(), fetchDailySpend()]);
+  const dates = Array.from(new Set([...Array.from(follows.keys()), ...Array.from(spend.keys())])).sort();
+  const daily: DailyKpiRow[] = dates.map((date) => {
+    const s = spend.get(date);
+    const f = follows.has(date) ? follows.get(date)! : null;
+    const cpf = s && f && f > 0 ? Math.round(s.spend / f) : null;
+    return { date, spend: s?.spend ?? null, ctr: s?.ctr ?? null, linkClicks: s?.linkClicks ?? null, follows: f, cpf };
+  });
+
+  // IGのフォロワー数は直近1〜2日が未反映（0）のことがあるため、末尾の0日を除いてから直近7日を取る
+  let end = daily.length;
+  let trimmed = 0;
+  while (end > 0 && (daily[end - 1].follows ?? 0) === 0 && trimmed < 3) {
+    end--;
+    trimmed++;
+  }
+  const window = daily.slice(Math.max(0, end - 7), end).filter((d) => d.spend !== null || d.follows !== null);
+  if (window.length === 0) return { daily, last7: null };
+
+  const sum = (k: "spend" | "follows" | "linkClicks") => window.reduce((a, d) => a + (d[k] ?? 0), 0);
+  const totalSpend = sum("spend");
+  const totalFollows = sum("follows");
+  const totalLinks = sum("linkClicks");
+  const ctrVals = window.map((d) => d.ctr).filter((v): v is number => v !== null);
+  const last7: KpiSummary = {
+    from: window[0].date,
+    to: window[window.length - 1].date,
+    days: window.length,
+    spend: Math.round(totalSpend),
+    follows: totalFollows,
+    linkClicks: totalLinks,
+    cpf: totalFollows > 0 ? Math.round(totalSpend / totalFollows) : null,
+    followRate: totalLinks > 0 ? Math.round((totalFollows / totalLinks) * 1000) / 10 : null,
+    ctr: ctrVals.length ? Math.round((ctrVals.reduce((a, b) => a + b, 0) / ctrVals.length) * 100) / 100 : null,
+    note: trimmed > 0 ? `フォロワー数が未反映の末尾${trimmed}日を集計から除外` : null,
+  };
+  return { daily, last7 };
 }
 
 function head(text: string | undefined | null, n = 80): string {
@@ -257,10 +373,23 @@ export async function collectPerformanceSnapshot(): Promise<PerformanceSnapshot>
     collectedAt: new Date().toISOString(),
     period: "直近7日間",
     account: null,
+    kpi: { daily: [], last7: null, error: null },
     ads: { account: null, creatives: [], error: null },
     organic: { posts: [], error: null },
     appPosts: [],
   };
+
+  if (env.adAccountId) {
+    try {
+      const k = await fetchKpi();
+      snapshot.kpi.daily = k.daily;
+      snapshot.kpi.last7 = k.last7;
+    } catch (e) {
+      snapshot.kpi.error = errText(e);
+    }
+  } else {
+    snapshot.kpi.error = "BAEMESHI_META_AD_ACCOUNT_ID が未設定のためCPFは未算出";
+  }
 
   try {
     const info = await getAccountInfo();
@@ -311,6 +440,26 @@ export function snapshotToText(s: PerformanceSnapshot): string {
   lines.push(`取得日時: ${s.collectedAt}／対象期間: ${s.period}`);
   if (s.account) {
     lines.push(`アカウント: @${s.account.username ?? "?"}／フォロワー ${fmt(s.account.followers)}／投稿数 ${fmt(s.account.mediaCount)}`);
+  }
+
+  lines.push("");
+  lines.push("■ KPI: CPF（フォロー獲得単価 ＝ 広告消化 ÷ 新規フォロワー数）");
+  if (s.kpi.last7) {
+    const k = s.kpi.last7;
+    lines.push(
+      `直近${k.days}日（${k.from}〜${k.to}）: 消化 ${fmt(k.spend, "円")}／新規フォロワー ${fmt(k.follows, "人")}／CPF ${k.cpf === null ? "算出不可（フォロー0）" : fmt(k.cpf, "円")}／リンククリック ${fmt(k.linkClicks)}／クリック→フォロー転換率 ${k.followRate === null ? "不明" : fmt(k.followRate, "%")}／平均CTR ${fmt(k.ctr, "%")}`
+    );
+    if (k.note) lines.push(`注: ${k.note}`);
+    lines.push("参考水準: 8月の日次レポートでのCPFは概ね150〜300円の帯");
+    lines.push("日別（日付: 消化／新規フォロワー／CPF／CTR／リンククリック）");
+    for (const d of s.kpi.daily.slice(-10)) {
+      lines.push(
+        `- ${d.date}: ${fmt(d.spend, "円")}／${d.follows === null ? "未取得" : fmt(d.follows, "人")}／${d.cpf === null ? "-" : fmt(d.cpf, "円")}／${fmt(d.ctr, "%")}／${fmt(d.linkClicks)}`
+      );
+    }
+    lines.push("注: 新規フォロワー数はアカウント全体（広告＋オーガニック）の日別値。広告別のフォロー数はAPIで取得できないため、広告別はCTR・CPC・リンククリックで比較する");
+  } else {
+    lines.push(`（未算出: ${s.kpi.error ?? "データなし"}）`);
   }
 
   lines.push("");

@@ -35,14 +35,48 @@ function parseIssues(b: ProposalBatchRow): string[] {
   }
 }
 
-function parseGuidelines(b: ProposalBatchRow): { theme: string[]; shoot: string[]; caption: string[] } | null {
+function parseGuidelines(
+  b: ProposalBatchRow
+): { theme: string[]; shoot: string[]; caption: string[]; conversion: string[] } | null {
   try {
     const v = JSON.parse(b.guidelines_json ?? "null");
     if (!v) return null;
-    return { theme: v.theme ?? [], shoot: v.shoot ?? [], caption: v.caption ?? [] };
+    return { theme: v.theme ?? [], shoot: v.shoot ?? [], caption: v.caption ?? [], conversion: v.conversion ?? [] };
   } catch {
     return null;
   }
+}
+
+interface KpiView {
+  from: string;
+  to: string;
+  spend: number;
+  follows: number;
+  cpf: number | null;
+  followRate: number | null;
+  ctr: number | null;
+  note: string | null;
+}
+
+/** 生成時に読んだ実績（source_json）から、KPI（CPF）の集計値だけ取り出す */
+function parseKpi(b: ProposalBatchRow): KpiView | null {
+  try {
+    const src = JSON.parse((b as ProposalBatchRow & { source_json?: string }).source_json ?? "null");
+    const k = src?.snapshot?.kpi?.last7;
+    if (!k) return null;
+    return { from: k.from, to: k.to, spend: k.spend, follows: k.follows, cpf: k.cpf, followRate: k.followRate, ctr: k.ctr, note: k.note };
+  } catch {
+    return null;
+  }
+}
+
+function KpiChip({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="flex items-center gap-1 rounded-full border border-[var(--hairline)] bg-[var(--paper)] px-2.5 py-1 text-xs font-bold">
+      <span className="text-[var(--ink-soft)]">{label}</span>
+      <span>{value}</span>
+    </span>
+  );
 }
 
 function GuideList({ icon, label, items }: { icon: string; label: string; items: string[] }) {
@@ -147,7 +181,7 @@ export default function ProposalsPage() {
         </Link>
         <h1 className="font-display sparkle mb-1 text-xl font-extrabold">改善案</h1>
         <p className="mb-4 text-sm leading-relaxed text-[var(--ink-soft)]">
-          直近7日の広告実績と投稿の反応から、現状の課題・傾向・対策の指針と、次の投稿の型を3つ出します。型は店を選ばず使える形で、気に入った型は「この型で作る」で投稿フローに進みます。
+          CPF（フォロー獲得単価）を主軸、CTRを従として直近7日の広告実績と投稿の反応を読み、現状の課題・傾向・対策の指針と、次の投稿の型を3つ出します。型は店を選ばず使える形で、気に入った型は「この型で作る」で投稿フローに進みます。
         </p>
 
         <button type="button" onClick={generate} disabled={generating} className="btn-primary">
@@ -175,12 +209,29 @@ export default function ProposalsPage() {
           const proposals = items.filter((p) => p.batch_id === batch.id);
           const issues = parseIssues(batch);
           const guides = parseGuidelines(batch);
+          const kpi = parseKpi(batch);
           return (
             <section key={batch.id} className="mt-5 space-y-3">
               <div className="card space-y-3 p-4">
                 <p className="text-xs font-bold text-[var(--ink-soft)]">
                   {toDate(batch.created_at).toLocaleString("ja-JP")} の実績から
                 </p>
+
+                {kpi && (
+                  <div>
+                    <p className="text-xs font-bold text-[var(--ink-soft)]">
+                      🎯 KPI: CPF（フォロー獲得単価）{kpi.from.slice(5)}〜{kpi.to.slice(5)}
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <KpiChip label="CPF" value={kpi.cpf === null ? "算出不可" : `${kpi.cpf.toLocaleString("ja-JP")}円`} />
+                      <KpiChip label="新規フォロワー" value={`${kpi.follows.toLocaleString("ja-JP")}人`} />
+                      <KpiChip label="消化" value={`${kpi.spend.toLocaleString("ja-JP")}円`} />
+                      <KpiChip label="クリック→フォロー" value={kpi.followRate === null ? "不明" : `${kpi.followRate}%`} />
+                      <KpiChip label="CTR（従）" value={kpi.ctr === null ? "不明" : `${kpi.ctr}%`} />
+                    </div>
+                    {kpi.note && <p className="mt-1 text-[11px] text-[var(--ink-soft)]">{kpi.note}</p>}
+                  </div>
+                )}
 
                 {issues.length > 0 && (
                   <div className="note-warn">
@@ -207,6 +258,7 @@ export default function ProposalsPage() {
                     <GuideList icon="🎯" label="テーマ設定" items={guides.theme} />
                     <GuideList icon="📷" label="撮り方" items={guides.shoot} />
                     <GuideList icon="✍️" label="キャプション" items={guides.caption} />
+                    <GuideList icon="🔁" label="フォロー転換（クリック後）" items={guides.conversion} />
                   </div>
                 )}
               </div>
