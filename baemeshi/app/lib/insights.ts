@@ -240,44 +240,45 @@ async function fetchAdCreatives(): Promise<AdCreativeSummary[]> {
   rows.sort((a, b) => Number(b.spend ?? 0) - Number(a.spend ?? 0));
   const top = rows.slice(0, 8);
 
-  const out: AdCreativeSummary[] = [];
-  for (const r of top) {
-    let captionHead: string | null = null;
-    let permalink: string | null = null;
-    let status: string | null = null;
-    try {
-      const aq = new URLSearchParams({
-        access_token: env.igUserToken,
-        fields: "effective_status,creative{effective_instagram_media_id,instagram_permalink_url,body}",
-      });
-      const ad = await graphGet(`/${r.ad_id}?${aq.toString()}`);
-      status = ad.effective_status ?? null;
-      permalink = ad.creative?.instagram_permalink_url ?? null;
-      const mediaId = ad.creative?.effective_instagram_media_id;
-      if (mediaId) {
-        const mq = new URLSearchParams({ access_token: env.igUserToken, fields: "caption" });
-        const media = await graphGet(`/${mediaId}?${mq.toString()}`);
-        captionHead = head(media.caption) || null;
-      } else if (ad.creative?.body) {
-        captionHead = head(ad.creative.body);
+  // 広告ごとのクリエイティブ詳細は並列で取得（Vercelの60秒制限対策）
+  return Promise.all(
+    top.map(async (r): Promise<AdCreativeSummary> => {
+      let captionHead: string | null = null;
+      let permalink: string | null = null;
+      let status: string | null = null;
+      try {
+        const aq = new URLSearchParams({
+          access_token: env.igUserToken,
+          fields: "effective_status,creative{effective_instagram_media_id,instagram_permalink_url,body}",
+        });
+        const ad = await graphGet(`/${r.ad_id}?${aq.toString()}`);
+        status = ad.effective_status ?? null;
+        permalink = ad.creative?.instagram_permalink_url ?? null;
+        const mediaId = ad.creative?.effective_instagram_media_id;
+        if (mediaId) {
+          const mq = new URLSearchParams({ access_token: env.igUserToken, fields: "caption" });
+          const media = await graphGet(`/${mediaId}?${mq.toString()}`);
+          captionHead = head(media.caption) || null;
+        } else if (ad.creative?.body) {
+          captionHead = head(ad.creative.body);
+        }
+      } catch {
+        // クリエイティブ詳細が取れなくても数値だけで続行
       }
-    } catch {
-      // クリエイティブ詳細が取れなくても数値だけで続行
-    }
-    out.push({
-      adName: r.ad_name,
-      status,
-      spend: r.spend != null ? Number(r.spend) : null,
-      impressions: r.impressions != null ? Number(r.impressions) : null,
-      clicks: r.clicks != null ? Number(r.clicks) : null,
-      ctr: r.ctr != null ? Number(r.ctr) : null,
-      cpc: r.cpc != null ? Number(r.cpc) : null,
-      linkClicks: r.inline_link_clicks != null ? Number(r.inline_link_clicks) : null,
-      captionHead,
-      permalink,
-    });
-  }
-  return out;
+      return {
+        adName: r.ad_name,
+        status,
+        spend: r.spend != null ? Number(r.spend) : null,
+        impressions: r.impressions != null ? Number(r.impressions) : null,
+        clicks: r.clicks != null ? Number(r.clicks) : null,
+        ctr: r.ctr != null ? Number(r.ctr) : null,
+        cpc: r.cpc != null ? Number(r.cpc) : null,
+        linkClicks: r.inline_link_clicks != null ? Number(r.inline_link_clicks) : null,
+        captionHead,
+        permalink,
+      };
+    })
+  );
 }
 
 async function fetchOrganicPosts(limit = 8): Promise<OrganicPostSummary[]> {
@@ -289,8 +290,9 @@ async function fetchOrganicPosts(limit = 8): Promise<OrganicPostSummary[]> {
   const json = await graphGet(`/${env.igAccountId}/media?${qs.toString()}`);
   const items = (json.data ?? []) as Record<string, unknown>[];
 
-  const out: OrganicPostSummary[] = [];
-  for (const m of items) {
+  // 投稿ごとの指標取得は並列で行う
+  return Promise.all(
+    items.map(async (m): Promise<OrganicPostSummary> => {
     const post: OrganicPostSummary = {
       id: String(m.id),
       timestamp: (m.timestamp as string) ?? null,
@@ -319,9 +321,9 @@ async function fetchOrganicPosts(limit = 8): Promise<OrganicPostSummary[]> {
         // 次のセットへ
       }
     }
-    out.push(post);
-  }
-  return out;
+    return post;
+    })
+  );
 }
 
 async function fetchAppPosts(): Promise<AppPostSummary[]> {
@@ -379,52 +381,76 @@ export async function collectPerformanceSnapshot(): Promise<PerformanceSnapshot>
     appPosts: [],
   };
 
+  // 各ソースは独立しているので並列で取得する（Vercelの60秒制限対策）
+  const tasks: Promise<void>[] = [];
+
   if (env.adAccountId) {
-    try {
-      const k = await fetchKpi();
-      snapshot.kpi.daily = k.daily;
-      snapshot.kpi.last7 = k.last7;
-    } catch (e) {
-      snapshot.kpi.error = errText(e);
-    }
+    tasks.push(
+      fetchKpi()
+        .then((k) => {
+          snapshot.kpi.daily = k.daily;
+          snapshot.kpi.last7 = k.last7;
+        })
+        .catch((e) => {
+          snapshot.kpi.error = errText(e);
+        })
+    );
+    tasks.push(
+      fetchAdAccountSummary()
+        .then((a) => {
+          snapshot.ads.account = a;
+        })
+        .catch((e) => {
+          snapshot.ads.error = errText(e);
+        })
+    );
+    tasks.push(
+      fetchAdCreatives()
+        .then((c) => {
+          snapshot.ads.creatives = c;
+        })
+        .catch((e) => {
+          snapshot.ads.error ??= errText(e);
+        })
+    );
   } else {
     snapshot.kpi.error = "BAEMESHI_META_AD_ACCOUNT_ID が未設定のためCPFは未算出";
-  }
-
-  try {
-    const info = await getAccountInfo();
-    snapshot.account = {
-      username: info.username ?? null,
-      followers: info.followers_count ?? null,
-      mediaCount: info.media_count ?? null,
-    };
-  } catch {
-    snapshot.account = null;
-  }
-
-  if (env.adAccountId) {
-    try {
-      snapshot.ads.account = await fetchAdAccountSummary();
-      snapshot.ads.creatives = await fetchAdCreatives();
-    } catch (e) {
-      snapshot.ads.error = errText(e);
-    }
-  } else {
     snapshot.ads.error = "BAEMESHI_META_AD_ACCOUNT_ID が未設定のため広告実績は未取得";
   }
 
-  try {
-    snapshot.organic.posts = await fetchOrganicPosts();
-  } catch (e) {
-    snapshot.organic.error = errText(e);
-  }
+  tasks.push(
+    getAccountInfo()
+      .then((info) => {
+        snapshot.account = {
+          username: info.username ?? null,
+          followers: info.followers_count ?? null,
+          mediaCount: info.media_count ?? null,
+        };
+      })
+      .catch(() => {
+        snapshot.account = null;
+      })
+  );
+  tasks.push(
+    fetchOrganicPosts()
+      .then((p) => {
+        snapshot.organic.posts = p;
+      })
+      .catch((e) => {
+        snapshot.organic.error = errText(e);
+      })
+  );
+  tasks.push(
+    fetchAppPosts()
+      .then((p) => {
+        snapshot.appPosts = p;
+      })
+      .catch(() => {
+        snapshot.appPosts = [];
+      })
+  );
 
-  try {
-    snapshot.appPosts = await fetchAppPosts();
-  } catch {
-    snapshot.appPosts = [];
-  }
-
+  await Promise.all(tasks);
   return snapshot;
 }
 

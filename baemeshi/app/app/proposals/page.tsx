@@ -104,6 +104,7 @@ export default function ProposalsPage() {
   const [items, setItems] = useState<ProposalRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [phase, setPhase] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -125,7 +126,18 @@ export default function ProposalsPage() {
     setError(null);
     setWarnings([]);
     try {
-      const res = await fetch("/api/proposals/generate", { method: "POST" });
+      // 1) 実績収集 → 2) 生成 の2段階（サーバー関数の60秒制限に収めるため）
+      setPhase("実績を集めています…（10秒ほど）");
+      const cRes = await fetch("/api/proposals/collect", { method: "POST" });
+      const collected = await cRes.json();
+      if (!cRes.ok || !collected.ok) throw new Error(collected.error ?? "実績の取得に失敗しました");
+
+      setPhase("実績を読んで案を考えています…（30秒ほど）");
+      const res = await fetch("/api/proposals/generate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ snapshot: collected.snapshot, text: collected.text }),
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error ?? "改善案の生成に失敗しました");
       setWarnings(json.warnings ?? []);
@@ -185,7 +197,7 @@ export default function ProposalsPage() {
         </p>
 
         <button type="button" onClick={generate} disabled={generating} className="btn-primary">
-          {generating ? "実績を読んでいます…（30秒ほど）" : latestBatch ? "最新の実績で作り直す" : "実績を読んで新案を作る"}
+          {generating ? phase || "処理中…" : latestBatch ? "最新の実績で作り直す" : "実績を読んで新案を作る"}
         </button>
 
         {error && <p className="note-error mt-3">{error}</p>}

@@ -1,28 +1,35 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
-import { collectPerformanceSnapshot, snapshotToText } from "@/lib/insights";
+import { collectPerformanceSnapshot, snapshotToText, type PerformanceSnapshot } from "@/lib/insights";
 import { generateProposals } from "@/lib/claude";
 import { createProposalBatch, insertProposals } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// 実績取得 → 改善仮説 → 新案3本の生成（読み取り専用。投稿・広告への書き込みは一切しない）
-export async function POST() {
+// 改善仮説 → 課題・傾向・対策・型3つの生成（読み取り専用。投稿・広告への書き込みは一切しない）。
+// 通常は /api/proposals/collect の結果（snapshot, text）を body で受け取る。
+// body が無い場合はこの場で収集する（手動実行用。Vercelでは60秒に収まらないことがある）。
+export async function POST(req: Request) {
   try {
-    const snapshot = await collectPerformanceSnapshot();
-    const text = snapshotToText(snapshot);
+    const body = (await req.json().catch(() => null)) as { snapshot?: PerformanceSnapshot; text?: string } | null;
+    let snapshot = body?.snapshot;
+    let text = body?.text;
 
-    const hasAnyData =
-      snapshot.ads.account !== null || snapshot.organic.posts.length > 0 || snapshot.appPosts.length > 0;
-    if (!hasAnyData) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: `実績データを取得できませんでした（広告: ${snapshot.ads.error ?? "なし"}／投稿: ${snapshot.organic.error ?? "なし"}）`,
-        },
-        { status: 502 }
-      );
+    if (!snapshot || !text) {
+      snapshot = await collectPerformanceSnapshot();
+      text = snapshotToText(snapshot);
+      const hasAnyData =
+        snapshot.ads.account !== null || snapshot.organic.posts.length > 0 || snapshot.appPosts.length > 0;
+      if (!hasAnyData) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: `実績データを取得できませんでした（広告: ${snapshot.ads.error ?? "なし"}／投稿: ${snapshot.organic.error ?? "なし"}）`,
+          },
+          { status: 502 }
+        );
+      }
     }
 
     const generated = await generateProposals(text);
@@ -46,7 +53,12 @@ export async function POST() {
       }))
     );
 
-    return NextResponse.json({ ok: true, batch, items, warnings: [snapshot.ads.error, snapshot.organic.error].filter(Boolean) });
+    return NextResponse.json({
+      ok: true,
+      batch,
+      items,
+      warnings: [snapshot.kpi.error, snapshot.ads.error, snapshot.organic.error].filter(Boolean),
+    });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err instanceof Error ? err.message : err) }, { status: 500 });
   }
