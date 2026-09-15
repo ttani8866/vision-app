@@ -417,3 +417,8 @@
 .badge--warn{background:var(--warn-bg);color:var(--warn-fg)}
 .pill--pri{background:var(--pri-bg);color:var(--pri-fg)}
 .grid3__val--pri{color:var(--pri)}
+
+/* --- 写真診断カード（写真→分析→スコア→ゾーン詳細を1枚に） ----------------- */
+.divider{border-top:1px solid var(--line);margin:16px 0 14px}
+.zone__legend .push{color:var(--mut)}
+.face{margin-top:12px}

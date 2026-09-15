@@ -31,36 +31,18 @@
 
             <div class="screen__body">
 
-              <!-- 1. 総合スコア -->
-              <section class="card" aria-label="総合スコア">
-                <div class="eyebrow">FACE AGE SCORE — 総合スコア</div>
-                <div class="hero__scores">
-                  <div class="hero__score" id="hero-score">82</div>
-                  <div class="hero__max">/ 100</div>
-                  <div class="hero__delta">
-                    <span class="pill pill--ok" id="hero-delta">+4pt <span class="pill__unit">前回比</span></span>
-                  </div>
-                </div>
-                <div class="hero__bar"><div class="hero__bar-fill" id="hero-bar" style="width:82%"></div></div>
-                <div class="grid3 hero__grid">
-                  <div class="grid3__cell"><div class="grid3__key">見た目年齢</div><div class="grid3__val" id="kpi-age">52<span class="grid3__unit">歳相当</span></div></div>
-                  <div class="grid3__cell"><div class="grid3__key">肌年齢</div><div class="grid3__val" id="kpi-skin">50<span class="grid3__unit">歳</span></div></div>
-                  <div class="grid3__cell"><div class="grid3__key">改善率</div><div class="grid3__val grid3__val--ok" id="kpi-rate">+5.1<span class="grid3__unit">%</span></div></div>
-                </div>
-                <p class="hero__note" id="hero-note">肌のツヤ・キメは改善。最大の改善余地は<b>目の下</b>。</p>
-              </section>
-
-              <!-- 2. 顔ゾーン診断 -->
-              <section class="card" aria-label="顔ゾーン診断">
+              <!-- 1. 写真診断：写真 → 分析 → 総合スコア → ゾーン詳細 -->
+              <section class="card" aria-label="写真診断">
                 <div class="row row--baseline row--between">
-                  <h2 class="card__title">顔ゾーン診断</h2>
-                  <span class="card__hint">タップで詳細</span>
+                  <h2 class="card__title">顔写真診断</h2>
+                  <span class="card__hint">写真を入れて分析</span>
                 </div>
                 <div class="legend zone__legend">
                   <span class="legend__item"><span class="dot dot--ok"></span>良好</span>
                   <span class="legend__item"><span class="dot dot--warn"></span>注意</span>
                   <span class="legend__item"><span class="dot dot--imp"></span>改善余地</span>
                   <span class="legend__item"><span class="dot dot--pri"></span>優先改善</span>
+                  <span class="legend__item push">チップをタップで詳細</span>
                 </div>
                 <div class="face" id="face">
                   <div class="slot" data-slot="face-photo" data-alt="正面の顔写真"><span class="slot__label">正面の顔写真をドロップ</span></div>
@@ -80,6 +62,23 @@
                   <p class="analyze__meta" id="analysis-meta" hidden></p>
                   <p class="analyze__note">写真からの推定・参考評価です。医療診断ではありません。写真は分析のためだけに送信し、保存しません。</p>
                 </div>
+                <div class="divider"></div>
+                <div class="eyebrow">FACE AGE SCORE — 総合スコア</div>
+                <div class="hero__scores">
+                  <div class="hero__score" id="hero-score">82</div>
+                  <div class="hero__max">/ 100</div>
+                  <div class="hero__delta">
+                    <span class="pill pill--ok" id="hero-delta">+4pt <span class="pill__unit">前回比</span></span>
+                  </div>
+                </div>
+                <div class="hero__bar"><div class="hero__bar-fill" id="hero-bar" style="width:82%"></div></div>
+                <div class="grid3 hero__grid">
+                  <div class="grid3__cell"><div class="grid3__key">見た目年齢</div><div class="grid3__val" id="kpi-age">52<span class="grid3__unit">歳相当</span></div></div>
+                  <div class="grid3__cell"><div class="grid3__key">肌年齢</div><div class="grid3__val" id="kpi-skin">50<span class="grid3__unit">歳</span></div></div>
+                  <div class="grid3__cell"><div class="grid3__key">改善率</div><div class="grid3__val grid3__val--ok" id="kpi-rate">+5.1<span class="grid3__unit">%</span></div></div>
+                </div>
+                <p class="hero__note" id="hero-note">肌のツヤ・キメは改善。最大の改善余地は<b>目の下</b>。</p>
+                <div class="divider"></div>
                 <div class="zone-detail" id="zone-detail" aria-live="polite">
                   <div class="row">
                     <span class="zone-detail__status"></span>
