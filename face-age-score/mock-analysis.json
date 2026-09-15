@@ -1,0 +1,48 @@
+{
+  "photo_quality": { "usable": true, "lighting": "良好", "notes": "デモ結果です。APIキーが設定されていないため、固定のサンプル値を表示しています。" },
+  "confidence": "low",
+  "apparent_age": 52,
+  "skin_age": 50,
+  "total_score": 82,
+  "summary": "肌のツヤ・キメは良好。最大の改善余地は目の下（目袋と影）。",
+  "axes": [
+    { "key": "tsuya", "score": 9.0, "comment": "頬・額の光沢が均一で健康的。" },
+    { "key": "hari", "score": 8.0, "comment": "頬の張りは年齢に対して良好。" },
+    { "key": "kime", "score": 8.5, "comment": "表面が滑らかで粗さは目立たない。" },
+    { "key": "keana", "score": 7.5, "comment": "鼻周りの毛穴がやや目立つ。" },
+    { "key": "kusumi", "score": 8.0, "comment": "透明感あり。頬にわずかな色ムラ。" },
+    { "key": "shimi", "score": 8.0, "comment": "目立つ色素沈着は少ない。" },
+    { "key": "shiwa", "score": 7.5, "comment": "額の横ジワが定着しはじめている。" },
+    { "key": "mebukuro", "score": 5.5, "comment": "目の下の膨らみと影が年齢印象を上げている。" },
+    { "key": "hourei", "score": 6.5, "comment": "軽度。左右差わずか。" },
+    { "key": "faceline", "score": 8.0, "comment": "輪郭は明瞭に保たれている。" }
+  ],
+  "zones": [
+    { "id": "hitai", "status": "注意", "score": 7.5, "metrics": [ { "k": "シワ", "v": 7.5 }, { "k": "ハリ", "v": 8.0 } ], "note": "横ジワが定着しはじめています。ボトックスとレチノールで進行を抑えられる段階です。" },
+    { "id": "memoto", "status": "注意", "score": 7.0, "metrics": [ { "k": "小ジワ", "v": 7.0 }, { "k": "ハリ", "v": 7.5 } ], "note": "乾燥由来の小ジワ。夜の保湿とリンクルケアで改善が見込めます。" },
+    { "id": "meshita", "status": "優先改善", "score": 5.5, "metrics": [ { "k": "目袋", "v": 5.5 }, { "k": "影", "v": 6.0 } ], "note": "膨らみと影が年齢印象を最も上げている部位。施術による改善が有効です。" },
+    { "id": "hoho", "status": "良好", "score": 8.2, "metrics": [ { "k": "毛穴", "v": 7.5 }, { "k": "ツヤ", "v": 9.0 } ], "note": "ツヤは非常に良好。毛穴は現在のケア継続で改善が期待できます。" },
+    { "id": "hourei", "status": "改善余地", "score": 6.5, "metrics": [ { "k": "深さ", "v": 6.5 }, { "k": "左右差", "v": 7.0 } ], "note": "軽度。現段階では経過観察とハリケアで十分です。" },
+    { "id": "line", "status": "良好", "score": 8.0, "metrics": [ { "k": "輪郭", "v": 8.0 }, { "k": "たるみ", "v": 8.0 } ], "note": "輪郭は年齢に対して良好に保たれています。" }
+  ],
+  "strengths": [ "肌のツヤ", "キメ", "フェイスライン" ],
+  "issues": [
+    { "axis": "mebukuro", "name": "目袋", "current": 5.5, "target": 8.5, "reason": "膨らみと影が顔全体の年齢印象を最も上げている。" },
+    { "axis": "shiwa", "name": "額のシワ", "current": 7.5, "target": 8.5, "reason": "横ジワが定着しはじめており、早期対処が有効。" },
+    { "axis": "keana", "name": "毛穴", "current": 7.5, "target": 9.0, "reason": "鼻周りの開きが透明感を下げている。" }
+  ],
+  "priority_order": [ "目元", "額", "肌質", "ほうれい線" ],
+  "home_care": {
+    "morning": [ "洗顔", "ビタミンC美容液", "保湿", "日焼け止め" ],
+    "night": [ "洗顔", "保湿", "レチノール／リンクルケア" ],
+    "ingredients": [ "ビタミンC", "レチノール", "ナイアシンアミド" ],
+    "note": "夜の保湿とレチノールを継続。目元は専用のアイクリームを追加。"
+  },
+  "procedures": [
+    { "name": "目袋施術（裏ハムラ）", "aim": "目袋・影", "target": "目の下", "priority": "高", "price_hint": "¥23〜44万", "downtime": "1〜2週間", "when": "10月" },
+    { "name": "額ボトックス", "aim": "額の横ジワ", "target": "額", "priority": "中", "price_hint": "¥3〜5万", "downtime": "ほぼなし", "when": "10月" },
+    { "name": "ケアシス", "aim": "保湿・鎮静・肌質改善", "target": "キメ・くすみ", "priority": "中", "price_hint": "¥25,000〜", "downtime": "なし", "when": "9月" },
+    { "name": "IPL", "aim": "くすみ・色ムラ・透明感", "target": "肌全体", "priority": "低", "price_hint": "¥30,000〜", "downtime": "ほぼなし", "when": "9月" }
+  ],
+  "cautions": "本結果は写真からの推定であり医療診断ではありません。急な腫れ・強い炎症・出血などがある場合は皮膚科を受診してください。"
+}

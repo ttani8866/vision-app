@@ -25,7 +25,7 @@
               </div>
               <div class="app-header__user">
                 <div class="app-header__name">田中 様</div>
-                <div class="app-header__date">2026/09/01 撮影</div>
+                <div class="app-header__date" id="header-date">2026/09/01 撮影</div>
               </div>
             </header>
 
@@ -35,19 +35,19 @@
               <section class="card" aria-label="総合スコア">
                 <div class="eyebrow">FACE AGE SCORE — 総合スコア</div>
                 <div class="hero__scores">
-                  <div class="hero__score">82</div>
+                  <div class="hero__score" id="hero-score">82</div>
                   <div class="hero__max">/ 100</div>
                   <div class="hero__delta">
-                    <span class="pill pill--ok">+4pt <span class="pill__unit">前回比</span></span>
+                    <span class="pill pill--ok" id="hero-delta">+4pt <span class="pill__unit">前回比</span></span>
                   </div>
                 </div>
-                <div class="hero__bar"><div class="hero__bar-fill" style="width:82%"></div></div>
+                <div class="hero__bar"><div class="hero__bar-fill" id="hero-bar" style="width:82%"></div></div>
                 <div class="grid3 hero__grid">
-                  <div class="grid3__cell"><div class="grid3__key">見た目年齢</div><div class="grid3__val">52<span class="grid3__unit">歳相当</span></div></div>
-                  <div class="grid3__cell"><div class="grid3__key">肌年齢</div><div class="grid3__val">50<span class="grid3__unit">歳</span></div></div>
-                  <div class="grid3__cell"><div class="grid3__key">改善率</div><div class="grid3__val grid3__val--ok">+5.1<span class="grid3__unit">%</span></div></div>
+                  <div class="grid3__cell"><div class="grid3__key">見た目年齢</div><div class="grid3__val" id="kpi-age">52<span class="grid3__unit">歳相当</span></div></div>
+                  <div class="grid3__cell"><div class="grid3__key">肌年齢</div><div class="grid3__val" id="kpi-skin">50<span class="grid3__unit">歳</span></div></div>
+                  <div class="grid3__cell"><div class="grid3__key">改善率</div><div class="grid3__val grid3__val--ok" id="kpi-rate">+5.1<span class="grid3__unit">%</span></div></div>
                 </div>
-                <p class="hero__note">肌のツヤ・キメは改善。最大の改善余地は<b>目の下</b>。</p>
+                <p class="hero__note" id="hero-note">肌のツヤ・キメは改善。最大の改善余地は<b>目の下</b>。</p>
               </section>
 
               <!-- 2. 顔ゾーン診断 -->
@@ -72,7 +72,13 @@
                     <line x1="252" y1="242" x2="196" y2="238"></line><circle cx="196" cy="238" r="4" fill="var(--imp)"></circle>
                     <line x1="78" y1="308" x2="122" y2="298"></line><circle cx="122" cy="298" r="4" fill="var(--ok)"></circle>
                   </svg>
-                  <!-- ゾーンチップは main.js が ZONES から生成 -->
+                  <!-- ゾーンチップは main.js が生成（AI分析後は analyze.js が差し替え） -->
+                </div>
+                <div class="analyze">
+                  <button class="analyze__btn" id="analyze-btn" type="button" disabled>写真をAI分析する</button>
+                  <p class="analyze__status" id="analyze-status" hidden></p>
+                  <p class="analyze__meta" id="analysis-meta" hidden></p>
+                  <p class="analyze__note">写真からの推定・参考評価です。医療診断ではありません。写真は分析のためだけに送信し、保存しません。</p>
                 </div>
                 <div class="zone-detail" id="zone-detail" aria-live="polite">
                   <div class="row">
@@ -100,25 +106,25 @@
                     <line x1="160" y1="145" x2="160" y2="55"></line><line x1="160" y1="145" x2="212.9" y2="72.2"></line><line x1="160" y1="145" x2="245.6" y2="117.2"></line><line x1="160" y1="145" x2="245.6" y2="172.8"></line><line x1="160" y1="145" x2="212.9" y2="217.8"></line><line x1="160" y1="145" x2="160" y2="235"></line><line x1="160" y1="145" x2="107.1" y2="217.8"></line><line x1="160" y1="145" x2="74.4" y2="172.8"></line><line x1="160" y1="145" x2="74.4" y2="117.2"></line><line x1="160" y1="145" x2="107.1" y2="72.2"></line>
                   </g>
                   <polygon class="radar__target" points="160,68.5 205,83.2 232.8,121.4 232.8,168.6 205,206.8 160,221.5 115,206.8 87.2,168.6 87.2,121.4 115,83.2"></polygon>
-                  <polygon class="radar__area" points="160,64 202.3,86.8 232.8,121.4 224.2,165.9 197,196 160,212.5 120.3,199.6 112.9,160.3 104.4,126.9 117.7,86.8"></polygon>
-                  <circle class="radar__point" cx="112.9" cy="160.3" r="3.5"></circle>
-                  <circle class="radar__ring" cx="112.9" cy="160.3" r="7"></circle>
-                  <g class="radar__labels">
-                    <text x="160" y="42" text-anchor="middle">ツヤ 9.0</text>
-                    <text x="222" y="60" text-anchor="start">ハリ 8.0</text>
-                    <text x="253" y="114" text-anchor="start">キメ</text>
-                    <text x="253" y="182" text-anchor="start">毛穴 7.5</text>
-                    <text x="220" y="234" text-anchor="start">くすみ</text>
-                    <text x="160" y="252" text-anchor="middle">シミ</text>
-                    <text x="100" y="234" text-anchor="end">シワ 7.5</text>
-                    <text class="radar__label--alert" x="67" y="182" text-anchor="end">目袋 5.5</text>
-                    <text x="67" y="114" text-anchor="end">ほうれい線</text>
-                    <text x="100" y="60" text-anchor="end">フェイスライン</text>
+                  <polygon class="radar__area" id="radar-area" points="160,64 202.3,86.8 232.8,121.4 224.2,165.9 197,196 160,212.5 120.3,199.6 112.9,160.3 104.4,126.9 117.7,86.8"></polygon>
+                  <circle class="radar__point" id="radar-point" cx="112.9" cy="160.3" r="3.5"></circle>
+                  <circle class="radar__ring" id="radar-ring" cx="112.9" cy="160.3" r="7"></circle>
+                  <g class="radar__labels" id="radar-labels">
+                    <text data-axis="tsuya" x="160" y="42" text-anchor="middle">ツヤ 9.0</text>
+                    <text data-axis="hari" x="222" y="60" text-anchor="start">ハリ 8.0</text>
+                    <text data-axis="kime" x="253" y="114" text-anchor="start">キメ</text>
+                    <text data-axis="keana" x="253" y="182" text-anchor="start">毛穴 7.5</text>
+                    <text data-axis="kusumi" x="220" y="234" text-anchor="start">くすみ</text>
+                    <text data-axis="shimi" x="160" y="252" text-anchor="middle">シミ</text>
+                    <text data-axis="shiwa" x="100" y="234" text-anchor="end">シワ 7.5</text>
+                    <text data-axis="mebukuro" class="radar__label--alert" x="67" y="182" text-anchor="end">目袋 5.5</text>
+                    <text data-axis="hourei" x="67" y="114" text-anchor="end">ほうれい線</text>
+                    <text data-axis="faceline" x="100" y="60" text-anchor="end">フェイスライン</text>
                   </g>
                 </svg>
                 <div class="prio-section">
                   <div class="eyebrow eyebrow--tight">改善優先順位 TOP3</div>
-                  <div class="prio-list">
+                  <div class="prio-list" id="prio-list">
                     <div class="prio prio--pri"><span class="prio__num">1</span><span class="prio__name">目袋</span><span class="prio__delta">5.5 → 8.5</span></div>
                     <div class="prio prio--imp"><span class="prio__num">2</span><span class="prio__name">額のシワ</span><span class="prio__delta">7.5 → 8.5</span></div>
                     <div class="prio prio--warn"><span class="prio__num">3</span><span class="prio__name">毛穴</span><span class="prio__delta">7.5 → 9.0</span></div>
@@ -132,11 +138,11 @@
                 <div class="ai">
                   <div>
                     <div class="ai__label">① 現在の状態</div>
-                    <p class="ai__text">肌のツヤとキメは非常に良好。一方、目の下の膨らみと影が顔全体の年齢印象を上げています。</p>
+                    <p class="ai__text" id="ai-current">肌のツヤとキメは非常に良好。一方、目の下の膨らみと影が顔全体の年齢印象を上げています。</p>
                   </div>
                   <div>
-                    <div class="ai__label">② 改善された点</div>
-                    <div class="tags">
+                    <div class="ai__label" id="ai-improved-label">② 改善された点</div>
+                    <div class="tags" id="ai-improved">
                       <span class="tag tag--num tag--ok">ツヤ +1.5</span>
                       <span class="tag tag--num tag--ok">くすみ +1.0</span>
                       <span class="tag tag--num tag--ok">毛穴 +0.5</span>
@@ -144,7 +150,7 @@
                   </div>
                   <div>
                     <div class="ai__label">③ 現在の課題</div>
-                    <div class="tags">
+                    <div class="tags" id="ai-issues">
                       <span class="tag tag--pri">目袋</span>
                       <span class="tag tag--imp">額のシワ</span>
                       <span class="tag tag--warn">軽いほうれい線</span>
@@ -152,8 +158,9 @@
                   </div>
                   <div>
                     <div class="ai__label">④ 優先順位</div>
-                    <div class="ai__order">目元 <span>＞</span> 額 <span>＞</span> 肌質 <span>＞</span> ほうれい線</div>
+                    <div class="ai__order" id="ai-order">目元 <span>＞</span> 額 <span>＞</span> 肌質 <span>＞</span> ほうれい線</div>
                   </div>
+                  <p class="ai__cautions" id="ai-cautions" hidden></p>
                 </div>
               </section>
 
@@ -169,12 +176,16 @@
                   <div class="routine">
                     <div class="routine__col">
                       <div class="routine__when">朝</div>
-                      <div class="routine__steps">洗顔<br>ビタミンC<br>保湿<br>日焼け止め</div>
+                      <div class="routine__steps" id="care-morning">洗顔<br>ビタミンC<br>保湿<br>日焼け止め</div>
                     </div>
                     <div class="routine__col">
                       <div class="routine__when routine__when--night">夜</div>
-                      <div class="routine__steps">洗顔<br>保湿<br>レチノール／リンクルケア</div>
+                      <div class="routine__steps" id="care-night">洗顔<br>保湿<br>レチノール／リンクルケア</div>
                     </div>
+                  </div>
+                  <div class="care-extra">
+                    <div class="clinic__tags" id="care-ingredients"></div>
+                    <p class="care-note" id="care-note" hidden></p>
                   </div>
                   <div class="product">
                     <div class="product__head">おすすめ商品</div>
@@ -196,6 +207,7 @@
 
                 <div class="tabpanel tabpanel--seme" id="panel-seme" role="tabpanel" data-panel="seme" hidden>
                   <p class="seme__lead">現在の状態から、必要な施術のみ提案しています。</p>
+                  <div class="proc-list" id="proc-list">
                   <div class="proc">
                     <div class="row"><span class="proc__name">ケアシス</span><span class="push stars stars--sm">★★★★★</span></div>
                     <div class="proc__aim">目的：保湿・鎮静・肌質改善　／　改善対象：キメ・くすみ</div>
@@ -231,6 +243,7 @@
                       <div class="proc__cell"><div class="proc__key">ダウンタイム</div><div class="proc__val">ほぼなし</div></div>
                       <div class="proc__cell"><div class="proc__key">おすすめ時期</div><div class="proc__val proc__val--when">10月</div></div>
                     </div>
+                  </div>
                   </div>
                 </div>
               </section>
@@ -361,5 +374,6 @@
 
 <script src="assets/js/main.js"></script>
 <script src="assets/js/slot-upload.js"></script>
+<script src="assets/js/analyze.js"></script>
 </body>
 </html>

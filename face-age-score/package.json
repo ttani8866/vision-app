@@ -1,0 +1,14 @@
+{
+  "name": "face-age-score",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FACE AGE SCORE — 顔写真AI分析つきの診断結果画面（静的サイト＋分析API）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
+    "zod": "^3.25.0"
+  }
+}

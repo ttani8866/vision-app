@@ -75,11 +75,16 @@
       }
       img.src = dataUrl;
       slot.classList.add('is-filled');
+      notify();
     }
     function remove() {
       if (img) { img.remove(); img = null; }
       slot.classList.remove('is-filled');
       store(id, null);
+      notify();
+    }
+    function notify() {
+      document.dispatchEvent(new CustomEvent('slot:change', { detail: { id: id, filled: slot.classList.contains('is-filled') } }));
     }
     function accept(file) {
       if (!file || !/^image\//.test(file.type)) return;

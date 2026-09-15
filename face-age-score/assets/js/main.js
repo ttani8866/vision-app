@@ -1,7 +1,7 @@
 /* ==========================================================================
    FACE AGE SCORE — App Screen
    - iOS デバイスの装飾（ステータスバー／ダイナミックアイランド／ホームバー）を注入
-   - 顔ゾーン診断：チップ選択で詳細パネルを切り替える
+   - 顔ゾーン診断：チップ選択で詳細パネルを切り替える（window.FAS.setZones で差し替え可）
    - 改善アドバイス：守り（ホームケア）／攻め（美容施術）のタブ切替
    ========================================================================== */
 (function () {
@@ -23,30 +23,34 @@
     '<path d="M64.4 4.4v3.2a1.7 1.7 0 0 0 0-3.2Z" opacity=".4"></path>' +
     '</svg>';
 
-  /* 顔ゾーンの診断データ（デザインの ZONES をそのまま移植） */
-  var ZONES = [
+  /* チップの表示位置（ゾーンごとに固定。写真の上のおおよその部位） */
+  var ZONE_POS = {
+    hitai: { left: '8px', top: '32px' },
+    memoto: { right: '8px', top: '106px' },
+    meshita: { right: '8px', top: '162px' },
+    hoho: { left: '8px', top: '192px' },
+    hourei: { right: '8px', top: '228px' },
+    line: { left: '8px', top: '294px' }
+  };
+
+  /* 初期表示のサンプルデータ（AI分析後は analyze.js が差し替える） */
+  var DEFAULT_ZONES = [
     { id: 'hitai', name: '額', score: '7.5', color: 'var(--warn)', status: '注意',
-      pos: { left: '8px', top: '32px' },
       metrics: [{ k: 'シワ', v: '7.5' }, { k: 'ハリ', v: '8.0' }],
       note: '横ジワが定着しはじめています。ボトックスとレチノールで進行を抑えられる段階です。' },
     { id: 'memoto', name: '目元', score: '7.0', color: 'var(--warn)', status: '注意',
-      pos: { right: '8px', top: '106px' },
       metrics: [{ k: '小ジワ', v: '7.0' }, { k: 'ハリ', v: '7.5' }],
       note: '乾燥由来の小ジワ。夜の保湿とリンクルケアで改善が見込めます。' },
     { id: 'meshita', name: '目の下', score: '5.5', color: 'var(--pri)', status: '優先改善',
-      pos: { right: '8px', top: '162px' },
       metrics: [{ k: '目袋', v: '5.5' }, { k: '影', v: '6.0' }],
       note: '膨らみと影が年齢印象を最も上げている部位。施術による改善が有効です。' },
     { id: 'hoho', name: '頬', score: '8.2', color: 'var(--ok)', status: '良好',
-      pos: { left: '8px', top: '192px' },
       metrics: [{ k: '毛穴', v: '7.5' }, { k: 'ツヤ', v: '9.0' }],
       note: 'ツヤは非常に良好。毛穴は現在のケア継続で改善が期待できます。' },
     { id: 'hourei', name: 'ほうれい線', score: '6.5', color: 'var(--imp)', status: '改善余地',
-      pos: { right: '8px', top: '228px' },
       metrics: [{ k: '深さ', v: '6.5' }, { k: '左右差', v: '7.0' }],
       note: '軽度。現段階では経過観察とハリケアで十分です。' },
     { id: 'line', name: 'フェイスライン', score: '8.0', color: 'var(--ok)', status: '良好',
-      pos: { left: '8px', top: '294px' },
       metrics: [{ k: '輪郭', v: '8.0' }, { k: 'たるみ', v: '8.0' }],
       note: '輪郭は年齢に対して良好に保たれています。' }
   ];
@@ -86,15 +90,22 @@
     var nameEl = detail.querySelector('.zone-detail__name');
     var metricsEl = detail.querySelector('.zone-detail__metrics');
     var noteEl = detail.querySelector('.zone-detail__note');
+    var zones = DEFAULT_ZONES;
     var chips = {};
+    var current = DEFAULT_ZONE;
+
+    function find(id) {
+      for (var i = 0; i < zones.length; i++) if (zones[i].id === id) return zones[i];
+      return null;
+    }
 
     function select(id) {
-      var zone = null;
-      ZONES.forEach(function (z) { if (z.id === id) zone = z; });
+      var zone = find(id) || zones[0];
       if (!zone) return;
+      current = zone.id;
 
       Object.keys(chips).forEach(function (key) {
-        chips[key].setAttribute('aria-pressed', key === id ? 'true' : 'false');
+        chips[key].setAttribute('aria-pressed', key === zone.id ? 'true' : 'false');
       });
 
       statusEl.textContent = zone.status;
@@ -112,25 +123,39 @@
       });
     }
 
-    ZONES.forEach(function (z) {
-      var chip = el('button', 'chip');
-      chip.type = 'button';
-      chip.setAttribute('aria-pressed', 'false');
-      chip.setAttribute('aria-label', z.name + ' ' + z.score);
-      Object.keys(z.pos).forEach(function (k) { chip.style[k] = z.pos[k]; });
+    function render() {
+      Object.keys(chips).forEach(function (key) { chips[key].remove(); });
+      chips = {};
+      zones.forEach(function (z) {
+        var chip = el('button', 'chip');
+        chip.type = 'button';
+        chip.setAttribute('aria-pressed', 'false');
+        chip.setAttribute('aria-label', z.name + ' ' + z.score);
+        var pos = ZONE_POS[z.id] || { left: '8px', top: '8px' };
+        Object.keys(pos).forEach(function (k) { chip.style[k] = pos[k]; });
 
-      var dot = el('span', 'dot');
-      dot.style.background = z.color;
-      chip.appendChild(dot);
-      chip.appendChild(document.createTextNode(z.name + ' '));
-      chip.appendChild(el('span', 'chip__score', z.score));
+        var dot = el('span', 'dot');
+        dot.style.background = z.color;
+        chip.appendChild(dot);
+        chip.appendChild(document.createTextNode(z.name + ' '));
+        chip.appendChild(el('span', 'chip__score', z.score));
 
-      chip.addEventListener('click', function () { select(z.id); });
-      face.appendChild(chip);
-      chips[z.id] = chip;
-    });
+        chip.addEventListener('click', function () { select(z.id); });
+        face.appendChild(chip);
+        chips[z.id] = chip;
+      });
+    }
 
+    render();
     select(DEFAULT_ZONE);
+
+    /* analyze.js から差し替える入口 */
+    window.FAS = window.FAS || {};
+    window.FAS.setZones = function (next, selectId) {
+      zones = next;
+      render();
+      select(selectId || current);
+    };
   }
 
   /* --- 改善アドバイスのタブ --------------------------------------------- */

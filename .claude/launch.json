@@ -94,14 +94,9 @@
     },
     {
       "name": "face-age-score",
-      "runtimeExecutable": "npx",
+      "runtimeExecutable": "node",
       "runtimeArgs": [
-        "-y",
-        "http-server",
-        "face-age-score",
-        "-p",
-        "8150",
-        "-c-1"
+        "face-age-score/server.js"
       ],
       "port": 8150
     },
