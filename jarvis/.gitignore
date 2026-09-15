@@ -1,0 +1,8 @@
+tests/audio/
+__pycache__/
+*.pyc
+.env
+hud/graph.json
+hud/state.json
+hud/data/dashboard.json
+tests/logs/

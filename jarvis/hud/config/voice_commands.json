@@ -1,0 +1,11 @@
+{
+  "_comment": "音声の発話テキストにこのキーワードが含まれていたら、対応するパネル(panels.jsonのid)を拡大表示する。jarvis_kanbei_main.py が毎ターンの発話テキストに対して部分一致で判定し、state.json の panel_focus にパネルidを書く（一致しなければ null に戻る＝リング表示に復帰）。hud側（app.js）はキーワードを知る必要がなく、panel_focus の値をそのまま参照するだけ。コマンドを増やす場合はこのファイルにキーワードを追記するだけでよい（voice側・HUD側ともコード変更不要）。",
+  "commands": [
+    { "keyword": "経営数字", "panel": "dashboard" },
+    { "keyword": "経営ダッシュボード", "panel": "dashboard" },
+    { "keyword": "財務レポート", "panel": "dashboard" },
+    { "keyword": "VisionX", "panel": "graph" },
+    { "keyword": "ビジョンエックス", "panel": "graph" },
+    { "keyword": "グラフビュー", "panel": "graph" }
+  ]
+}

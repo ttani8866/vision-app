@@ -1,0 +1,18 @@
+{
+  "_comment": "state.json の state フィールド（booting/idle/listening/transcribing/thinking/speaking）を5状態に正規化して表示する対応表。dispatch配列に未完了ジョブがあるときは他の状態より優先して dispatching を使う（app.js の resolveEffectiveState）。状態を増やす場合はここに追記し、rawStateMap にも生のstate値を対応させる。",
+  "states": {
+    "idle": { "ja": "待機", "en": "IDLE", "color": "#3ee0ff", "ringSpeed": 0.12, "glow": 0.35 },
+    "listening": { "ja": "聞き取り中", "en": "LISTENING", "color": "#5ee8ff", "ringSpeed": 0.55, "glow": 0.6 },
+    "thinking": { "ja": "考え中", "en": "THINKING", "color": "#8ff0ff", "ringSpeed": 1.1, "glow": 0.78 },
+    "speaking": { "ja": "発話中", "en": "SPEAKING", "color": "#baffef", "ringSpeed": 0.85, "glow": 1.0 },
+    "dispatching": { "ja": "召集中", "en": "DISPATCHING", "color": "#b48cff", "ringSpeed": 1.6, "glow": 1.0 }
+  },
+  "rawStateMap": {
+    "booting": "idle",
+    "idle": "idle",
+    "listening": "listening",
+    "transcribing": "listening",
+    "thinking": "thinking",
+    "speaking": "speaking"
+  }
+}

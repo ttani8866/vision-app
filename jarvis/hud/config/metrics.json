@@ -1,0 +1,15 @@
+{
+  "_comment": "経営ダッシュボードの指標・切り口の定義。行や指標を増やす場合はここだけを編集する（dashboard-panel.js は本ファイルを読んでレンダリングするだけで、コードは触らない）。実データは hud/data/dashboard.json（adapters/rin_weekly_adapter.py の生成物）。フェーズC最小版では activeCut=branch、metrics=sales/gross_profit のみ。事業本部別・販管費以降・自己資本比率等は今回対象外（拡張ガイド docs/C-1_HUD拡張ガイド.md 参照）。",
+  "activeCut": "branch",
+  "cuts": {
+    "branch": {
+      "label": "拠点別",
+      "labelEn": "BY BRANCH",
+      "rows": ["名古屋本社", "東京本社", "新東大阪", "統括本部"]
+    }
+  },
+  "metrics": [
+    { "id": "sales", "label": "売上", "labelEn": "SALES" },
+    { "id": "gross_profit", "label": "粗利益", "labelEn": "GROSS PROFIT" }
+  ]
+}

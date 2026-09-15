@@ -1,0 +1,14 @@
+{
+  "_comment": "召集表の正本は C:/claude code/.claude/agents/*.md 。KANBEIは中央リング本体なのでここには含めない。GENは2026-08-30付で休止のため除外。行を増減する場合はここだけを編集すればよい（agent-ring.js は本ファイルを読むだけで、コードは触らない）。",
+  "roster": [
+    { "id": "cho", "label": "CHO", "role": "変革推進統括" },
+    { "id": "iris", "label": "IRIS", "role": "Chief of Staff" },
+    { "id": "jin", "label": "JIN", "role": "人材・組織統括" },
+    { "id": "kai", "label": "KAI", "role": "営業統括" },
+    { "id": "rai", "label": "RAI", "role": "広告データハブ" },
+    { "id": "rin", "label": "RIN", "role": "財務統括" },
+    { "id": "ryu", "label": "RYU", "role": "クリエイティブ統括" },
+    { "id": "sen", "label": "SEN", "role": "マーケティング統括" },
+    { "id": "shu", "label": "SHU", "role": "技術開発統括" }
+  ]
+}

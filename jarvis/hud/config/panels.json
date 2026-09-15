@@ -1,0 +1,24 @@
+{
+  "_comment": "HUDに載せるパネルの一覧。1パネル1モジュールが原則。新しいパネルを追加する場合は (1) panels/ に新モジュールを追加し panel-base.js の契約（mount/reload/expand/collapse）を実装する (2) ここにエントリを1件追記する。既存パネルへの影響はない。corner は docked（縮小）時の画面端の位置。",
+  "panels": [
+    {
+      "id": "graph",
+      "title": "VisionXグラフビュー",
+      "titleEn": "VISIONX GRAPH",
+      "module": "./panels/graph-panel.js",
+      "corner": "bottom-left",
+      "dataUrl": "graph.json",
+      "reload": "manual"
+    },
+    {
+      "id": "dashboard",
+      "title": "経営ダッシュボード",
+      "titleEn": "MANAGEMENT DASHBOARD",
+      "module": "./panels/dashboard-panel.js",
+      "corner": "bottom-right",
+      "dataUrl": "data/dashboard.json",
+      "configUrl": "config/metrics.json",
+      "reload": "manual"
+    }
+  ]
+}

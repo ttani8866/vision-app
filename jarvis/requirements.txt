@@ -1,0 +1,6 @@
+faster-whisper
+sounddevice==0.4.6
+numpy
+soundfile==0.12.1
+requests==2.31.0
+keyboard==0.13.5
