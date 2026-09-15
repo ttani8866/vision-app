@@ -168,7 +168,7 @@
    ========================================================================== */
 .zone__legend{margin-top:10px}
 .face{position:relative;width:100%;height:400px;margin-top:12px}
-.face__overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.face__overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
 .face__overlay line{stroke:#fff;stroke-width:1.5;opacity:.9}
 .face__overlay circle{stroke:#fff;stroke-width:1.5}
 .chip{
@@ -176,7 +176,7 @@
   background:rgba(255,255,255,.94);color:var(--ink);
   border:1px solid var(--line);border-radius:var(--radius-pill);
   padding:5px 9px;font:700 10.5px var(--font-sans);
-  box-shadow:var(--shadow-chip);cursor:pointer;white-space:nowrap;
+  box-shadow:var(--shadow-chip);cursor:pointer;white-space:nowrap;z-index:4;
   transition:background-color var(--dur-fast) var(--ease-standard),color var(--dur-fast) var(--ease-standard),border-color var(--dur-fast) var(--ease-standard);
 }
 .chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
@@ -368,3 +368,22 @@
 .cta:hover{background:var(--navy-deep);color:#fff}
 .cta__note{text-align:center;font:400 10.5px/1 var(--font-sans);color:var(--mut);margin-top:10px}
 .cta__date{font-family:var(--font-mono);font-weight:700;color:var(--ink)}
+
+/* --- 写真スロットのアップロード（slot-upload.js） -------------------------- */
+.slot--fillable{cursor:pointer;transition:border-color var(--dur-fast) var(--ease-standard),background-color var(--dur-fast) var(--ease-standard)}
+.slot--fillable:hover,.slot.is-dragover{border-color:var(--navy);background:var(--acc-soft)}
+.slot.is-filled{border-style:solid;border-color:var(--line)}
+.slot__pick{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:2;
+  background:var(--navy);color:#fff;border-radius:var(--radius-pill);
+  padding:6px 12px;font:700 10.5px/1 var(--font-sans);white-space:nowrap;
+  box-shadow:var(--shadow-chip);pointer-events:none;
+}
+.slot__clear{
+  position:absolute;top:6px;right:6px;z-index:2;display:none;
+  width:22px;height:22px;border-radius:50%;border:0;
+  background:rgba(15,27,30,.6);color:#fff;font:700 15px/22px var(--font-sans);
+  text-align:center;cursor:pointer;padding:0;
+}
+.slot.is-filled .slot__label,.slot.is-filled .slot__pick{display:none}
+.slot.is-filled .slot__clear{display:block}

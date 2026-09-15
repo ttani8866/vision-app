@@ -433,3 +433,22 @@ body{background:var(--ink-100)}
 
 /* 要件定義書へのリンク（ボタンと同じ見た目のアンカー） */
 .toolbar__link--doc{display:inline-block;text-decoration:none;margin-left:var(--space-3)}
+
+/* --- 写真スロットのアップロード（slot-upload.js） -------------------------- */
+.slot--fillable{cursor:pointer;transition:border-color var(--dur-fast) var(--ease-standard),background-color var(--dur-fast) var(--ease-standard)}
+.slot--fillable:hover,.slot.is-dragover{border-color:var(--surface-brand);background:var(--surface-brand-soft)}
+.slot.is-filled{border-style:solid;border-color:var(--border-subtle)}
+.slot__pick{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:2;
+  background:var(--surface-brand);color:#fff;border-radius:var(--radius-pill);
+  padding:6px 12px;font:700 10.5px/1 var(--font-sans);white-space:nowrap;
+  box-shadow:var(--shadow-md);pointer-events:none;
+}
+.slot__clear{
+  position:absolute;top:6px;right:6px;z-index:2;display:none;
+  width:22px;height:22px;border-radius:50%;border:0;
+  background:rgba(15,27,30,.6);color:#fff;font:700 15px/22px var(--font-sans);
+  text-align:center;cursor:pointer;padding:0;
+}
+.slot.is-filled .slot__label,.slot.is-filled .slot__pick{display:none}
+.slot.is-filled .slot__clear{display:block}

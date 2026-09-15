@@ -63,7 +63,7 @@
                   <span class="legend__item"><span class="dot dot--pri"></span>優先改善</span>
                 </div>
                 <div class="face" id="face">
-                  <div class="slot"><span class="slot__label">正面の顔写真をドロップ</span></div>
+                  <div class="slot" data-slot="face-photo" data-alt="正面の顔写真"><span class="slot__label">正面の顔写真をドロップ</span></div>
                   <svg class="face__overlay" viewBox="0 0 330 400" preserveAspectRatio="none" aria-hidden="true">
                     <line x1="86" y1="46" x2="150" y2="82"></line><circle cx="150" cy="82" r="4" fill="var(--warn)"></circle>
                     <line x1="252" y1="120" x2="203" y2="142"></line><circle cx="203" cy="142" r="4" fill="var(--warn)"></circle>
@@ -309,11 +309,11 @@
                 </div>
                 <div class="ba">
                   <div>
-                    <div class="ba__photo"><div class="slot slot--r10"><span class="slot__label">前回写真</span></div></div>
+                    <div class="ba__photo"><div class="slot slot--r10" data-slot="photo-before" data-alt="前回写真"><span class="slot__label">前回写真</span></div></div>
                     <div class="ba__date">2026/06/01</div>
                   </div>
                   <div>
-                    <div class="ba__photo"><div class="slot slot--r10"><span class="slot__label">現在写真</span></div></div>
+                    <div class="ba__photo"><div class="slot slot--r10" data-slot="photo-after" data-alt="現在写真"><span class="slot__label">現在写真</span></div></div>
                     <div class="ba__date ba__date--now">2026/09/01</div>
                   </div>
                 </div>
@@ -360,5 +360,6 @@
 </main>
 
 <script src="assets/js/main.js"></script>
+<script src="assets/js/slot-upload.js"></script>
 </body>
 </html>
