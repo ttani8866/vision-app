@@ -132,7 +132,8 @@
           id: z.id, name: ZONE_NAMES[z.id] || z.id, score: fmt1(z.score),
           color: STATUS_COLOR[z.status] || 'var(--mut)', status: z.status,
           metrics: z.metrics.map(function (m) { return { k: m.k, v: fmt1(m.v) }; }),
-          note: z.note
+          note: z.note,
+          point: z.point || null
         };
       }), worstZone(r.zones));
     }

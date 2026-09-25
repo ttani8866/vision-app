@@ -49,6 +49,10 @@ const AnalysisSchema = z.object({
     id: z.enum(ZONE_IDS),
     status: z.enum(['良好', '注意', '改善余地', '優先改善']),
     score: z.number().describe('0〜10'),
+    point: z.object({
+      x: z.number().describe('写真内でそのゾーンの中心の横位置。左端0.0〜右端1.0'),
+      y: z.number().describe('写真内でそのゾーンの中心の縦位置。上端0.0〜下端1.0'),
+    }).describe('マーカーを置く位置。写真の実際の顔の位置に合わせる'),
     metrics: z.array(z.object({ k: z.string(), v: z.number() })).describe('そのゾーンの指標を2件'),
     note: z.string().describe('状態と対処の方向性を1〜2文'),
   })).describe('6ゾーンすべてを1件ずつ'),
@@ -104,6 +108,10 @@ const SYSTEM_PROMPT = [
   'ゾーン（6か所）',
   '- hitai 額 / memoto 目元 / meshita 目の下 / hoho 頬 / hourei ほうれい線 / line フェイスライン',
   '- status は 良好(8以上) / 注意(7〜7.9) / 改善余地(6〜6.9) / 優先改善(6未満) を目安に',
+  '- point は写真の中でそのゾーンが実際にある位置（0〜1の相対座標）。額は眉の上、目元は目尻、目の下は下まぶたの下、頬は頬骨の下、ほうれい線は鼻横〜口角の溝、フェイスラインは顎の輪郭。左右どちらか片側で構いません',
+  '',
+  '見た目年齢',
+  '- 静止した正面写真は、表情・動き・話し方など実際の印象要素を含まないため、実年齢より上に見えやすいことを踏まえ、肌の状態だけで安易に高く見積もらない。天井照明で目の下や溝に影が出ている場合はその分を割り引く',
   '',
   '総合スコア',
   '- 10軸の平均×10 を基本に、年齢印象に効く軸（目袋・ほうれい線・シワ・ハリ・フェイスライン）をやや重く見て 0〜100 の整数で出します。',
@@ -174,7 +182,11 @@ function normalize(r) {
   r.zones.forEach(function (z) { byZone[z.id] = z; });
   r.zones = ZONE_IDS.map(function (id) {
     return byZone[id] || { id: id, status: '注意', score: 7, metrics: [], note: '判定が難しいため中央値としました。' };
-  }).map(function (z) { return Object.assign({}, z, { score: clamp(round5(z.score), 0, 10), metrics: z.metrics.slice(0, 3) }); });
+  }).map(function (z) {
+    var p = z.point && Number.isFinite(z.point.x) && Number.isFinite(z.point.y)
+      ? { x: clamp(z.point.x, 0, 1), y: clamp(z.point.y, 0, 1) } : null;
+    return Object.assign({}, z, { score: clamp(round5(z.score), 0, 10), metrics: z.metrics.slice(0, 3), point: p });
+  });
 
   r.total_score = clamp(Math.round(r.total_score), 0, 100);
   r.apparent_age = Math.round(r.apparent_age);

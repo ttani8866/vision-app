@@ -123,6 +123,74 @@
       });
     }
 
+    var overlay = face.querySelector('.face__overlay');
+    var staticOverlay = overlay ? overlay.innerHTML : '';
+    var VB_W = 330, VB_H = 400;
+
+    function hasPoints() {
+      return zones.length > 0 && zones.every(function (z) { return z.point && Number.isFinite(z.point.x) && Number.isFinite(z.point.y); });
+    }
+
+    /* 写真（object-fit: cover）上の相対座標 → コンテナ内ピクセル */
+    function project(pt) {
+      var W = face.clientWidth, H = face.clientHeight;
+      var img = face.querySelector('.slot img');
+      var nw = img && img.naturalWidth, nh = img && img.naturalHeight;
+      if (!nw || !nh) return { x: pt.x * W, y: pt.y * H };
+      var s = Math.max(W / nw, H / nh);
+      var dw = nw * s, dh = nh * s;
+      return { x: (W - dw) / 2 + pt.x * dw, y: (H - dh) / 2 + pt.y * dh };
+    }
+
+    /* AI が返した位置にマーカーとチップを置き、引き出し線を描く */
+    function layoutFromPoints() {
+      var W = face.clientWidth, H = face.clientHeight;
+      var items = zones.map(function (z) {
+        var p = project(z.point);
+        return { z: z, chip: chips[z.id], px: p.x, py: p.y, side: p.x < W / 2 ? 'left' : 'right' };
+      });
+      /* 同じ側のチップが重ならないよう縦にずらす */
+      ['left', 'right'].forEach(function (side) {
+        var col = items.filter(function (it) { return it.side === side; }).sort(function (a, b) { return a.py - b.py; });
+        var lastBottom = 4;
+        col.forEach(function (it) {
+          var h = it.chip.offsetHeight || 24;
+          var top = Math.max(lastBottom, Math.min(H - h - 4, it.py - h / 2));
+          it.top = top;
+          lastBottom = top + h + 6;
+        });
+      });
+      var svg = '';
+      items.forEach(function (it) {
+        var chip = it.chip, w = chip.offsetWidth || 80, h = chip.offsetHeight || 24;
+        chip.style.top = it.top + 'px';
+        chip.style.left = it.side === 'left' ? '8px' : '';
+        chip.style.right = it.side === 'right' ? '8px' : '';
+        var ax = it.side === 'left' ? 8 + w : W - 8 - w;
+        var ay = it.top + h / 2;
+        var toVB = function (x, y) { return (x / W * VB_W).toFixed(1) + ',' + (y / H * VB_H).toFixed(1); };
+        var a = toVB(ax, ay).split(','), b = toVB(it.px, it.py).split(',');
+        svg += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '"></line>' +
+               '<circle cx="' + b[0] + '" cy="' + b[1] + '" r="4" fill="' + it.z.color + '"></circle>';
+      });
+      if (overlay) overlay.innerHTML = svg;
+    }
+
+    function layout() {
+      if (!hasPoints()) {
+        zones.forEach(function (z) {
+          var chip = chips[z.id], pos = ZONE_POS[z.id] || { left: '8px', top: '8px' };
+          chip.style.left = ''; chip.style.right = ''; chip.style.top = '';
+          Object.keys(pos).forEach(function (k) { chip.style[k] = pos[k]; });
+        });
+        if (overlay) overlay.innerHTML = staticOverlay;
+        return;
+      }
+      var img = face.querySelector('.slot img');
+      if (img && !img.complete) { img.addEventListener('load', layoutFromPoints, { once: true }); }
+      layoutFromPoints();
+    }
+
     function render() {
       Object.keys(chips).forEach(function (key) { chips[key].remove(); });
       chips = {};
@@ -131,8 +199,6 @@
         chip.type = 'button';
         chip.setAttribute('aria-pressed', 'false');
         chip.setAttribute('aria-label', z.name + ' ' + z.score);
-        var pos = ZONE_POS[z.id] || { left: '8px', top: '8px' };
-        Object.keys(pos).forEach(function (k) { chip.style[k] = pos[k]; });
 
         var dot = el('span', 'dot');
         dot.style.background = z.color;
@@ -144,10 +210,15 @@
         face.appendChild(chip);
         chips[z.id] = chip;
       });
+      layout();
     }
 
     render();
     select(DEFAULT_ZONE);
+    window.addEventListener('resize', function () { if (hasPoints()) layoutFromPoints(); });
+    document.addEventListener('slot:change', function (e) {
+      if (e.detail && e.detail.id === 'face-photo' && hasPoints()) layout();
+    });
 
     /* analyze.js から差し替える入口 */
     window.FAS = window.FAS || {};
