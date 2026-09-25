@@ -114,6 +114,7 @@
     }
     $('kpi-age').firstChild.nodeValue = r.apparent_age;
     $('kpi-skin').firstChild.nodeValue = r.skin_age;
+    renderAgeDelta(r);
     var rate = $('kpi-rate');
     if (prev && prev.total_score) {
       var pct = (r.total_score - prev.total_score) / prev.total_score * 100;
@@ -125,17 +126,27 @@
     }
     $('hero-note').textContent = r.summary;
 
-    /* 顔ゾーン */
+    /* 顔ゾーン：まず AI の位置で表示し、端末内のランドマーク検出が成功したらその位置に置き直す */
     if (window.FAS && window.FAS.setZones) {
-      window.FAS.setZones(r.zones.map(function (z) {
-        return {
-          id: z.id, name: ZONE_NAMES[z.id] || z.id, score: fmt1(z.score),
-          color: STATUS_COLOR[z.status] || 'var(--mut)', status: z.status,
-          metrics: z.metrics.map(function (m) { return { k: m.k, v: fmt1(m.v) }; }),
-          note: z.note,
-          point: z.point || null
-        };
-      }), worstZone(r.zones));
+      var toZones = function (pointsById) {
+        return r.zones.map(function (z) {
+          return {
+            id: z.id, name: ZONE_NAMES[z.id] || z.id, score: fmt1(z.score),
+            color: STATUS_COLOR[z.status] || 'var(--mut)', status: z.status,
+            metrics: z.metrics.map(function (m) { return { k: m.k, v: fmt1(m.v) }; }),
+            note: z.note,
+            point: (pointsById && pointsById[z.id]) || z.point || null
+          };
+        });
+      };
+      window.FAS.setZones(toZones(null), worstZone(r.zones));
+      var faceImg = document.querySelector('.slot[data-slot="face-photo"] img');
+      if (faceImg && window.FAS.detectZonePoints) {
+        var whenLoaded = faceImg.complete ? Promise.resolve() : new Promise(function (res) { faceImg.addEventListener('load', res, { once: true }); });
+        whenLoaded.then(function () { return window.FAS.detectZonePoints(faceImg); }).then(function (pts) {
+          if (pts) window.FAS.setZones(toZones(pts), worstZone(r.zones));
+        });
+      }
     }
 
     /* レーダー */
@@ -237,6 +248,33 @@
       ' ／ 確度 ' + confidenceLabel(r.confidence) + ' ／ 写真 ' + r.photo_quality.lighting +
       (r.photo_quality.notes ? ' ／ ' + r.photo_quality.notes : '');
   }
+  /* 実年齢との差。実年齢は端末内にだけ保存し、AI には送らない（推定へのバイアスを避ける） */
+  var AGE_KEY = 'profile:age';
+  function actualAge() { try { var v = parseInt(localStorage.getItem(AGE_KEY), 10); return v > 0 ? v : null; } catch (e) { return null; } }
+  function renderAgeDelta(r) {
+    var age = actualAge();
+    var a = $('kpi-age-delta'), s = $('kpi-skin-delta');
+    if (!a || !s) return;
+    if (!age || !r) { a.textContent = ''; s.textContent = ''; return; }
+    var da = r.apparent_age - age, ds = r.skin_age - age;
+    a.textContent = '実年齢' + (da === 0 ? '相当' : (da > 0 ? ' +' : ' −') + Math.abs(da));
+    s.textContent = '実年齢' + (ds === 0 ? '相当' : (ds > 0 ? ' +' : ' −') + Math.abs(ds));
+    a.className = 'grid3__sub ' + (da <= 0 ? 'grid3__sub--ok' : 'grid3__sub--pri');
+    s.className = 'grid3__sub ' + (ds <= 0 ? 'grid3__sub--ok' : 'grid3__sub--pri');
+  }
+  function setupAgeInput() {
+    var input = $('age-input');
+    if (!input) return;
+    var v = actualAge();
+    if (v) input.value = v;
+    input.addEventListener('change', function () {
+      var n = parseInt(input.value, 10);
+      try { if (n > 0) localStorage.setItem(AGE_KEY, String(n)); else localStorage.removeItem(AGE_KEY); } catch (e) { /* 無視 */ }
+      var latest = readJson(KEY_LATEST);
+      renderAgeDelta(latest && latest.result);
+    });
+  }
+
   function cell(k, v, cls) {
     var c = el('div', 'proc__cell');
     c.appendChild(el('div', 'proc__key', k));
@@ -259,6 +297,7 @@
 
     btn.addEventListener('click', run);
     refreshButton();
+    setupAgeInput();
     document.addEventListener('slot:change', refreshButton);
 
     fetch('/api/status').then(function (r) { return r.json(); }).then(function (s) {

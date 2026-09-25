@@ -60,7 +60,8 @@
                   <button class="analyze__btn" id="analyze-btn" type="button" disabled>写真をAI分析する</button>
                   <p class="analyze__status" id="analyze-status" hidden></p>
                   <p class="analyze__meta" id="analysis-meta" hidden></p>
-                  <p class="analyze__note">写真からの推定・参考評価です。医療診断ではありません。写真は分析のためだけに送信し、保存しません。</p>
+                  <label class="analyze__age">実年齢 <input class="analyze__age-input" id="age-input" type="number" min="1" max="120" inputmode="numeric" placeholder="—"> 歳 <span class="analyze__age-note">端末内にのみ保存。AIには送らず、見た目年齢との差の表示にだけ使います</span></label>
+                  <p class="analyze__note">写真からの推定・参考評価です。医療診断ではありません。写真は分析のためだけに送信し、保存しません。マーカー位置は端末内の顔検出で決めます。</p>
                 </div>
                 <div class="divider"></div>
                 <div class="eyebrow">FACE AGE SCORE — 総合スコア</div>
@@ -73,8 +74,8 @@
                 </div>
                 <div class="hero__bar"><div class="hero__bar-fill" id="hero-bar" style="width:82%"></div></div>
                 <div class="grid3 hero__grid">
-                  <div class="grid3__cell"><div class="grid3__key">見た目年齢</div><div class="grid3__val" id="kpi-age">52<span class="grid3__unit">歳相当</span></div></div>
-                  <div class="grid3__cell"><div class="grid3__key">肌年齢</div><div class="grid3__val" id="kpi-skin">50<span class="grid3__unit">歳</span></div></div>
+                  <div class="grid3__cell"><div class="grid3__key">見た目年齢</div><div class="grid3__val" id="kpi-age">52<span class="grid3__unit">歳相当</span></div><div class="grid3__sub" id="kpi-age-delta"></div></div>
+                  <div class="grid3__cell"><div class="grid3__key">肌年齢</div><div class="grid3__val" id="kpi-skin">50<span class="grid3__unit">歳</span></div><div class="grid3__sub" id="kpi-skin-delta"></div></div>
                   <div class="grid3__cell"><div class="grid3__key">改善率</div><div class="grid3__val grid3__val--ok" id="kpi-rate">+5.1<span class="grid3__unit">%</span></div></div>
                 </div>
                 <p class="hero__note" id="hero-note">肌のツヤ・キメは改善。最大の改善余地は<b>目の下</b>。</p>
@@ -373,6 +374,7 @@
 
 <script src="assets/js/main.js"></script>
 <script src="assets/js/slot-upload.js"></script>
+<script src="assets/js/landmarks.js"></script>
 <script src="assets/js/analyze.js"></script>
 </body>
 </html>
