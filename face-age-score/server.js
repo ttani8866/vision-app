@@ -15,7 +15,7 @@ loadDotEnv(path.join(__dirname, '.env'));
 
 const AnthropicMod = require('@anthropic-ai/sdk');
 const Anthropic = AnthropicMod.default || AnthropicMod;
-const { z } = require('zod');
+const { z } = require('zod/v4'); // SDK の zodOutputFormat は zod v4 API を前提とする
 const { zodOutputFormat } = require('@anthropic-ai/sdk/helpers/zod');
 
 const PORT = Number(process.env.PORT) || 8150;
