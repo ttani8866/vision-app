@@ -80,7 +80,11 @@
         ? 'デモ結果を表示中（APIキー未設定）。face-age-score/.env に ANTHROPIC_API_KEY を設定すると実分析になります。'
         : '分析完了（' + Math.round(data.elapsed_ms / 1000) + '秒・' + (data.model || '') + '）。確度: ' + confidenceLabel(data.result.confidence) + ' / 写真: ' + data.result.photo_quality.lighting);
     } catch (e) {
-      setStatus('error', e.message || '分析に失敗しました。');
+      var msg = e.message || '分析に失敗しました。';
+      if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+        msg = 'サーバーとの接続が切れました。もう一度お試しください。続く場合は node server.js を再起動してください。';
+      }
+      setStatus('error', msg);
     } finally {
       btn.classList.remove('is-busy');
       refreshButton();

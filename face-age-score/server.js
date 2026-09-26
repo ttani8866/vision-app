@@ -247,8 +247,11 @@ async function handleAnalyze(req, res) {
   catch (e) { return sendJson(res, e.status || 400, { error: e.status ? e.message : 'リクエスト本文が不正です。' }); }
 
   const started = Date.now();
+  console.log('[analyze] start', new Date().toISOString(), 'image', Math.round(String(body.image || '').length / 1024) + 'KB');
+  req.on('close', function () { if (!res.writableEnded) console.warn('[analyze] client closed connection after', Date.now() - started, 'ms'); });
   try {
     const out = await analyze(body.image);
+    console.log('[analyze] done', Date.now() - started, 'ms', out.mock ? '(mock)' : out.model);
     sendJson(res, 200, Object.assign({ ok: true, elapsed_ms: Date.now() - started, analyzed_at: new Date().toISOString() }, out));
   } catch (e) {
     let status = e.status || 500;
