@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/*
+  AIチューター確認テスト デザイントークン（Tailwind CSS v4）
+  既存の globals.css の @import "tailwindcss" の直後に @theme ブロックを追記してください。
+*/
+@theme {
+  /* 日本語ゴシックのみ。英字専用フォントは入れない */
+  --font-sans: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", Meiryo, sans-serif;
+
+  /* 基調 */
+  --color-page: #f3f5f8;        /* ページ背景 */
+  --color-line: #e3e8ef;        /* 罫線・未到達 */
+  --color-choice: #d5dce5;      /* 選択肢の枠 */
+  --color-tint: #f7f9fc;        /* ホバー・補足ボックス */
+  --color-heading: #14233a;     /* 見出し・数字 */
+  --color-ink: #1f2a37;         /* 選択肢本文 */
+  --color-body: #3e4c5b;        /* 本文 */
+  --color-muted: #5b6b7d;       /* 補助文字 */
+
+  /* プライマリ（紺） */
+  --color-primary: #1e3a5f;
+  --color-primary-deep: #122a47;
+  --color-primary-soft: #8fa7c7; /* 進捗の「現在」 */
+  --color-primary-tint: #eaf0f7; /* 番号丸・チップ */
+
+  /* 正解（緑） */
+  --color-ok: #15803d;
+  --color-ok-ink: #166534;
+  --color-ok-soft: #dcfce7;
+  --color-ok-tint: #f0fdf4;
+
+  /* 自分の誤答の選択肢だけに使う赤 */
+  --color-ng: #dc2626;
+  --color-ng-ink: #991b1b;
+  --color-ng-soft: #fee2e2;
+  --color-ng-tint: #fef2f2;
+
+  /* 不正解の判定ヘッダー・及第点（琥珀） */
+  --color-warn-ink: #9a3412;
+  --color-warn-badge: #92400e;
+  --color-warn-soft: #fef3c7;
+  --color-warn-tint: #fff7ed;
+  --color-warn-icon: #fed7aa;
+}
+
+html {
+  font-feature-settings: "palt";
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  @apply bg-page text-ink font-sans;
+}
