@@ -1,49 +1,68 @@
 @import "tailwindcss";
 
 /*
-  AIチューター確認テスト デザイントークン（Tailwind CSS v4）
-  既存の globals.css の @import "tailwindcss" の直後に @theme ブロックを追記してください。
+  AIチューター確認テスト デザイントークン v2（Tailwind CSS v4）
+  既存の globals.css の @import "tailwindcss" の直後に追記してください。
+  ブランド色は仮。--color-brand の1行を差し替えると全画面に反映されます。
 */
 @theme {
   /* 日本語ゴシックのみ。英字専用フォントは入れない */
-  --font-sans: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+  --font-sans: "Zen Kaku Gothic New", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "Yu Gothic", Meiryo, sans-serif;
 
   /* 基調 */
-  --color-page: #f3f5f8;        /* ページ背景 */
-  --color-line: #e3e8ef;        /* 罫線・未到達 */
-  --color-choice: #d5dce5;      /* 選択肢の枠 */
-  --color-tint: #f7f9fc;        /* ホバー・補足ボックス */
-  --color-heading: #14233a;     /* 見出し・数字 */
-  --color-ink: #1f2a37;         /* 選択肢本文 */
-  --color-body: #3e4c5b;        /* 本文 */
-  --color-muted: #5b6b7d;       /* 補助文字 */
+  --color-brand: #2d4bff;       /* 仮。コーポレートカラーに差し替え */
+  --color-brand-deep: #1b33c9;
+  --color-brand-tint: #e8ecff;  /* スタート画面の地 */
+  --color-ink: #141a2e;         /* 文字・枠・影・解説パネル・結果の地 */
+  --color-ink-soft: #3a4160;    /* 淡色地の補助文字 */
+  --color-ink-muted: #5b6483;   /* 白地の注記 */
+  --color-on-ink: #e6e9f7;      /* 濃色地の本文 */
+  --color-on-ink-muted: #c9d0ea;
+  --color-on-ink-faint: #8e97bc;
+  --color-on-ink-link: #9db0ff;
+  --color-track: #eef0f7;       /* バーの下地 */
 
-  /* プライマリ（紺） */
-  --color-primary: #1e3a5f;
-  --color-primary-deep: #122a47;
-  --color-primary-soft: #8fa7c7; /* 進捗の「現在」 */
-  --color-primary-tint: #eaf0f7; /* 番号丸・チップ */
+  /* 判定 */
+  --color-ok: #1fa971;          /* 正解の面（白文字） */
+  --color-ng: #ff6b57;          /* 自分の誤答の面（白文字） */
+  --color-accent: #ffb224;      /* 及第点・差し色 */
+  --color-fail: #9aa3bf;        /* 不合格のドット */
 
-  /* 正解（緑） */
-  --color-ok: #15803d;
-  --color-ok-ink: #166534;
-  --color-ok-soft: #dcfce7;
-  --color-ok-tint: #f0fdf4;
+  /* カテゴリ（シーン色） */
+  --color-cat-kokoro: #ff7a5c;
+  --color-cat-skill: #22c58b;
+  --color-cat-ai: #7c6cf6;
 
-  /* 自分の誤答の選択肢だけに使う赤 */
-  --color-ng: #dc2626;
-  --color-ng-ink: #991b1b;
-  --color-ng-soft: #fee2e2;
-  --color-ng-tint: #fef2f2;
+  /* モーション */
+  --animate-rise: rise 0.35s ease-out both;
+  --animate-grow: grow 0.6s ease-out both;
+  --animate-pop: pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-float: float 6s ease-in-out infinite;
 
-  /* 不正解の判定ヘッダー・及第点（琥珀） */
-  --color-warn-ink: #9a3412;
-  --color-warn-badge: #92400e;
-  --color-warn-soft: #fef3c7;
-  --color-warn-tint: #fff7ed;
-  --color-warn-icon: #fed7aa;
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes grow {
+    from { width: 0; }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
 }
+
+/* カテゴリで画面全体の色を切り替える。QuizPage のルートに data-theme を付ける */
+[data-theme="start"]  { --bg: #e8ecff; --scene: var(--color-brand);      --cat: var(--color-brand); }
+[data-theme="kokoro"] { --bg: #ffe3da; --scene: var(--color-cat-kokoro); --cat: var(--color-cat-kokoro); }
+[data-theme="skill"]  { --bg: #d9f4e7; --scene: var(--color-cat-skill);  --cat: var(--color-cat-skill); }
+[data-theme="ai"]     { --bg: #e6e3ff; --scene: var(--color-cat-ai);     --cat: var(--color-cat-ai); }
+[data-theme="result"] { --bg: var(--color-ink); --scene: var(--color-brand); --cat: var(--color-brand); }
 
 html {
   font-feature-settings: "palt";
@@ -51,5 +70,21 @@ html {
 }
 
 body {
-  @apply bg-page text-ink font-sans;
+  @apply font-sans text-ink;
+}
+
+/* ステッカー風の枠と影。選択肢・ボタン・カードで共用 */
+@utility sticker {
+  border-width: 2px;
+  border-color: var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
+}
+@utility sticker-lift {
+  transition: transform 150ms, box-shadow 150ms;
+  &:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--color-ink); }
+  &:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--color-ink); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }

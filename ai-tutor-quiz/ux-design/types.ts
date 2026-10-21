@@ -33,3 +33,19 @@ export function judge(score: number): Judgement {
 }
 
 export const CHOICE_LABELS = ['A', 'B', 'C', 'D'] as const;
+
+/** data-theme の値。globals.css の [data-theme] と対応 */
+export type Theme = 'start' | 'kokoro' | 'skill' | 'ai' | 'result';
+
+export const CATEGORY_THEME: Record<Category, Theme> = {
+  心構え: 'kokoro',
+  スキル: 'skill',
+  AI知識: 'ai',
+};
+
+/** カテゴリ色（Tailwind のトークン名と hex）。バーの色や凡例で使う */
+export const CATEGORY_COLOR: Record<Category, { token: string; hex: string }> = {
+  心構え: { token: 'bg-cat-kokoro', hex: '#ff7a5c' },
+  スキル: { token: 'bg-cat-skill', hex: '#22c58b' },
+  AI知識: { token: 'bg-cat-ai', hex: '#7c6cf6' },
+};

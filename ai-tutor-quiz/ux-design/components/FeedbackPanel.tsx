@@ -14,37 +14,15 @@ type Props = {
   onNext: () => void;
 };
 
-function CheckIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 12.5l4.5 4.5L19 7.5" />
-    </svg>
-  );
-}
-
-function InfoIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 8v5" />
-      <path d="M12 17h.01" />
-    </svg>
-  );
-}
-
-function ArrowIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 12h14" />
-      <path d="M13 6l6 6-6 6" />
-    </svg>
-  );
-}
-
+/**
+ * 判定と解説の濃色パネル。QuestionCard の直下に置く。
+ * マウント時に 16px 浮上（animate-rise）し、スマホで画面外に残らないよう scrollIntoView。
+ * 影の色はカテゴリ色（--cat）を使い、画面全体の色と呼応させる。
+ */
 export function FeedbackPanel({ isCorrect, correctIndex, explanation, score, answered, isLast, onNext }: Props) {
   const ref = useRef<HTMLElement>(null);
   const correctLabel = CHOICE_LABELS[correctIndex] ?? String(correctIndex + 1);
 
-  // スマホで解説が画面外に残らないよう、表示時にパネル先頭まで寄せる
   useEffect(() => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, []);
@@ -54,51 +32,47 @@ export function FeedbackPanel({ isCorrect, correctIndex, explanation, score, ans
       ref={ref}
       aria-live="polite"
       aria-label="判定と解説"
-      className="flex flex-col overflow-hidden rounded-xl border border-line bg-white sm:rounded-2xl"
+      className="flex flex-col gap-[18px] rounded-3xl border-2 border-ink bg-ink p-5 text-white shadow-[5px_5px_0_var(--cat)] motion-safe:animate-rise lg:gap-[22px] lg:rounded-[32px] lg:px-9 lg:py-8 lg:shadow-[6px_6px_0_var(--cat)]"
     >
-      <div
-        className={
-          'flex flex-wrap items-center gap-3 px-4 py-3.5 text-base font-bold sm:flex-nowrap sm:px-7 sm:py-4 sm:text-[17px] ' +
-          (isCorrect ? 'bg-ok-tint text-ok-ink' : 'bg-warn-tint text-warn-ink')
-        }
-      >
-        <span
-          className={
-            'flex h-7 w-7 shrink-0 items-center justify-center rounded-full ' +
-            (isCorrect ? 'bg-ok-soft text-ok-ink' : 'bg-warn-icon text-warn-ink')
-          }
-        >
-          {isCorrect ? <CheckIcon /> : <InfoIcon />}
+      <div className="flex flex-wrap items-center gap-4">
+        <div>
+          <div className="text-3xl font-black leading-[1.1] tracking-tight lg:text-[40px]">
+            {isCorrect ? '正解！' : '惜しい！'}
+          </div>
+          <div className="mt-1 text-sm font-bold text-on-ink-muted lg:text-base">
+            {isCorrect ? 'その調子です' : '考え方を押さえれば次は取れます'}
+          </div>
+        </div>
+        <span className="inline-flex h-10 items-center gap-2.5 rounded-full bg-white pl-1.5 pr-3.5 text-sm font-black text-ink lg:ml-auto lg:h-11 lg:pr-4 lg:text-[15px]">
+          <b className="flex size-7 items-center justify-center rounded-[9px] bg-ok text-white lg:size-8 lg:rounded-[10px]">{correctLabel}</b>
+          が正解
         </span>
-        <span>{isCorrect ? `正解です。${correctLabel} が正解` : `惜しい。正解は ${correctLabel} でした`}</span>
-        <small className="w-full pl-10 text-sm font-medium text-body sm:ml-auto sm:w-auto sm:pl-0">
-          {isCorrect ? 'その調子です' : '考え方を確認して次に進みましょう'}
-        </small>
       </div>
 
-      <div className="flex flex-col gap-4 px-4 pb-5 pt-4 sm:gap-[18px] sm:px-7 sm:pb-7 sm:pt-[22px]">
-        <div className="flex flex-col gap-2">
-          <div className="text-xs font-bold tracking-wider text-muted">解説</div>
-          <p className="text-[15px] leading-[1.85] text-body">{explanation}</p>
-        </div>
+      <div className="flex flex-col gap-2">
+        <div className="text-[11px] font-black tracking-[.1em] text-on-ink-faint lg:text-xs">解説</div>
+        <p className="text-[15px] leading-[1.9] text-on-ink lg:text-base">{explanation}</p>
+      </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-tint pt-4 sm:pt-[18px]">
-          <div className="flex flex-col gap-0.5 text-sm text-body">
-            <span>現在のスコア</span>
-            <span className="text-[22px] font-bold leading-tight text-heading">
-              {score}{' '}
-              <span className="text-sm font-medium text-muted">/ {answered}問 正解</span>
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onNext}
-            className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[10px] bg-primary px-7 text-base font-bold text-white transition-colors hover:bg-primary-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto sm:min-w-[220px]"
-          >
-            {isLast ? '結果を見る' : '次の問題へ'}
-            <ArrowIcon />
-          </button>
+      <div className="flex flex-col gap-3.5 border-t border-[#2c3556] pt-[18px] lg:flex-row lg:items-center lg:justify-between lg:gap-4 lg:pt-[22px]">
+        <div className="flex items-baseline gap-2 text-[13px] font-bold text-on-ink-muted lg:flex-col lg:items-start lg:gap-0.5">
+          <span>現在のスコア</span>
+          <span>
+            <b className="text-[26px] font-black text-white lg:text-[28px]">{score}</b>
+            <span className="ml-1">/ {answered}問 正解</span>
+          </span>
         </div>
+        <button
+          type="button"
+          onClick={onNext}
+          className="inline-flex h-[58px] w-full items-center justify-center gap-3 rounded-full border-2 border-white bg-white px-8 text-base font-black text-ink shadow-[4px_4px_0_var(--cat)] transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_var(--cat)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:h-[60px] lg:w-auto lg:text-[17px]"
+        >
+          {isLast ? '結果を見る' : '次の問題へ'}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M5 12h14" />
+            <path d="M13 6l6 6-6 6" />
+          </svg>
+        </button>
       </div>
     </section>
   );

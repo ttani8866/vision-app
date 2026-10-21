@@ -1,14 +1,15 @@
 'use client';
 
-// useQuiz と4コンポーネントの配線例です。
+// useQuiz と4コンポーネントの配線例（v2）。
 // useQuiz の戻り値名は推定です（README の「props の前提」参照）。実物に合わせて読み替えてください。
 
 import { AppHeader } from './components/AppHeader';
+import { CategoryScene } from './components/CategoryScene';
 import { StartScreen } from './components/StartScreen';
 import { QuestionCard } from './components/QuestionCard';
 import { FeedbackPanel } from './components/FeedbackPanel';
 import { ResultScreen } from './components/ResultScreen';
-import type { CategoryStats, Phase, Question } from './types';
+import { CATEGORY_THEME, type CategoryStats, type Phase, type Question, type Theme } from './types';
 
 // 既存の useQuiz.ts をそのまま import してください。
 // import { useQuiz } from '@/hooks/useQuiz';
@@ -30,22 +31,32 @@ declare function useQuiz(): {
 
 export default function QuizPage() {
   const q = useQuiz();
+  const inQuiz = q.phase === 'question' || q.phase === 'feedback';
 
-  const status =
-    q.phase === 'question' || q.phase === 'feedback'
-      ? `正解 ${q.score} / 回答済 ${q.answeredCount}問`
-      : q.phase === 'result'
-        ? `全${q.total}問 回答済み`
-        : undefined;
+  // 画面全体の色は data-theme で切り替える（globals.css の [data-theme] 参照）
+  const theme: Theme =
+    q.phase === 'start' ? 'start' : q.phase === 'result' ? 'result' : q.currentQuestion ? CATEGORY_THEME[q.currentQuestion.category] : 'start';
+
+  const status = inQuiz
+    ? `正解 ${q.score} ・ 回答済 ${q.answeredCount}問`
+    : q.phase === 'result'
+      ? `全${q.total}問 回答済み`
+      : '社内研修 ・ AIチューター候補者向け';
 
   return (
-    <div className="flex min-h-dvh flex-col bg-page">
-      <AppHeader status={status} />
-      <main className="mx-auto flex w-full max-w-[720px] flex-col gap-3 px-3 pb-10 pt-4 sm:gap-4 sm:px-4 sm:pb-14 sm:pt-8">
-        {q.phase === 'start' && <StartScreen onStart={q.start} />}
+    <div data-theme={theme} className="flex min-h-dvh flex-col bg-[var(--bg)] transition-colors duration-[400ms]">
+      <AppHeader
+        progress={inQuiz ? { index: q.currentIndex, total: q.total } : undefined}
+        status={status}
+        inverted={q.phase === 'result'}
+      />
 
-        {(q.phase === 'question' || q.phase === 'feedback') && q.currentQuestion && (
-          <>
+      {q.phase === 'start' && <StartScreen onStart={q.start} />}
+
+      {inQuiz && q.currentQuestion && (
+        <main className="mx-auto grid w-full max-w-[1200px] flex-1 grid-cols-1 items-start gap-4 px-4 pb-10 pt-1 lg:grid-cols-[1.1fr_.9fr] lg:gap-12 lg:px-8 lg:pb-14 lg:pt-4">
+          {/* key を問題IDにすると、問題が変わるたびに左ブロックが再マウントされ入場アニメーションが走る */}
+          <div key={String(q.currentQuestion.id)} className="flex flex-col gap-4 motion-safe:animate-rise lg:gap-[22px]">
             <QuestionCard
               question={q.currentQuestion}
               index={q.currentIndex}
@@ -64,18 +75,17 @@ export default function QuizPage() {
                 onNext={q.next}
               />
             )}
-          </>
-        )}
-
-        {q.phase === 'result' && (
-          <ResultScreen
-            score={q.score}
-            total={q.total}
-            categoryStats={q.categoryStats}
-            onRetry={q.restart}
+          </div>
+          <CategoryScene
+            category={q.currentQuestion.category}
+            className="order-first h-[150px] lg:sticky lg:top-6 lg:order-last lg:aspect-[1/1.05] lg:h-auto lg:max-h-[520px]"
           />
-        )}
-      </main>
+        </main>
+      )}
+
+      {q.phase === 'result' && (
+        <ResultScreen score={q.score} total={q.total} categoryStats={q.categoryStats} onRetry={q.restart} />
+      )}
     </div>
   );
 }

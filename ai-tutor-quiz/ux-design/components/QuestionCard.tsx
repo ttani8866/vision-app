@@ -1,4 +1,4 @@
-import { CHOICE_LABELS, type Question } from '../types';
+import { CHOICE_LABELS, CATEGORY_COLOR, type Question } from '../types';
 
 type Props = {
   question: Question;
@@ -10,25 +10,6 @@ type Props = {
   onSelect: (choiceIndex: number) => void;
 };
 
-function ProgressSegments({ index, total }: { index: number; total: number }) {
-  return (
-    <div
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={total}
-      aria-valuenow={index + 1}
-      aria-label={`進捗 ${index + 1}問目`}
-      className="grid gap-1"
-      style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}
-    >
-      {Array.from({ length: total }, (_, i) => {
-        const tone = i < index ? 'bg-primary' : i === index ? 'bg-primary-soft' : 'bg-line';
-        return <span key={i} className={`h-1.5 rounded-full ${tone}`} />;
-      })}
-    </div>
-  );
-}
-
 type ChoiceState = 'idle' | 'correct' | 'wrong' | 'off';
 
 function choiceState(i: number, selectedIndex: number | null, correctIndex: number): ChoiceState {
@@ -39,72 +20,64 @@ function choiceState(i: number, selectedIndex: number | null, correctIndex: numb
 }
 
 const CHOICE_BASE =
-  'flex w-full items-start gap-3 rounded-xl bg-white text-left text-base leading-[1.65] text-ink ' +
-  'min-h-14 px-3.5 py-3.5 sm:min-h-[60px] sm:gap-3.5 sm:px-4 ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
+  'flex w-full flex-wrap items-start gap-3 rounded-2xl border-2 border-ink bg-white px-3.5 py-3.5 text-left text-base leading-relaxed text-ink ' +
+  'min-h-[58px] lg:min-h-16 lg:flex-nowrap lg:gap-4 lg:rounded-[20px] lg:px-5 lg:py-4 lg:text-[17px] ' +
+  'transition-[transform,box-shadow,background-color,color] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand';
 
 const CHOICE_BY_STATE: Record<ChoiceState, string> = {
-  idle: 'border-[1.5px] border-choice transition-colors hover:border-primary hover:bg-tint',
-  // 判定後は 2px 枠。1.5px との差分 0.5px は実用上無視できる
-  correct: 'border-2 border-ok bg-ok-tint',
-  wrong: 'border-2 border-ng bg-ng-tint',
-  off: 'border-[1.5px] border-choice opacity-50',
+  idle: 'shadow-[3px_3px_0_var(--color-ink)] lg:shadow-[4px_4px_0_var(--color-ink)] sticker-lift cursor-pointer',
+  correct: 'bg-ok text-white -translate-x-0.5 -translate-y-0.5 shadow-[5px_5px_0_var(--color-ink)]',
+  wrong: 'bg-ng text-white shadow-[3px_3px_0_var(--color-ink)] lg:shadow-[4px_4px_0_var(--color-ink)]',
+  off: 'opacity-40 shadow-none',
 };
 
 const KEY_BASE =
-  '-mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[1.5px] text-sm font-bold';
+  'flex size-8 shrink-0 items-center justify-center rounded-[10px] border-2 text-sm font-black lg:size-9 lg:rounded-xl lg:text-[15px]';
 
 const KEY_BY_STATE: Record<ChoiceState, string> = {
-  idle: 'border-slate-400 text-slate-600',
-  correct: 'border-ok bg-ok text-white',
-  wrong: 'border-ng bg-ng text-white',
-  off: 'border-slate-400 text-slate-600',
+  idle: 'border-ink text-ink',
+  correct: 'border-white bg-white text-ok',
+  wrong: 'border-white bg-white text-ng',
+  off: 'border-ink text-ink',
 };
 
+/**
+ * 出題カード。未回答と回答後（正解＝緑面、誤答＝コーラル面、他＝40%）を同じコンポーネントで描く。
+ * 親は data-theme を question.category に合わせて切り替える（CATEGORY_THEME 参照）。
+ */
 export function QuestionCard({ question, index, total, selectedIndex, onSelect }: Props) {
   const answered = selectedIndex !== null;
+  const cat = CATEGORY_COLOR[question.category];
 
   return (
-    <section
-      aria-labelledby="question-text"
-      className="flex flex-col gap-4 rounded-xl border border-line bg-white p-4 sm:gap-5 sm:rounded-2xl sm:p-8"
-    >
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-baseline gap-1 text-sm font-bold text-primary">
-            <span className="text-[22px]">第{index + 1}問</span>
-            <span className="font-medium text-muted">/ {total}問</span>
-          </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-tint px-3 py-1 text-xs font-bold text-body">
-            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-primary" />
-            {question.category}
-          </span>
+    <section aria-labelledby="question-text" className="flex flex-col gap-4 lg:gap-[22px]">
+      <div className="flex items-end gap-3 lg:gap-4">
+        <div className="text-6xl font-black leading-[.9] tracking-[-.04em] lg:text-[88px]">
+          Q{index + 1}
+          <span className="ml-1 text-lg font-bold tracking-normal text-ink-soft lg:text-[22px]">/ {total}</span>
         </div>
-        <ProgressSegments index={index} total={total} />
+        <span className="mb-2 inline-flex h-8 items-center gap-2 rounded-full bg-ink px-3 text-xs font-bold text-white lg:mb-2.5 lg:h-9 lg:px-3.5 lg:text-[13px]">
+          <span aria-hidden="true" className={`size-2.5 rounded-full ${cat.token}`} />
+          {question.category}
+        </span>
       </div>
 
-      <p id="question-text" className="text-[17px] font-bold leading-[1.8] text-heading sm:text-lg">
+      <p id="question-text" className="text-xl font-bold leading-[1.6] lg:text-[26px] lg:tracking-tight">
         {question.text}
       </p>
 
       {!answered ? (
-        <p className="text-[13px] text-muted">
-          選択肢をひとつ選んでください。選ぶとすぐに正誤と解説が表示されます。
+        <p className="text-xs font-bold text-ink-soft lg:text-[13px]">
+          ひとつ選んでください。選ぶとすぐに正誤と解説が表示されます。
         </p>
       ) : null}
 
-      <div role="group" aria-label={answered ? '選択肢（回答済み）' : '選択肢'} className="flex flex-col gap-3">
+      <div role="group" aria-label={answered ? '選択肢（回答済み）' : '選択肢'} className="flex flex-col gap-3 lg:gap-3.5">
         {question.choices.map((choice, i) => {
           const state = choiceState(i, selectedIndex, question.correctIndex);
           const label = CHOICE_LABELS[i] ?? String(i + 1);
           const tag =
-            state === 'correct'
-              ? selectedIndex === i
-                ? '正解 ・ あなたの回答'
-                : '正解'
-              : state === 'wrong'
-                ? 'あなたの回答'
-                : null;
+            state === 'correct' ? (selectedIndex === i ? '正解 ・ あなたの回答' : '正解') : state === 'wrong' ? 'あなたの回答' : null;
 
           return (
             <button
@@ -113,17 +86,12 @@ export function QuestionCard({ question, index, total, selectedIndex, onSelect }
               disabled={answered}
               onClick={() => onSelect(i)}
               aria-label={tag ? `${label} ${tag}` : undefined}
-              className={`${CHOICE_BASE} ${CHOICE_BY_STATE[state]} flex-wrap disabled:cursor-default sm:flex-nowrap`}
+              className={`${CHOICE_BASE} ${CHOICE_BY_STATE[state]} disabled:cursor-default`}
             >
               <span className={`${KEY_BASE} ${KEY_BY_STATE[state]}`}>{label}</span>
-              <span className="min-w-0 flex-1">{choice}</span>
+              <span className="min-w-0 flex-1 pt-0.5 lg:pt-1">{choice}</span>
               {tag ? (
-                <span
-                  className={
-                    'ml-11 shrink-0 self-start rounded-md px-2 py-0.5 text-xs font-bold sm:ml-0 sm:mt-0.5 ' +
-                    (state === 'correct' ? 'bg-ok-soft text-ok-ink' : 'bg-ng-soft text-ng-ink')
-                  }
-                >
+                <span className="ml-11 shrink-0 self-start whitespace-nowrap rounded-full border-2 border-current px-2.5 py-0.5 text-[11px] font-black lg:ml-0 lg:self-center lg:text-xs">
                   {tag}
                 </span>
               ) : null}
