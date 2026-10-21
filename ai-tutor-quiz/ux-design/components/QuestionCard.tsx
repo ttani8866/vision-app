@@ -20,15 +20,15 @@ function choiceState(i: number, selectedIndex: number | null, correctIndex: numb
 }
 
 const CHOICE_BASE =
-  'flex w-full flex-wrap items-start gap-3 rounded-2xl border-2 border-ink bg-white px-3.5 py-3.5 text-left text-base leading-relaxed text-ink ' +
+  'flex w-full flex-wrap items-start gap-3 rounded-2xl border-2 border-ink px-3.5 py-3.5 text-left text-base leading-relaxed ' +
   'min-h-[58px] lg:min-h-16 lg:flex-nowrap lg:gap-4 lg:rounded-[20px] lg:px-5 lg:py-4 lg:text-[17px] ' +
   'transition-[transform,box-shadow,background-color,color] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand';
 
 const CHOICE_BY_STATE: Record<ChoiceState, string> = {
-  idle: 'shadow-[3px_3px_0_var(--color-ink)] lg:shadow-[4px_4px_0_var(--color-ink)] sticker-lift cursor-pointer',
+  idle: 'bg-white text-ink shadow-[3px_3px_0_var(--color-ink)] lg:shadow-[4px_4px_0_var(--color-ink)] sticker-lift cursor-pointer',
   correct: 'bg-ok text-white -translate-x-0.5 -translate-y-0.5 shadow-[5px_5px_0_var(--color-ink)]',
   wrong: 'bg-ng text-white shadow-[3px_3px_0_var(--color-ink)] lg:shadow-[4px_4px_0_var(--color-ink)]',
-  off: 'opacity-40 shadow-none',
+  off: 'bg-white text-ink opacity-40 shadow-none',
 };
 
 const KEY_BASE =
