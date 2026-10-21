@@ -26,8 +26,8 @@ export function CategoryScene({ category, className = '' }: Props) {
       <svg viewBox="0 0 520 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true" className="absolute inset-0 size-full">
         {category === '心構え' && (
           <>
-            <circle cx="260" cy="230" r="150" fill="#ffb224" stroke={INK} strokeWidth="4" className="motion-safe:animate-float" />
-            <circle cx="260" cy="230" r="96" fill="#ffe3da" stroke={INK} strokeWidth="4" />
+            <circle cx="260" cy="230" r="150" fill="var(--color-brand)" stroke={INK} strokeWidth="4" className="motion-safe:animate-float" />
+            <circle cx="260" cy="230" r="96" fill="#fff1d6" stroke={INK} strokeWidth="4" />
             <circle cx="260" cy="230" r="40" fill={INK} />
             <path d="M60 470 Q 260 380 460 470" fill="none" stroke={INK} strokeWidth="6" strokeLinecap="round" />
             <circle cx="90" cy="110" r="18" fill="#fff" stroke={INK} strokeWidth="4" />
@@ -40,7 +40,7 @@ export function CategoryScene({ category, className = '' }: Props) {
             <rect x="190" y="250" width="90" height="230" rx="18" fill="#ffb224" stroke={INK} strokeWidth="4" />
             <rect x="310" y="150" width="90" height="330" rx="18" fill="var(--color-brand)" stroke={INK} strokeWidth="4" />
             <g className="motion-safe:animate-float">
-              <circle cx="430" cy="100" r="40" fill="#ff7a5c" stroke={INK} strokeWidth="4" />
+              <circle cx="430" cy="100" r="40" fill="#ffb224" stroke={INK} strokeWidth="4" />
               <path d="M412 100 l18 -18 l18 18 M430 82 l0 40" fill="none" stroke={INK} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
             </g>
             <path d="M60 110 Q 180 60 300 110" fill="none" stroke={INK} strokeWidth="6" strokeLinecap="round" strokeDasharray="2 16" />
@@ -56,12 +56,12 @@ export function CategoryScene({ category, className = '' }: Props) {
             <circle cx="230" cy="330" r="38" fill="#ffb224" stroke={INK} strokeWidth="4" className="motion-safe:animate-float" />
             <circle cx="370" cy="160" r="46" fill="#fff" stroke={INK} strokeWidth="4" />
             <circle cx="370" cy="160" r="16" fill={INK} />
-            <circle cx="440" cy="360" r="30" fill="#ff7a5c" stroke={INK} strokeWidth="4" />
+            <circle cx="440" cy="360" r="30" fill="#ffb224" stroke={INK} strokeWidth="4" />
           </>
         )}
         {!category && (
           <>
-            <circle cx="170" cy="190" r="120" fill="#ff7a5c" stroke={INK} strokeWidth="4" className="motion-safe:animate-float" />
+            <circle cx="170" cy="190" r="120" fill="#ffb224" stroke={INK} strokeWidth="4" className="motion-safe:animate-float" />
             <rect x="300" y="300" width="60" height="180" rx="14" fill="#22c58b" stroke={INK} strokeWidth="4" />
             <rect x="376" y="240" width="60" height="240" rx="14" fill="#22c58b" stroke={INK} strokeWidth="4" />
             <rect x="452" y="170" width="60" height="310" rx="14" fill="#22c58b" stroke={INK} strokeWidth="4" />

@@ -3,7 +3,7 @@
 /*
   AIチューター確認テスト デザイントークン v2（Tailwind CSS v4）
   既存の globals.css の @import "tailwindcss" の直後に追記してください。
-  ブランド色は仮。--color-brand の1行を差し替えると全画面に反映されます。
+  ブランド色 #FC6044 は新東通信ロゴから抽出。--color-brand の1行で全画面に反映されます。
 */
 @theme {
   /* 日本語ゴシックのみ。英字専用フォントは入れない */
@@ -11,26 +11,26 @@
     "Yu Gothic", Meiryo, sans-serif;
 
   /* 基調 */
-  --color-brand: #2d4bff;       /* 仮。コーポレートカラーに差し替え */
-  --color-brand-deep: #1b33c9;
-  --color-brand-tint: #e8ecff;  /* スタート画面の地 */
+  --color-brand: #fc6044;       /* コーポレートカラー（ロゴから抽出） */
+  --color-brand-deep: #d9472e;
+  --color-brand-tint: #ffe6e0;  /* スタート画面の地 */
   --color-ink: #141a2e;         /* 文字・枠・影・解説パネル・結果の地 */
   --color-ink-soft: #3a4160;    /* 淡色地の補助文字 */
   --color-ink-muted: #5b6483;   /* 白地の注記 */
   --color-on-ink: #e6e9f7;      /* 濃色地の本文 */
   --color-on-ink-muted: #c9d0ea;
   --color-on-ink-faint: #8e97bc;
-  --color-on-ink-link: #9db0ff;
+  --color-on-ink-link: #ffb3a5;
   --color-track: #eef0f7;       /* バーの下地 */
 
   /* 判定 */
   --color-ok: #1fa971;          /* 正解の面（白文字） */
-  --color-ng: #ff6b57;          /* 自分の誤答の面（白文字） */
+  --color-ng: #c1203b;          /* 自分の誤答の面（白文字） */
   --color-accent: #ffb224;      /* 及第点・差し色 */
   --color-fail: #9aa3bf;        /* 不合格のドット */
 
   /* カテゴリ（シーン色） */
-  --color-cat-kokoro: #ff7a5c;
+  --color-cat-kokoro: #ffb224;
   --color-cat-skill: #22c58b;
   --color-cat-ai: #7c6cf6;
 
@@ -58,8 +58,8 @@
 }
 
 /* カテゴリで画面全体の色を切り替える。QuizPage のルートに data-theme を付ける */
-[data-theme="start"]  { --bg: #e8ecff; --scene: var(--color-brand);      --cat: var(--color-brand); }
-[data-theme="kokoro"] { --bg: #ffe3da; --scene: var(--color-cat-kokoro); --cat: var(--color-cat-kokoro); }
+[data-theme="start"]  { --bg: #ffe6e0; --scene: var(--color-brand);      --cat: var(--color-brand); }
+[data-theme="kokoro"] { --bg: #fff1d6; --scene: var(--color-cat-kokoro); --cat: var(--color-cat-kokoro); }
 [data-theme="skill"]  { --bg: #d9f4e7; --scene: var(--color-cat-skill);  --cat: var(--color-cat-skill); }
 [data-theme="ai"]     { --bg: #e6e3ff; --scene: var(--color-cat-ai);     --cat: var(--color-cat-ai); }
 [data-theme="result"] { --bg: var(--color-ink); --scene: var(--color-brand); --cat: var(--color-brand); }

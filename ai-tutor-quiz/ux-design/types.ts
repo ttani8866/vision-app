@@ -45,7 +45,7 @@ export const CATEGORY_THEME: Record<Category, Theme> = {
 
 /** カテゴリ色（Tailwind のトークン名と hex）。バーの色や凡例で使う */
 export const CATEGORY_COLOR: Record<Category, { token: string; hex: string }> = {
-  心構え: { token: 'bg-cat-kokoro', hex: '#ff7a5c' },
+  心構え: { token: 'bg-cat-kokoro', hex: '#ffb224' },
   スキル: { token: 'bg-cat-skill', hex: '#22c58b' },
   AI知識: { token: 'bg-cat-ai', hex: '#7c6cf6' },
 };
