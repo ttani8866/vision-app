@@ -1,1 +1,93 @@
-/* Global reset handled in App.css */
+@import "tailwindcss";
+
+/*
+  AIチューター認定試験 デザイントークン v2
+  ブランド色 #FC6044 は新東通信ロゴから抽出。--color-brand の1行で全画面に反映されます。
+*/
+@theme {
+  --font-sans: "Zen Kaku Gothic New", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", Meiryo, sans-serif;
+
+  --color-brand: #fc6044;
+  --color-brand-deep: #d9472e;
+  --color-brand-tint: #ffe6e0;
+  --color-ink: #141a2e;
+  --color-ink-soft: #3a4160;
+  --color-ink-muted: #5b6483;
+  --color-on-ink: #e6e9f7;
+  --color-on-ink-muted: #c9d0ea;
+  --color-on-ink-faint: #8e97bc;
+  --color-on-ink-link: #ffb3a5;
+  --color-track: #eef0f7;
+
+  --color-ok: #1fa971;
+  --color-ng: #c1203b;
+  --color-accent: #ffb224;
+  --color-fail: #9aa3bf;
+
+  /* 5カテゴリ（rank 1〜5） */
+  --color-cat-1: #7c6cf6; /* 基礎知識 */
+  --color-cat-2: #ffb224; /* 心構え */
+  --color-cat-3: #22c58b; /* ヒアリング */
+  --color-cat-4: #4c8dff; /* 業務分析 */
+  --color-cat-5: #fc6044; /* 提案・高度知識 */
+
+  --animate-rise: rise 0.35s ease-out both;
+  --animate-grow: grow 0.6s ease-out both;
+  --animate-pop: pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes grow {
+    from { width: 0; }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+}
+
+/* 画面全体の色。App のルートに data-theme を付ける */
+[data-theme="start"]  { --bg: #ffe6e0; --scene: var(--color-brand); --cat: var(--color-brand); }
+[data-theme="cat-1"]  { --bg: #e6e3ff; --scene: var(--color-cat-1); --cat: var(--color-cat-1); }
+[data-theme="cat-2"]  { --bg: #fff1d6; --scene: var(--color-cat-2); --cat: var(--color-cat-2); }
+[data-theme="cat-3"]  { --bg: #d9f4e7; --scene: var(--color-cat-3); --cat: var(--color-cat-3); }
+[data-theme="cat-4"]  { --bg: #e0ecff; --scene: var(--color-cat-4); --cat: var(--color-cat-4); }
+[data-theme="cat-5"]  { --bg: #ffe6e0; --scene: var(--color-cat-5); --cat: var(--color-cat-5); }
+[data-theme="result"] { --bg: var(--color-ink); --scene: var(--color-brand); --cat: var(--color-brand); }
+
+html {
+  font-feature-settings: "palt";
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  @apply font-sans text-ink;
+}
+
+@utility sticker {
+  border-width: 2px;
+  border-color: var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
+}
+@utility sticker-lift {
+  transition: transform 150ms, box-shadow 150ms;
+  &:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--color-ink); }
+  &:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--color-ink); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
