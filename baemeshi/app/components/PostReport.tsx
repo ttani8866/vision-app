@@ -74,6 +74,8 @@ export default function PostReport({ historyId }: { historyId: number }) {
                 <MetricChip icon="📤" label="シェア" value={report.metrics.shares} />
                 <MetricChip icon="👀" label="リーチ" value={report.metrics.reach} />
                 <MetricChip icon="▶️" label="表示" value={report.metrics.views} />
+                <MetricChip icon="🚪" label="プロフィール訪問" value={report.metrics.profileVisits ?? null} />
+                <MetricChip icon="➕" label="フォロー" value={report.metrics.follows ?? null} />
               </div>
 
               <div className="note-success">

@@ -159,6 +159,10 @@ export interface MediaMetrics {
   saved: number | null;
   shares: number | null;
   views: number | null;
+  /** この投稿からフォローした人数（Business Suite の投稿インサイト「フォロー」と同じ値） */
+  follows: number | null;
+  /** この投稿からプロフィールを訪問した人数 */
+  profileVisits: number | null;
   permalink: string | null;
   timestamp: string | null;
   caption: string | null;
@@ -180,6 +184,8 @@ export async function getMediaMetrics(mediaId: string): Promise<MediaMetrics> {
     saved: null,
     shares: null,
     views: null,
+    follows: null,
+    profileVisits: null,
     permalink: base.permalink ?? null,
     timestamp: base.timestamp ?? null,
     caption: base.caption ?? null,
@@ -188,6 +194,7 @@ export async function getMediaMetrics(mediaId: string): Promise<MediaMetrics> {
 
   // insights はメディア種別・APIバージョンで取れる指標が変わるため、段階的にフォールバックする
   const metricSets = [
+    ["reach", "saved", "shares", "views", "follows", "profile_visits"],
     ["reach", "saved", "shares", "views"],
     ["reach", "saved", "shares"],
     ["reach", "saved"],
@@ -203,6 +210,8 @@ export async function getMediaMetrics(mediaId: string): Promise<MediaMetrics> {
         if (item.name === "saved") metrics.saved = value;
         if (item.name === "shares") metrics.shares = value;
         if (item.name === "views") metrics.views = value;
+        if (item.name === "follows") metrics.follows = value;
+        if (item.name === "profile_visits") metrics.profileVisits = value;
       }
       break;
     } catch {

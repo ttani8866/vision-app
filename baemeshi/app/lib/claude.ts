@@ -186,6 +186,8 @@ export async function generateReportCommentary(input: {
     m.shares !== null ? `シェア: ${m.shares}` : null,
     m.reach !== null ? `リーチ: ${m.reach}` : null,
     m.views !== null ? `視聴/表示: ${m.views}` : null,
+    m.profileVisits !== null ? `プロフィール訪問: ${m.profileVisits}` : null,
+    m.follows !== null ? `この投稿からのフォロー: ${m.follows}（獲得数の実数。KPIはここ）` : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -263,6 +265,7 @@ export async function generateProposals(performanceText: string): Promise<Genera
   - CTRが低いのにCPFが良い → 訴求は弱いが刺さった人はフォローしている。訴求の量（見せ方・配信）を増やす
   - CTRもCPFも良い → 勝ちパターン。型として横展開する
 - 広告別のフォロー数はAPIで取れない。広告別の比較はCTR・CPC・リンククリックで行い、CPFはアカウント全体の日別・期間値で判断する
+- 投稿ごとの「フォロー」（その投稿からフォローした人数）と「プロフィール訪問」は実数として取れる。これが獲得数の実態なので、投稿の評価はいいね・保存より先にこの2つで見る。閲覧→プロフィール訪問→フォローのどこで止まっているかを必ず切り分ける（プロフィール訪問が少なければ投稿内でプロフィールへ誘導できていない、訪問はあるのにフォローが0ならプロフィール側でフォローする理由を示せていない）
 - CPFの参考水準は8月時点で概ね150〜300円。これより悪ければ課題、良ければ維持・横展開
 
 運用の前提（重要）:

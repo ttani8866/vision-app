@@ -57,6 +57,11 @@ export interface OrganicPostSummary {
   reach: number | null;
   saved: number | null;
   shares: number | null;
+  views: number | null;
+  /** この投稿からフォローした人数（投稿インサイトの「フォロー」。獲得数の実数） */
+  follows: number | null;
+  /** この投稿からプロフィールを訪問した人数 */
+  profileVisits: number | null;
   permalink: string | null;
 }
 
@@ -303,10 +308,17 @@ async function fetchOrganicPosts(limit = 8): Promise<OrganicPostSummary[]> {
       reach: null,
       saved: null,
       shares: null,
+      views: null,
+      follows: null,
+      profileVisits: null,
       permalink: (m.permalink as string) ?? null,
     };
-    // 指標は2段階まで（reach,saved,shares → reach）で試す。取れなければ null のまま
-    for (const set of [["reach", "saved", "shares"], ["reach"]]) {
+    // 指標は段階的に試す（フォロー・プロフィール訪問つき → 基本指標 → reach のみ）。取れなければ null のまま
+    for (const set of [
+      ["reach", "saved", "shares", "views", "follows", "profile_visits"],
+      ["reach", "saved", "shares"],
+      ["reach"],
+    ]) {
       try {
         const iq = new URLSearchParams({ metric: set.join(","), access_token: env.igUserToken });
         const ins = await graphGet(`/${post.id}/insights?${iq.toString()}`);
@@ -315,6 +327,9 @@ async function fetchOrganicPosts(limit = 8): Promise<OrganicPostSummary[]> {
           if (item.name === "reach") post.reach = v;
           if (item.name === "saved") post.saved = v;
           if (item.name === "shares") post.shares = v;
+          if (item.name === "views") post.views = v;
+          if (item.name === "follows") post.follows = v;
+          if (item.name === "profile_visits") post.profileVisits = v;
         }
         break;
       } catch {
@@ -342,6 +357,8 @@ async function fetchAppPosts(): Promise<AppPostSummary[]> {
           saved: m.saved ?? null,
           shares: m.shares ?? null,
           views: m.views ?? null,
+          follows: m.follows ?? null,
+          profileVisits: m.profileVisits ?? null,
         };
       } catch {
         metrics = null;
@@ -518,11 +535,23 @@ export function snapshotToText(s: PerformanceSnapshot): string {
   if (s.organic.posts.length === 0) {
     lines.push(`（未取得: ${s.organic.error ?? "データなし"}）`);
   }
+  if (s.organic.posts.length > 0) {
+    lines.push("（フォロー＝その投稿からフォローした人数の実数。プロフィール訪問→フォローの流れでどこで止まっているかを見る）");
+  }
   for (const p of s.organic.posts) {
     lines.push(
-      `- ${p.timestamp?.slice(0, 10) ?? "?"} ${p.mediaType}: いいね ${fmt(p.likeCount)}／コメント ${fmt(p.commentsCount)}／リーチ ${fmt(p.reach)}／保存 ${fmt(p.saved)}／シェア ${fmt(p.shares)}`
+      `- ${p.timestamp?.slice(0, 10) ?? "?"} ${p.mediaType}: 閲覧 ${fmt(p.views)}／リーチ ${fmt(p.reach)}／いいね ${fmt(p.likeCount)}／コメント ${fmt(p.commentsCount)}／保存 ${fmt(p.saved)}／シェア ${fmt(p.shares)}／プロフィール訪問 ${fmt(p.profileVisits)}／フォロー ${fmt(p.follows)}`
     );
     if (p.captionHead) lines.push(`    内容: ${p.captionHead}`);
+  }
+  const withFollows = s.organic.posts.filter((p) => p.follows !== null);
+  if (withFollows.length > 0) {
+    const f = withFollows.reduce((a, p) => a + (p.follows ?? 0), 0);
+    const pv = withFollows.reduce((a, p) => a + (p.profileVisits ?? 0), 0);
+    const v = withFollows.reduce((a, p) => a + (p.views ?? 0), 0);
+    lines.push(
+      `直近${withFollows.length}投稿の合計: 閲覧 ${fmt(v)}／プロフィール訪問 ${fmt(pv)}／フォロー ${fmt(f)}（閲覧→プロフィール訪問 ${v ? ((pv / v) * 100).toFixed(2) : "不明"}%、プロフィール訪問→フォロー ${pv ? ((f / pv) * 100).toFixed(1) : "不明"}%）`
+    );
   }
 
   if (s.appPosts.length > 0) {
@@ -533,7 +562,7 @@ export function snapshotToText(s: PerformanceSnapshot): string {
       lines.push(
         `- ${p.postedAt.slice(0, 10)} ${p.storeName}（${p.mediaType}）: ` +
           (m
-            ? `いいね ${fmt(m.likeCount)}／コメント ${fmt(m.commentsCount)}／リーチ ${fmt(m.reach)}／保存 ${fmt(m.saved)}／シェア ${fmt(m.shares)}`
+            ? `いいね ${fmt(m.likeCount)}／コメント ${fmt(m.commentsCount)}／リーチ ${fmt(m.reach)}／保存 ${fmt(m.saved)}／シェア ${fmt(m.shares)}／プロフィール訪問 ${fmt(m.profileVisits ?? null)}／フォロー ${fmt(m.follows ?? null)}`
             : "指標未集計")
       );
       if (p.kadai) lines.push(`    前回の課題: ${p.kadai}`);
