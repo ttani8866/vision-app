@@ -188,6 +188,9 @@ function normalizeKpi(raw) {
       })),
       history: m.history || [],
       source: m.source || "出典未取得",
+      sourcePath: m.sourcePath ?? null,   // 出典ファイルのフルパス（あれば詳細で表示）
+      card: m.card ?? m.group,            // 同じ指標を拠点横断で並べるためのカード名
+      metricKey: m.metricKey ?? m.id,     // 指標種別（sales / gross_profit ...）
       updatedAt: m.updatedAt || m.updated_at || raw.generatedAt || "",
       warnPct: m.warnPct ?? -10,
     })),

@@ -212,6 +212,37 @@
   .log-line.alert .m { color: var(--red); }
   .log-line.ok .m { color: var(--green); }
   @keyframes logIn { from { opacity: 0; transform: translateX(-6px); } }
+
+  /* ---------- 詳細モーダル（KPI の内訳・判断の根拠） ---------- */
+  .kpi, .trace { cursor: pointer; }
+  .kpi:hover, .trace:hover { border-color: var(--line-strong); }
+  #modal-bg { position: fixed; inset: 0; z-index: 50; background: rgba(2, 6, 10, 0.74); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } }
+  #modal { width: min(1000px, 94vw); max-height: 88vh; background: rgba(6, 16, 24, 0.985); border: 1px solid var(--line-strong); border-radius: 6px; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0, 229, 255, 0.12); }
+  #modal .panel-head { padding: 10px 14px; }
+  #modal .close { background: none; border: 1px solid var(--line-strong); color: var(--cyan); border-radius: 3px; font-family: var(--font-mono); font-size: 11px; padding: 2px 8px; cursor: pointer; }
+  #modal .close:hover { background: var(--cyan-soft); }
+  #modal-body { padding: 12px 14px; overflow-y: auto; font-size: 12px; line-height: 1.5; }
+  #modal-body h3 { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--cyan-dim); margin: 12px 0 6px; font-weight: 500; }
+  #modal-body h3:first-child { margin-top: 0; }
+  table.dt { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.dt th { text-align: left; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.12em; color: var(--text-faint); padding: 2px 6px 4px; border-bottom: 1px solid var(--line); font-weight: 500; }
+  table.dt td { padding: 5px 6px; border-bottom: 1px dashed rgba(0, 229, 255, 0.1); font-family: var(--font-mono); white-space: nowrap; }
+  table.dt td.l { font-family: var(--font-sans); }
+  table.dt tr.cur td { background: var(--cyan-soft); }
+  table.dt .pos { color: var(--green); } table.dt .neg { color: var(--amber); } table.dt .bad { color: var(--red); }
+  .kv { display: grid; grid-template-columns: 90px 1fr; gap: 3px 10px; font-size: 11.5px; }
+  .kv dt { color: var(--text-faint); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; padding-top: 2px; }
+  .kv dd { margin: 0; word-break: break-all; }
+  .path { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-dim); }
+  .mini-btn { background: none; border: 1px solid var(--line-strong); color: var(--cyan); border-radius: 3px; font-size: 10px; padding: 1px 7px; cursor: pointer; margin-left: 6px; font-family: var(--font-mono); }
+  .mini-btn:hover { background: var(--cyan-soft); }
+  a.lnk { color: var(--cyan); text-decoration: none; border-bottom: 1px dotted var(--cyan-dim); }
+  .ref-item { border-left: 2px solid var(--line-strong); padding: 4px 10px; margin: 4px 0; }
+  .ref-item.hit { border-left-color: var(--amber); background: rgba(255, 181, 71, 0.06); }
+  .ref-item .src { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); }
+  .rel-trace { font-size: 11.5px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 3px; margin: 3px 0; cursor: pointer; }
+  .rel-trace:hover { border-color: var(--line-strong); background: var(--cyan-soft); }
 </style>
 </head>
 <body>
@@ -281,6 +312,14 @@
     <div class="panel-head"><span>Execution Log</span><span class="ja">実行ログ</span></div>
     <div class="panel-body" id="log-body"></div>
   </section>
+</div>
+
+<!-- 詳細モーダル: KPI カード／判断トレースをクリックで開く -->
+<div id="modal-bg" hidden>
+  <div id="modal" role="dialog" aria-modal="true">
+    <div class="panel-head"><span id="modal-title-en">DETAIL</span><span class="ja" id="modal-title">詳細</span><button class="close" id="modal-close" type="button">閉じる (Esc)</button></div>
+    <div id="modal-body"></div>
+  </div>
 </div>
 
 <script type="module">
@@ -493,6 +532,9 @@ function renderKpis() {
         <div class="cmp">${cmpHtml || `<span class="faint">比較対象 未取得</span>`}</div>
         ${plan && plan.diffPct != null ? `<div class="bar" title="対計画差分率（±30%スケール）"><i style="left:${barLeft}%;width:${barW}%;background:${barColor}"></i></div>` : ""}
         <div class="meta">${m.period}<br>出典: ${m.source} / 更新 ${fmtShort(m.updatedAt)}</div>`;
+      card.dataset.id = m.id;
+      card.title = "クリックで内訳・出典を開く";
+      card.addEventListener("click", () => openKpi(m.id));
       body.appendChild(card);
       S.prevValues[m.id] = m.value;
     }
@@ -602,6 +644,9 @@ function renderTraces() {
       <div class="node"><div class="k">CANDIDATES / 候補の評価</div><div class="v">${t.candidates.map((c) => `<div class="cand ${c.score === pickScore ? "pick" : ""}"><span class="cb"><i data-w="${Math.max(0, c.score)}"></i></span><span class="sc">${c.score}</span><span>${c.label}<span class="faint"> — ${c.note}</span></span></div>`).join("")}</div></div>
       <div class="node decision"><div class="k">DECISION / 判断</div><div class="v">${t.decision}</div><div class="conf-basis">信頼度の根拠: ${t.confidenceBasis}</div></div>
       <div class="node"><div class="k">EXECUTION / 実行ログ</div><div class="v">${t.executions.map((e) => `<div class="exe">${fmtShort(e.ts).slice(6)} ${e.text}</div>`).join("")}</div></div>`;
+    div.dataset.id = t.id;
+    div.title = "クリックで根拠の議事録・指標を開く";
+    div.addEventListener("click", () => openTrace(t.id));
     body.appendChild(div);
   }
   requestAnimationFrame(() => document.querySelectorAll(".cand .cb i").forEach((i) => { i.style.width = i.dataset.w + "%"; }));
@@ -691,7 +736,97 @@ async function refresh(first = false) {
   log(`更新完了。状態: ${STATE_LABEL[S.coreState][0]}、アラート ${S.alerts.length}件`);
 }
 
+/* =====================================================================
+ * 詳細モーダル（掘り下げ）。データは既に手元にあるので画面側だけで完結する
+ * ===================================================================== */
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function openModal(titleEn, title, html) {
+  $("#modal-title-en").textContent = titleEn; $("#modal-title").textContent = title;
+  $("#modal-body").innerHTML = html; $("#modal-body").scrollTop = 0;
+  $("#modal-bg").hidden = false;
+}
+function closeModal() { $("#modal-bg").hidden = true; }
+$("#modal-close").addEventListener("click", closeModal);
+$("#modal-bg").addEventListener("click", (e) => { if (e.target.id === "modal-bg") closeModal(); });
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); log("パスをクリップボードにコピー", "ok"); }
+  catch { log("クリップボードに書けません（ブラウザの許可が必要）", "warn"); }
+}
+window.__db = { openKpi, openTrace, copyText };  // モーダル内の onclick から呼ぶ
+
+function pctClass(v, warn = -10) { return v == null ? "faint" : v < warn * 1.5 ? "bad" : v < 0 ? "neg" : "pos"; }
+function cmpCell(m, type) {
+  const c = m.compare.find((x) => x.type === type);
+  if (!c) return `<td class="faint">未取得</td><td class="faint">—</td>`;
+  return `<td>${c.value == null ? "未取得" : fmtNum(c.value)}</td><td class="${pctClass(c.diffPct, m.warnPct)}">${fmtPct(c.diffPct)}</td>`;
+}
+
+/** KPI カード → 同じ指標を全社・拠点で横断比較、出典、関連する判断 */
+function openKpi(id) {
+  const m = S.kpi?.metrics.find((x) => x.id === id);
+  if (!m) return;
+  const sib = S.kpi.metrics.filter((x) => x.metricKey === m.metricKey);
+  const baseName = m.name.replace(/^.+?\s/, "");
+  const rows = sib.map((x) => `<tr class="${x.id === m.id ? "cur" : ""}"><td class="l">${esc(x.card)}</td><td>${x.value == null ? "未取得" : fmtNum(x.value) + " " + esc(x.unit)}</td>${cmpCell(x, "plan")}${cmpCell(x, "prev")}</tr>`).join("");
+  const related = S.traces.filter((t) => t.signals.some((s) => s.ref === m.id));
+  const relHtml = related.length
+    ? related.map((t) => `<div class="rel-trace" onclick="__db.openTrace('${esc(t.id)}')"><span class="badge ${t.level === "info" ? "" : t.level}">${t.level === "alert" ? "要判断" : t.level === "warn" ? "注意" : "情報"}</span> ${esc(t.purpose)} <span class="faint">信頼度 ${t.confidence}%</span></div>`).join("")
+    : `<div class="faint">この指標を根拠にした判断はありません</div>`;
+  openModal("METRIC DETAIL", `${baseName} の内訳`, `
+    <h3>BREAKDOWN / 拠点・全社の横断比較（${esc(m.period.split("。")[0])}）</h3>
+    <table class="dt"><thead><tr><th>区分</th><th>実績</th><th>計画</th><th>対計画</th><th>前期</th><th>対前期</th></tr></thead><tbody>${rows}</tbody></table>
+    <h3>SOURCE / 出典と断面</h3>
+    <dl class="kv">
+      <dt>期間</dt><dd>${esc(m.period)}</dd>
+      <dt>出典</dt><dd>${esc(m.source)}</dd>
+      ${m.sourcePath ? `<dt>ファイル</dt><dd class="path">${esc(m.sourcePath)}<button class="mini-btn" onclick="__db.copyText(${JSON.stringify(m.sourcePath).replace(/"/g, "&quot;")})">パスをコピー</button></dd>` : ""}
+      <dt>更新</dt><dd>${fmtShort(m.updatedAt)}</dd>
+      <dt>異常判定</dt><dd>対計画 ${m.warnPct}% 未満で注意、${m.warnPct * 1.5}% 未満で異常${m.warnPct !== -10 ? "（季節構造のため緩和）" : ""}</dd>
+      <dt>推移</dt><dd>${m.history.length ? m.history.map((v) => fmtNum(v)).join(" → ") : "未取得（資料は断面値のみ）"}</dd>
+    </dl>
+    <h3>RELATED DECISIONS / この指標を根拠にした判断</h3>
+    ${relHtml}`);
+}
+
+/** 判断トレース → 根拠にした議事録（該当箇所を強調）と指標、信頼度の根拠 */
+function openTrace(id) {
+  const t = S.traces.find((x) => x.id === id);
+  if (!t) return;
+  const parts = [];
+  for (const s of t.signals) {
+    if (s.kind === "kpi") {
+      const m = S.kpi?.metrics.find((x) => x.id === s.ref);
+      parts.push(`<div class="ref-item"><span class="badge">指標</span> ${esc(s.label)}${m ? ` <a class="lnk" onclick="__db.openKpi('${esc(m.id)}')">${esc(m.name)} の内訳を開く</a><div class="src">${esc(m.period.split("。")[0])} / ${esc(m.source)}</div>` : ""}</div>`);
+    } else {
+      const mt = S.minutes?.minutes.find((x) => x.id === s.ref || x.homework.some((h) => h.id === s.ref));
+      if (!mt) { parts.push(`<div class="ref-item"><span class="badge">議事録</span> ${esc(s.label)} <span class="faint">（本文未取得）</span></div>`); continue; }
+      const hw = mt.homework.find((h) => h.id === s.ref);
+      const items = hw
+        ? `<div class="ref-item hit">宿題「${esc(hw.title)}」 担当 ${esc(hw.owner)} 期限 ${esc(hw.due ?? "未設定")} ${hw.status === "done" ? "完了" : "未完"}</div>`
+        : `${mt.decisions.map((d) => `<div class="ref-item">決定: ${esc(d)}</div>`).join("")}${mt.openIssues.map((d) => `<div class="ref-item">未決: ${esc(d)}</div>`).join("")}`;
+      parts.push(`<div class="ref-item"><span class="badge">議事録</span> ${esc(mt.meeting)} ${fmtShort(mt.datetime)} ${mt.link ? `<a class="lnk" href="${esc(mt.link)}">元議事録を Obsidian で開く</a>` : "<span class='faint'>リンク未取得</span>"}<div style="margin-top:4px">${items}</div></div>`);
+    }
+  }
+  const pick = Math.max(...t.candidates.map((c) => c.score));
+  openModal("DECISION DETAIL", t.purpose, `
+    <h3>DECISION / 判断 <span class="badge ${t.level === "info" ? "" : t.level}">${t.level === "alert" ? "要判断" : t.level === "warn" ? "注意" : "情報"}</span> <span class="faint">${fmtShort(t.ts)}</span></h3>
+    <div>${esc(t.decision)}</div>
+    <h3>CONFIDENCE / 信頼度 ${t.confidence}%</h3>
+    <div class="dim">${esc(t.confidenceBasis)}</div>
+    <h3>EVIDENCE / 根拠にしたデータ（${t.signals.length}件）</h3>
+    ${parts.join("")}
+    <h3>CANDIDATES / 候補の評価</h3>
+    <table class="dt"><thead><tr><th>候補</th><th>評価</th><th>理由</th></tr></thead><tbody>
+      ${t.candidates.map((c) => `<tr class="${c.score === pick ? "cur" : ""}"><td class="l">${esc(c.label)}${c.score === pick ? " ◂ 採用" : ""}</td><td>${c.score}</td><td class="l dim">${esc(c.note)}</td></tr>`).join("")}
+    </tbody></table>
+    <h3>EXECUTION / 実行ログ</h3>
+    ${t.executions.map((e) => `<div class="exe">${fmtShort(e.ts).slice(6)} ${esc(e.text)}</div>`).join("")}
+    <div class="faint" style="margin-top:10px">この判断は画面側のルールで導いた派生判断です（KANBEI の実判断ではありません）。実行は下書きまでで、送信はしません。</div>`);
+}
+
 document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { closeModal(); return; }
+  if (!$("#modal-bg").hidden) return;
   if (e.key.toLowerCase() === "b" && !e.ctrlKey && !e.metaKey && !e.altKey) location.href = "index.html";
 });
 

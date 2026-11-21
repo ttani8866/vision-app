@@ -131,6 +131,9 @@ def convert(company: dict, section_key: str) -> dict:
                 "compare": compare,
                 "history": [],  # 資料は断面値のみで月次推移が無い（未取得）
                 "source": f"{src.get('name', '')}" + (f" {src['page_id']}" if src.get("page_id") else ""),
+                "sourcePath": src.get("path"),
+                "card": card["title"],
+                "metricKey": mid,
                 "updatedAt": updated,
                 "warnPct": SEASONAL_WARN_PCT if seasonal else DEFAULT_WARN_PCT,
             })

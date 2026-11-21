@@ -45,7 +45,8 @@ DEFAULT_DIR = VAULT / "51_新東通信" / "s議事録"
 OUT = Path(__file__).resolve().parent.parent / "data" / "decision-board" / "minutes.json"
 
 HEAD_RE = re.compile(r"^(#{1,4})\s+(.+?)\s*$")
-BULLET_RE = re.compile(r"^(\s*)[-*・]\s*(?:\[([ xX])\]\s*)?(.+?)\s*$")
+# 「- [ ] 」「* \[ ]  」（Notion書き出しは [ を \[ にエスケープする）の両方をチェックボックスとして扱う
+BULLET_RE = re.compile(r"^(\s*)[-*・]\s*(?:\\?\[([ xX])\\?\]\s*)?(.+?)\s*$")
 KIND_PATTERNS = {
     "decisions": re.compile(r"決定|決議|decisions?\b", re.I),
     "homework": re.compile(r"アクションアイテム|action\s*items?|宿題|todo|タスク", re.I),
