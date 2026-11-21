@@ -6,3 +6,7 @@ hud/graph.json
 hud/state.json
 hud/data/dashboard.json
 tests/logs/
+hud/.graph_cache.json
+
+# 判断監査ボードの生成物（区分C/C2 の経営数字・議事録を含む。リモートに出さない）
+hud/data/decision-board/

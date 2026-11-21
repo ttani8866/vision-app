@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JARVIS 判断監査ボード</title>
+<!--
+  JARVIS 判断監査ボード（経営ダッシュボード）
+  目的: AIエージェントが「何を根拠に、どれくらいの確信で判断したか」を経営者が一目で監査できる画面。
+  データ受け口は js/decision-board-data.js に分離（型定義・fetch・ダミー）。本ファイルは描画と連動のみ。
+  起動: python hud/serve.py → http://127.0.0.1:8765/decision-board.html
+-->
+<style>
+  :root {
+    --bg: #050a10;
+    --bg-panel: rgba(8, 20, 30, 0.72);
+    --line: rgba(0, 229, 255, 0.18);
+    --line-strong: rgba(0, 229, 255, 0.45);
+    --cyan: #00e5ff;
+    --cyan-dim: #2aa9bd;
+    --cyan-soft: rgba(0, 229, 255, 0.10);
+    --text: #cfe9f0;
+    --text-dim: #7fa3ad;
+    --text-faint: #4d6b74;
+    --amber: #ffb547;
+    --red: #ff4d6d;
+    --green: #4ee6a0;
+    --font-mono: "Cascadia Mono", "SF Mono", Consolas, "Courier New", monospace;
+    --font-sans: "Segoe UI", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 13px; overflow: hidden; }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 50% 45%, rgba(0, 229, 255, 0.07), transparent 55%),
+      repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.025) 0 1px, transparent 1px 4px);
+  }
+
+  /* ---------- 全体グリッド（16:9） ---------- */
+  #board {
+    position: relative; z-index: 1;
+    display: grid; height: 100vh; padding: 10px; gap: 10px;
+    grid-template-columns: 27fr 46fr 27fr;
+    grid-template-rows: 44px 1fr 215px;
+    grid-template-areas:
+      "top top top"
+      "left core right"
+      "minutes minutes log";
+  }
+  .panel {
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px;
+    position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 0;
+    backdrop-filter: blur(4px);
+  }
+  .panel::before, .panel::after {
+    content: ""; position: absolute; width: 14px; height: 14px; border-color: var(--line-strong); border-style: solid; pointer-events: none;
+  }
+  .panel::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+  .panel::after { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+  .panel-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+    padding: 8px 12px 6px; border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--cyan-dim); text-transform: uppercase;
+  }
+  .panel-head .ja { font-family: var(--font-sans); letter-spacing: 0.04em; color: var(--text); font-size: 12px; }
+  .panel-body { padding: 8px 12px; overflow-y: auto; flex: 1; min-height: 0; }
+  .panel-body::-webkit-scrollbar { width: 4px; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 2px; }
+  .mono { font-family: var(--font-mono); }
+  .dim { color: var(--text-dim); }
+  .faint { color: var(--text-faint); }
+  .badge {
+    display: inline-block; padding: 1px 6px; border-radius: 3px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+    border: 1px solid var(--line-strong); color: var(--cyan);
+  }
+  .badge.dummy { border-color: var(--amber); color: var(--amber); background: rgba(255, 181, 71, 0.08); }
+  .badge.alert { border-color: var(--red); color: var(--red); }
+  .badge.warn { border-color: var(--amber); color: var(--amber); }
+  .badge.ok { border-color: var(--green); color: var(--green); }
+
+  /* ---------- 上部バー ---------- */
+  #top { grid-area: top; flex-direction: row; align-items: center; padding: 0 14px; gap: 18px; }
+  #top .title { font-family: var(--font-mono); letter-spacing: 0.2em; color: var(--cyan); font-size: 13px; }
+  #top .title small { color: var(--text-dim); letter-spacing: 0.08em; margin-left: 10px; font-family: var(--font-sans); }
+  #top .spacer { flex: 1; }
+  #top .stat { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+  #top .stat b { font-weight: 500; color: var(--text); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); box-shadow: 0 0 6px transparent; }
+  .dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .dot.dummy { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+
+  /* ---------- 左: 経営数字 ---------- */
+  #left { grid-area: left; }
+  .kpi-group { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--text-faint); margin: 8px 0 4px; }
+  .kpi {
+    border: 1px solid var(--line); border-radius: 4px; padding: 7px 9px; margin-bottom: 6px; background: rgba(0, 229, 255, 0.025);
+    display: grid; grid-template-columns: 1fr 70px; grid-template-areas: "name spark" "val spark" "cmp cmp" "meta meta"; gap: 2px 8px;
+    transition: border-color 0.4s, background 0.4s;
+  }
+  .kpi.warn { border-color: rgba(255, 181, 71, 0.6); background: rgba(255, 181, 71, 0.05); }
+  .kpi.alert { border-color: rgba(255, 77, 109, 0.7); background: rgba(255, 77, 109, 0.06); animation: kpiPulse 2.4s ease-in-out infinite; }
+  @keyframes kpiPulse { 50% { box-shadow: 0 0 14px rgba(255, 77, 109, 0.25) inset; } }
+  .kpi .name { grid-area: name; font-size: 11.5px; color: var(--text-dim); display: flex; justify-content: space-between; }
+  .kpi .val { grid-area: val; font-family: var(--font-mono); font-size: 19px; color: var(--text); line-height: 1.1; }
+  .kpi .val small { font-size: 10px; color: var(--text-dim); margin-left: 4px; }
+  .kpi .val.na { color: var(--text-faint); font-size: 14px; }
+  .kpi .spark { grid-area: spark; align-self: center; }
+  .kpi .cmp { grid-area: cmp; display: flex; gap: 10px; font-family: var(--font-mono); font-size: 10.5px; margin-top: 2px; }
+  .kpi .cmp span.pos { color: var(--green); }
+  .kpi .cmp span.neg { color: var(--amber); }
+  .kpi .cmp span.bad { color: var(--red); }
+  .kpi .bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-top: 3px; position: relative; overflow: hidden; }
+  .kpi .bar i { position: absolute; top: 0; bottom: 0; left: 50%; background: var(--cyan-dim); transition: width 0.8s ease, left 0.8s ease, background 0.4s; }
+  .kpi .meta { grid-area: meta; font-size: 10px; color: var(--text-faint); line-height: 1.35; }
+  .kpi.changed .val { animation: flashVal 1s ease; }
+  @keyframes flashVal { 0% { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); } }
+
+  /* ---------- 中央: コア ---------- */
+  #core { grid-area: core; background: transparent; border-color: transparent; backdrop-filter: none; align-items: center; justify-content: center; }
+  #core::before, #core::after { display: none; }
+  #core-stage { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #core-svg { width: min(60vh, 100%); height: min(60vh, 100%); max-height: 100%; overflow: visible; margin-top: 5vh; }
+  .ring-outer { animation: spin 40s linear infinite; transform-origin: 0 0; }
+  .ring-inner { animation: spin 26s linear infinite reverse; transform-origin: 0 0; }
+  .ring-ticks { animation: spin 90s linear infinite; transform-origin: 0 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #core-stage[data-state="processing"] .ring-outer { animation-duration: 14s; }
+  #core-stage[data-state="processing"] .ring-inner { animation-duration: 9s; }
+  #core-stage[data-state="alert"] .ring-outer { animation-duration: 22s; }
+  #core-stage[data-state="alert"] .ring-inner { animation-duration: 16s; }
+  #core-label { position: absolute; top: calc(50% + 2.5vh); left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+  #core-label .ja { font-size: 20px; letter-spacing: 0.3em; color: var(--text); }
+  #core-label .en { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.3em; color: var(--cyan-dim); margin-top: 4px; }
+  #core-label .conf { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); margin-top: 10px; }
+  #core-label .conf b { color: var(--cyan); font-weight: 500; font-size: 15px; }
+  #core-stage[data-state="alert"] #core-label .ja { color: var(--amber); }
+  #wave { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); width: 62%; height: 54px; opacity: 0.85; }
+  #alerts { position: absolute; top: 1.5%; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 5px; align-items: center; width: 90%; }
+  .alert-chip {
+    font-size: 11px; padding: 4px 10px; border-radius: 3px; border: 1px solid var(--amber); color: var(--amber);
+    background: rgba(255, 181, 71, 0.08); animation: chipIn 0.5s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+  .alert-chip.red { border-color: var(--red); color: var(--red); background: rgba(255, 77, 109, 0.08); }
+  @keyframes chipIn { from { opacity: 0; transform: translateY(-10px); } }
+  #core-foot { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); letter-spacing: 0.1em; padding: 0 6px; }
+
+  /* ---------- 右: 判断トレース ---------- */
+  #right { grid-area: right; }
+  .trace { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; margin-bottom: 8px; background: rgba(0, 229, 255, 0.02); animation: traceIn 0.6s ease; }
+  .trace.warn { border-color: rgba(255, 181, 71, 0.5); }
+  .trace.alert { border-color: rgba(255, 77, 109, 0.6); }
+  @keyframes traceIn { from { opacity: 0; transform: translateY(-14px); } }
+  .trace-head { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); margin-bottom: 6px; }
+  .trace-head .conf { color: var(--cyan); }
+  .trace-head .conf.low { color: var(--amber); }
+  .node { position: relative; padding-left: 20px; padding-bottom: 10px; }
+  .node:last-child { padding-bottom: 0; }
+  .node::before {
+    content: ""; position: absolute; left: 4px; top: 5px; width: 7px; height: 7px; border-radius: 50%;
+    border: 1px solid var(--cyan); background: var(--bg); box-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
+  }
+  .node.decision::before { background: var(--cyan); }
+  .trace.alert .node.decision::before { background: var(--red); border-color: var(--red); box-shadow: 0 0 8px var(--red); }
+  .trace.warn .node.decision::before { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 8px var(--amber); }
+  .node:not(:last-child)::after {
+    content: ""; position: absolute; left: 7px; top: 13px; bottom: -1px; width: 1px;
+    background: linear-gradient(180deg, transparent 0%, var(--cyan) 35%, var(--cyan) 50%, transparent 85%) 0 0 / 100% 300%;
+    animation: flow 2.2s linear infinite; opacity: 0.8;
+  }
+  @keyframes flow { from { background-position: 0 100%; } to { background-position: 0 -200%; } }
+  .node .k { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.14em; color: var(--cyan-dim); }
+  .node .v { font-size: 11.5px; line-height: 1.4; color: var(--text); }
+  .node .v.dim { color: var(--text-dim); }
+  .sig { display: inline-block; font-family: var(--font-mono); font-size: 10px; padding: 0 5px; border: 1px solid var(--line-strong); border-radius: 2px; margin: 2px 3px 0 0; color: var(--text-dim); }
+  .sig.kpi { border-color: rgba(0, 229, 255, 0.5); }
+  .sig.minutes { border-color: rgba(78, 230, 160, 0.5); }
+  .cand { display: flex; align-items: center; gap: 6px; font-size: 11px; margin-top: 2px; }
+  .cand .cb { flex: 0 0 56px; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+  .cand .cb i { display: block; height: 100%; background: var(--cyan-dim); width: 0; transition: width 0.9s ease; }
+  .cand.pick { color: var(--text); }
+  .cand.pick .cb i { background: var(--cyan); }
+  .cand:not(.pick) { color: var(--text-dim); }
+  .cand .sc { font-family: var(--font-mono); font-size: 10px; width: 24px; text-align: right; }
+  .conf-basis { font-size: 10px; color: var(--text-faint); margin-top: 3px; }
+  .exe { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); }
+
+  /* ---------- 下: 議事録 ---------- */
+  #minutes { grid-area: minutes; }
+  #minutes .panel-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .col-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--text-faint); margin-bottom: 4px; }
+  .mt-item { font-size: 11.5px; line-height: 1.4; padding: 3px 0 3px 10px; border-left: 2px solid var(--line-strong); margin-bottom: 4px; }
+  .mt-item .src { font-size: 10px; color: var(--text-faint); font-family: var(--font-mono); }
+  .mt-item .src a { color: var(--cyan-dim); text-decoration: none; }
+  table.hw { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  table.hw th { text-align: left; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.12em; color: var(--text-faint); padding: 0 4px 3px; border-bottom: 1px solid var(--line); font-weight: 500; }
+  table.hw td { padding: 3px 4px; border-bottom: 1px dashed rgba(0, 229, 255, 0.08); vertical-align: top; }
+  table.hw tr.overdue td { color: var(--red); }
+  table.hw tr.soon td.due { color: var(--amber); }
+  table.hw tr.done td { color: var(--text-faint); text-decoration: line-through; }
+  table.hw td.due, table.hw td.owner { font-family: var(--font-mono); white-space: nowrap; font-size: 10.5px; }
+
+  /* ---------- 下右: 実行ログ ---------- */
+  #log { grid-area: log; }
+  #log .panel-body { font-family: var(--font-mono); font-size: 10.5px; line-height: 1.55; }
+  .log-line { display: flex; gap: 8px; animation: logIn 0.4s ease; }
+  .log-line .t { color: var(--text-faint); flex: 0 0 62px; }
+  .log-line.warn .m { color: var(--amber); }
+  .log-line.alert .m { color: var(--red); }
+  .log-line.ok .m { color: var(--green); }
+  @keyframes logIn { from { opacity: 0; transform: translateX(-6px); } }
+</style>
+</head>
+<body>
+<div id="board">
+
+  <!-- 上部 -->
+  <header id="top" class="panel">
+    <div class="title">JARVIS <small>判断監査ボード / visionX</small></div>
+    <span id="dummy-badge" class="badge dummy" hidden>DUMMY DATA</span>
+    <span id="insider-badge" class="badge alert" hidden>区分C 未公表数値を含む（インサイダー情報）</span>
+    <span id="scope-badge" class="badge" hidden></span>
+    <div class="spacer"></div>
+    <div class="stat">現在 <b id="clock">----/--/-- --:--:--</b></div>
+    <div class="stat">数字更新 <b id="kpi-updated">未取得</b></div>
+    <div class="stat">議事録更新 <b id="min-updated">未取得</b></div>
+    <div class="stat"><span id="conn-dot" class="dot"></span><span id="conn-text">接続確認中</span></div>
+  </header>
+
+  <!-- 左 -->
+  <section id="left" class="panel">
+    <div class="panel-head"><span>Metrics</span><span class="ja">経営数字</span></div>
+    <div class="panel-body" id="kpi-body"></div>
+  </section>
+
+  <!-- 中央 -->
+  <section id="core" class="panel">
+    <div id="core-stage" data-state="idle">
+      <div id="alerts"></div>
+      <svg id="core-svg" viewBox="-200 -200 400 400" aria-hidden="true"></svg>
+      <div id="core-label">
+        <div class="ja" id="state-ja">待機</div>
+        <div class="en" id="state-en">IDLE</div>
+        <div class="conf">直近判断の信頼度 <b id="core-conf">--</b>%</div>
+      </div>
+      <canvas id="wave"></canvas>
+      <div id="core-foot"><span id="foot-left">KANBEI / DECISION CORE</span><span id="foot-right">TRACES: 0</span></div>
+    </div>
+  </section>
+
+  <!-- 右 -->
+  <section id="right" class="panel">
+    <div class="panel-head"><span>Decision Trace</span><span class="ja">判断トレース</span></div>
+    <div class="panel-body" id="trace-body"></div>
+  </section>
+
+  <!-- 下左 -->
+  <section id="minutes" class="panel">
+    <div class="panel-head"><span>Minutes</span><span class="ja">決定事項と宿題</span></div>
+    <div class="panel-body">
+      <div>
+        <div class="col-title">決定事項 / DECISIONS</div>
+        <div id="decisions-body"></div>
+      </div>
+      <div>
+        <div class="col-title">宿題 / HOMEWORK</div>
+        <table class="hw">
+          <thead><tr><th>内容</th><th>担当</th><th>期限</th><th></th></tr></thead>
+          <tbody id="hw-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 下右 -->
+  <section id="log" class="panel">
+    <div class="panel-head"><span>Execution Log</span><span class="ja">実行ログ</span></div>
+    <div class="panel-body" id="log-body"></div>
+  </section>
+</div>
+
+<script type="module">
+import {
+  fetchKpis, fetchMinutes, fetchDecisions, jitterDummy, POLL_INTERVAL_MS,
+} from "./js/decision-board-data.js";
+
+/* =====================================================================
+ * 状態
+ * ===================================================================== */
+const S = {
+  kpi: null,          // KpiPayload
+  minutes: null,      // MinutesPayload
+  traces: [],         // DecisionTrace[]（新しい順）
+  prevValues: {},     // id -> value（更新検知用）
+  coreState: "idle",  // idle | processing | alert
+  alerts: [],         // {level, text}
+  seenTraceKeys: new Set(),
+};
+const $ = (sel) => document.querySelector(sel);
+const fmtDT = (d) => {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+};
+const fmtT = (d) => fmtDT(d).slice(11);
+const fmtShort = (iso) => (iso ? fmtDT(new Date(iso)).slice(5, 16) : "未取得");
+const fmtNum = (v) => (v == null ? "未取得" : Math.abs(v) >= 1000 ? v.toLocaleString("ja-JP", { maximumFractionDigits: 1 }) : String(Math.round(v * 10) / 10));
+const fmtPct = (v) => (v == null ? "未取得" : `${v > 0 ? "+" : ""}${(Math.round(v * 10) / 10).toFixed(1)}%`);
+const todayYmd = () => new Date().toISOString().slice(0, 10);
+const daysBetween = (ymd) => Math.round((new Date(ymd) - new Date(todayYmd())) / 86400000);
+
+/* =====================================================================
+ * 実行ログ
+ * ===================================================================== */
+function log(text, level = "") {
+  const body = $("#log-body");
+  const line = document.createElement("div");
+  line.className = `log-line ${level}`;
+  line.innerHTML = `<span class="t">${fmtT(new Date())}</span><span class="m"></span>`;
+  line.querySelector(".m").textContent = text;
+  body.prepend(line);
+  while (body.children.length > 60) body.lastChild.remove();
+}
+
+/* =====================================================================
+ * 時計
+ * ===================================================================== */
+setInterval(() => { $("#clock").textContent = fmtDT(new Date()); }, 1000);
+
+/* =====================================================================
+ * コア（二重リング SVG）
+ * ===================================================================== */
+const SVG_NS = "http://www.w3.org/2000/svg";
+function el(name, attrs = {}) {
+  const e = document.createElementNS(SVG_NS, name);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+function arcPath(r, a0, a1) {
+  const p = (a) => [r * Math.cos(a), r * Math.sin(a)];
+  const [x0, y0] = p(a0), [x1, y1] = p(a1);
+  const large = a1 - a0 > Math.PI ? 1 : 0;
+  return `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`;
+}
+function buildCore() {
+  const svg = $("#core-svg");
+  svg.innerHTML = "";
+  const defs = el("defs");
+  defs.innerHTML = `
+    <radialGradient id="coreGlow"><stop offset="55%" stop-color="var(--cyan)" stop-opacity="0"/><stop offset="100%" stop-color="var(--cyan)" stop-opacity="0.18"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  svg.appendChild(defs);
+  svg.appendChild(el("circle", { r: 190, fill: "url(#coreGlow)" }));
+
+  // 外リング: 分割アーク
+  const outer = el("g", { class: "ring-outer", id: "ring-outer" });
+  for (let i = 0; i < 6; i++) {
+    const a0 = (i / 6) * Math.PI * 2 + 0.08, a1 = ((i + 1) / 6) * Math.PI * 2 - 0.08;
+    outer.appendChild(el("path", { d: arcPath(178, a0, a1), fill: "none", stroke: "var(--cyan)", "stroke-width": 1.6, "stroke-opacity": 0.55, class: "ring-stroke" }));
+  }
+  outer.appendChild(el("circle", { r: 168, fill: "none", stroke: "var(--cyan)", "stroke-width": 0.6, "stroke-opacity": 0.25, "stroke-dasharray": "2 6" }));
+  svg.appendChild(outer);
+
+  // 目盛リング
+  const ticks = el("g", { class: "ring-ticks" });
+  for (let i = 0; i < 120; i++) {
+    const a = (i / 120) * Math.PI * 2, long = i % 10 === 0;
+    const r0 = 150, r1 = long ? 158 : 154;
+    ticks.appendChild(el("line", { x1: r0 * Math.cos(a), y1: r0 * Math.sin(a), x2: r1 * Math.cos(a), y2: r1 * Math.sin(a), stroke: "var(--cyan)", "stroke-opacity": long ? 0.6 : 0.25, "stroke-width": long ? 1.2 : 0.6 }));
+  }
+  svg.appendChild(ticks);
+
+  // 内リング: 3 アーク + 回転
+  const inner = el("g", { class: "ring-inner" });
+  for (let i = 0; i < 3; i++) {
+    const a0 = (i / 3) * Math.PI * 2, a1 = a0 + Math.PI * 2 / 3 * 0.62;
+    inner.appendChild(el("path", { d: arcPath(128, a0, a1), fill: "none", stroke: "var(--cyan)", "stroke-width": 3, "stroke-opacity": 0.7, "stroke-linecap": "round", class: "ring-stroke" }));
+  }
+  svg.appendChild(inner);
+
+  // 信頼度ゲージ（固定、上から時計回り）
+  svg.appendChild(el("path", { d: arcPath(110, -Math.PI / 2 - Math.PI * 0.75, -Math.PI / 2 + Math.PI * 0.75), fill: "none", stroke: "var(--cyan)", "stroke-opacity": 0.12, "stroke-width": 5 }));
+  svg.appendChild(el("path", { id: "conf-arc", d: "", fill: "none", stroke: "var(--cyan)", "stroke-width": 5, "stroke-linecap": "round", filter: "url(#glow)" }));
+  svg.appendChild(el("text", { x: 0, y: 128, "text-anchor": "middle", fill: "var(--cyan-dim)", "font-size": 9, "font-family": "monospace", "letter-spacing": 2 })).textContent = "CONFIDENCE";
+
+  // 中心
+  svg.appendChild(el("circle", { r: 92, fill: "none", stroke: "var(--cyan)", "stroke-opacity": 0.3, "stroke-width": 0.8 }));
+  svg.appendChild(el("circle", { id: "core-pulse", r: 86, fill: "var(--cyan)", "fill-opacity": 0.04 }));
+}
+function setConfidenceArc(pct) {
+  const path = $("#conf-arc");
+  if (pct == null) { path.setAttribute("d", ""); return; }
+  const span = Math.PI * 1.5, start = -Math.PI / 2 - span / 2;
+  const end = start + span * Math.max(0.005, Math.min(1, pct / 100));
+  path.setAttribute("d", arcPath(110, start, end));
+  path.setAttribute("stroke", pct < 60 ? "var(--amber)" : "var(--cyan)");
+}
+const STATE_LABEL = { idle: ["待機", "IDLE"], processing: ["処理中", "PROCESSING"], alert: ["要判断", "ATTENTION REQUIRED"] };
+function setCoreState(state) {
+  S.coreState = state;
+  $("#core-stage").dataset.state = state;
+  const [ja, en] = STATE_LABEL[state];
+  $("#state-ja").textContent = ja; $("#state-en").textContent = en;
+  const color = state === "alert" ? "var(--amber)" : "var(--cyan)";
+  document.querySelectorAll("#core-svg .ring-stroke").forEach((p) => p.setAttribute("stroke", color));
+}
+function renderAlerts() {
+  const box = $("#alerts");
+  box.innerHTML = "";
+  for (const a of S.alerts.slice(0, 3)) {
+    const c = document.createElement("div");
+    c.className = `alert-chip ${a.level === "alert" ? "red" : ""}`;
+    c.textContent = a.text;
+    box.appendChild(c);
+  }
+}
+
+/* =====================================================================
+ * 波形（canvas）。状態で振幅と速度が変わる
+ * ===================================================================== */
+const wave = { amp: 0.25, speed: 0.9, target: 0.25, t: 0 };
+function drawWave() {
+  const cv = $("#wave"), ctx = cv.getContext("2d");
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== w * 2 || cv.height !== h * 2) { cv.width = w * 2; cv.height = h * 2; }
+  ctx.setTransform(2, 0, 0, 2, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  wave.amp += (wave.target - wave.amp) * 0.04;
+  wave.t += 0.016 * wave.speed;
+  const color = S.coreState === "alert" ? "255,181,71" : "0,229,255";
+  for (let layer = 0; layer < 3; layer++) {
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 2) {
+      const n = x / w, env = Math.sin(n * Math.PI);
+      const y = h / 2 + Math.sin(n * 18 + wave.t * (2.4 + layer * 0.6) + layer) * Math.sin(n * 5 - wave.t) * env * h * 0.42 * wave.amp;
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = `rgba(${color},${0.55 - layer * 0.17})`;
+    ctx.lineWidth = layer === 0 ? 1.4 : 0.8;
+    ctx.stroke();
+  }
+  requestAnimationFrame(drawWave);
+}
+function setWaveByState() {
+  wave.target = S.coreState === "processing" ? 0.95 : S.coreState === "alert" ? 0.6 : 0.3;
+  wave.speed = S.coreState === "processing" ? 2.2 : 1;
+}
+
+/* =====================================================================
+ * 左: KPI
+ * ===================================================================== */
+function sparkline(hist, w = 70, h = 26) {
+  if (!hist || hist.length < 2) return `<svg class="spark" width="${w}" height="${h}"><text x="${w/2}" y="${h/2+3}" text-anchor="middle" fill="var(--text-faint)" font-size="9" font-family="monospace">no hist</text></svg>`;
+  const min = Math.min(...hist), max = Math.max(...hist), span = max - min || 1;
+  const pts = hist.map((v, i) => `${(i / (hist.length - 1)) * (w - 2) + 1},${h - 2 - ((v - min) / span) * (h - 4)}`).join(" ");
+  return `<svg class="spark" width="${w}" height="${h}"><polyline points="${pts}" fill="none" stroke="var(--cyan)" stroke-opacity="0.8" stroke-width="1.2"/><circle cx="${pts.split(" ").at(-1).split(",")[0]}" cy="${pts.split(" ").at(-1).split(",")[1]}" r="2" fill="var(--cyan)"/></svg>`;
+}
+function kpiLevel(m) {
+  if (m.value == null) return "na";
+  const plan = m.compare.find((c) => c.type === "plan");
+  if (!plan || plan.diffPct == null) return "ok";
+  if (plan.diffPct < m.warnPct * 1.5) return "alert";
+  if (plan.diffPct < m.warnPct) return "warn";
+  return "ok";
+}
+function renderKpis() {
+  const body = $("#kpi-body");
+  body.innerHTML = "";
+  if (!S.kpi) { body.innerHTML = `<div class="faint">未取得</div>`; return; }
+  const groups = [...new Set(S.kpi.metrics.map((m) => m.group))];
+  for (const g of groups) {
+    const gh = document.createElement("div"); gh.className = "kpi-group"; gh.textContent = g; body.appendChild(gh);
+    for (const m of S.kpi.metrics.filter((x) => x.group === g)) {
+      const lvl = kpiLevel(m);
+      const changed = S.prevValues[m.id] !== undefined && S.prevValues[m.id] !== m.value;
+      const plan = m.compare.find((c) => c.type === "plan");
+      const card = document.createElement("div");
+      card.className = `kpi ${lvl === "na" ? "" : lvl} ${changed ? "changed" : ""}`;
+      const cmpHtml = m.compare.map((c) => {
+        const cls = c.diffPct == null ? "faint" : c.diffPct < (m.warnPct * 1.5) ? "bad" : c.diffPct < 0 ? "neg" : "pos";
+        return `<span class="${cls}">対${c.label} ${fmtPct(c.diffPct)}${c.value != null ? ` <span class="faint">(${fmtNum(c.value)})</span>` : ""}</span>`;
+      }).join("");
+      const pct = plan?.diffPct ?? 0, clamp = Math.max(-30, Math.min(30, pct));
+      const barLeft = clamp < 0 ? 50 + clamp / 30 * 50 : 50, barW = Math.abs(clamp) / 30 * 50;
+      const barColor = lvl === "alert" ? "var(--red)" : lvl === "warn" ? "var(--amber)" : pct >= 0 ? "var(--green)" : "var(--cyan-dim)";
+      card.innerHTML = `
+        <div class="name"><span>${m.name}</span>${lvl === "alert" || lvl === "warn" ? `<span class="badge ${lvl}">${lvl === "alert" ? "異常" : "注意"}</span>` : ""}</div>
+        <div class="val ${m.value == null ? "na" : ""}">${fmtNum(m.value)}${m.value != null ? `<small>${m.unit}</small>` : ""}</div>
+        ${sparkline(m.history)}
+        <div class="cmp">${cmpHtml || `<span class="faint">比較対象 未取得</span>`}</div>
+        ${plan && plan.diffPct != null ? `<div class="bar" title="対計画差分率（±30%スケール）"><i style="left:${barLeft}%;width:${barW}%;background:${barColor}"></i></div>` : ""}
+        <div class="meta">${m.period}<br>出典: ${m.source} / 更新 ${fmtShort(m.updatedAt)}</div>`;
+      body.appendChild(card);
+      S.prevValues[m.id] = m.value;
+    }
+  }
+}
+
+/* =====================================================================
+ * 判断トレース生成（ルールベースの派生。KANBEI 等の実トレースがあれば優先）
+ * 実トレースが無い間は、ここで作る判断の信頼度に上限 75% を掛ける。
+ * ===================================================================== */
+const DERIVED_CAP = 75;
+function deriveTraces() {
+  const out = [];
+  const now = new Date().toISOString();
+  if (S.kpi) {
+    for (const m of S.kpi.metrics) {
+      const plan = m.compare.find((c) => c.type === "plan"), prev = m.compare.find((c) => c.type === "prev");
+      if (m.value == null) {
+        out.push({
+          id: `na_${m.id}`, ts: now, level: "warn",
+          purpose: `${m.name} の状況把握`,
+          signals: [{ ref: m.id, label: `${m.name}（未取得）`, kind: "kpi" }],
+          candidates: [{ label: "取得待ち", score: 90, note: "データ到着まで判断を保留" }, { label: "推定値で代替", score: 5, note: "推測で埋めない方針により不採用" }],
+          decision: "判断保留。数字が未取得のため推測で埋めない",
+          confidence: 20, confidenceBasis: "入力シグナルが無いため低く固定（20%）",
+          executions: [{ ts: now, text: "経営数字パイプラインに未取得項目を通知（ダミー動作）" }],
+        });
+        continue;
+      }
+      if (!plan || plan.diffPct == null) continue;
+      const lvl = kpiLevel(m);
+      let completeness = 40;
+      if (plan.value != null) completeness += 15;
+      if (prev && prev.diffPct != null) completeness += 15;
+      if (m.history.length >= 5) completeness += 10;
+      if (m.updatedAt && Date.now() - new Date(m.updatedAt) < 3 * 86400000) completeness += 10;
+      const confidence = Math.min(DERIVED_CAP, completeness);
+      const basis = `対計画${plan.value != null ? "あり" : "なし"}・対前期${prev?.diffPct != null ? "あり" : "なし"}・推移${m.history.length}点・鮮度${m.updatedAt ? "3日以内" : "不明"} → ${completeness}%、派生判断のため上限${DERIVED_CAP}%`;
+      const trend = m.history.length >= 3 ? (m.history.at(-1) - m.history.at(-3)) : 0;
+      if (lvl === "alert" || lvl === "warn") {
+        const trendDown = trend < 0;
+        const cands = [
+          { label: "様子見（来月再評価）", score: trendDown ? 15 : 45, note: trendDown ? "直近推移が下向きのため不採用" : "推移は横ばい" },
+          { label: "原因の深掘りを担当に指示", score: trendDown ? 80 : 60, note: "計画比の乖離幅と推移から優先" },
+          { label: "計画値の修正を提案", score: lvl === "alert" ? 50 : 25, note: "乖離が大きい場合のみ" },
+        ];
+        const pick = cands.reduce((a, b) => (b.score > a.score ? b : a));
+        out.push({
+          id: `plan_${m.id}`, ts: now, level: lvl,
+          purpose: `${m.name} の計画乖離への対応`,
+          signals: [
+            { ref: m.id, label: `${m.name} 対計画 ${fmtPct(plan.diffPct)}`, kind: "kpi" },
+            ...(prev?.diffPct != null ? [{ ref: m.id, label: `対${prev.label} ${fmtPct(prev.diffPct)}`, kind: "kpi" }] : []),
+            ...(m.history.length >= 3 ? [{ ref: m.id, label: `直近推移 ${trendDown ? "下降" : "横ばい/上昇"}`, kind: "kpi" }] : []),
+          ],
+          candidates: cands,
+          decision: `${pick.label}。${m.period} の実績が計画を ${fmtPct(plan.diffPct)} 下回っている`,
+          confidence, confidenceBasis: basis,
+          executions: [{ ts: now, text: `${lvl === "alert" ? "アラート" : "注意"}を中央コアに送出` }, { ts: now, text: "担当者への指示文を下書き（承認待ち・送信はしない）" }],
+        });
+      } else if (plan.diffPct >= 5) {
+        out.push({
+          id: `plan_${m.id}`, ts: now, level: "info",
+          purpose: `${m.name} の計画超過の確認`,
+          signals: [{ ref: m.id, label: `${m.name} 対計画 ${fmtPct(plan.diffPct)}`, kind: "kpi" }],
+          candidates: [{ label: "現状維持", score: 70, note: "超過幅は小さく一過性の可能性" }, { label: "上方修正を検討", score: 30, note: "3ヶ月連続超過で再評価" }],
+          decision: "現状維持。超過要因は次回会議で確認",
+          confidence: Math.min(DERIVED_CAP, completeness - 10), confidenceBasis: basis,
+          executions: [{ ts: now, text: "次回会議の確認事項に追記（ダミー動作）" }],
+        });
+      }
+    }
+  }
+  if (S.minutes) {
+    for (const mt of S.minutes.minutes) {
+      for (const hw of mt.homework) {
+        if (hw.status !== "open" || !hw.due) continue;
+        const d = daysBetween(hw.due);
+        if (d < 0) {
+          out.push({
+            id: `hw_${hw.id}`, ts: now, level: "alert",
+            purpose: "宿題の期限超過への対応",
+            signals: [{ ref: mt.id, label: `${mt.meeting} ${fmtShort(mt.datetime)}`, kind: "minutes" }, { ref: hw.id, label: `宿題「${hw.title}」期限 ${hw.due}（${-d}日超過）`, kind: "minutes" }],
+            candidates: [{ label: "担当にリマインド", score: 85, note: "超過日数が短い" }, { label: "期限の再設定を提案", score: 40, note: "超過7日以上で優先" }, { label: "エスカレーション", score: -d >= 7 ? 70 : 20, note: "超過7日以上" }],
+            decision: `${-d >= 7 ? "エスカレーションを提案" : "担当にリマインド"}。担当 ${hw.owner}、期限 ${hw.due}`,
+            confidence: Math.min(DERIVED_CAP, 70), confidenceBasis: `議事録に担当・期限が明記されている（70%）、派生判断のため上限${DERIVED_CAP}%`,
+            executions: [{ ts: now, text: "期限超過アラートを中央コアに送出" }, { ts: now, text: `${hw.owner} 宛リマインド文を下書き（承認待ち）` }],
+          });
+        }
+      }
+    }
+  }
+  return out;
+}
+function renderTraces() {
+  const body = $("#trace-body");
+  body.innerHTML = "";
+  if (!S.traces.length) { body.innerHTML = `<div class="faint">判断トレース 未取得</div>`; return; }
+  for (const t of S.traces) {
+    const pickScore = Math.max(...t.candidates.map((c) => c.score));
+    const div = document.createElement("div");
+    div.className = `trace ${t.level}`;
+    div.innerHTML = `
+      <div class="trace-head"><span>${fmtShort(t.ts)} ${t.level !== "info" ? `<span class="badge ${t.level}">${t.level === "alert" ? "要判断" : "注意"}</span>` : ""}</span><span class="conf ${t.confidence < 60 ? "low" : ""}">信頼度 ${t.confidence}%</span></div>
+      <div class="node"><div class="k">PURPOSE / 目的</div><div class="v">${t.purpose}</div></div>
+      <div class="node"><div class="k">SIGNALS / 入力シグナル（根拠）</div><div class="v">${t.signals.map((s) => `<span class="sig ${s.kind}">${s.kind === "kpi" ? "指標" : "議事録"}: ${s.label}</span>`).join("")}</div></div>
+      <div class="node"><div class="k">CANDIDATES / 候補の評価</div><div class="v">${t.candidates.map((c) => `<div class="cand ${c.score === pickScore ? "pick" : ""}"><span class="cb"><i data-w="${Math.max(0, c.score)}"></i></span><span class="sc">${c.score}</span><span>${c.label}<span class="faint"> — ${c.note}</span></span></div>`).join("")}</div></div>
+      <div class="node decision"><div class="k">DECISION / 判断</div><div class="v">${t.decision}</div><div class="conf-basis">信頼度の根拠: ${t.confidenceBasis}</div></div>
+      <div class="node"><div class="k">EXECUTION / 実行ログ</div><div class="v">${t.executions.map((e) => `<div class="exe">${fmtShort(e.ts).slice(6)} ${e.text}</div>`).join("")}</div></div>`;
+    body.appendChild(div);
+  }
+  requestAnimationFrame(() => document.querySelectorAll(".cand .cb i").forEach((i) => { i.style.width = i.dataset.w + "%"; }));
+  $("#foot-right").textContent = `TRACES: ${S.traces.length}`;
+}
+
+/* =====================================================================
+ * 下: 議事録
+ * ===================================================================== */
+function renderMinutes() {
+  const dBody = $("#decisions-body"), hBody = $("#hw-body");
+  dBody.innerHTML = ""; hBody.innerHTML = "";
+  if (!S.minutes) { dBody.innerHTML = `<div class="faint">未取得</div>`; return; }
+  const sorted = [...S.minutes.minutes].sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+  for (const mt of sorted) {
+    for (const d of mt.decisions) {
+      const item = document.createElement("div");
+      item.className = "mt-item";
+      item.innerHTML = `${d}<div class="src">${mt.meeting} ${fmtShort(mt.datetime)} ${mt.link ? `<a href="${mt.link}" target="_blank">元議事録</a>` : "<span class='faint'>リンク未取得</span>"}</div>`;
+      dBody.appendChild(item);
+    }
+    for (const iss of mt.openIssues) {
+      const item = document.createElement("div");
+      item.className = "mt-item"; item.style.borderLeftColor = "var(--amber)";
+      item.innerHTML = `<span class="dim">未決:</span> ${iss}<div class="src">${mt.meeting} ${fmtShort(mt.datetime)}</div>`;
+      dBody.appendChild(item);
+    }
+  }
+  const rows = sorted.flatMap((mt) => mt.homework.map((h) => ({ ...h, meeting: mt.meeting })));
+  rows.sort((a, b) => (a.status === "done") - (b.status === "done") || (a.due || "9999").localeCompare(b.due || "9999"));
+  for (const h of rows) {
+    const d = h.due ? daysBetween(h.due) : null;
+    const cls = h.status === "done" ? "done" : d != null && d < 0 ? "overdue" : d != null && d <= 3 ? "soon" : "";
+    const tr = document.createElement("tr");
+    tr.className = cls;
+    tr.innerHTML = `<td>${h.title}<div class="src faint" style="font-size:9.5px">${h.meeting}</div></td><td class="owner">${h.owner}</td><td class="due">${h.due ?? "未設定"}</td><td>${h.status === "done" ? "<span class='badge ok'>完了</span>" : d != null && d < 0 ? `<span class='badge alert'>${-d}日超過</span>` : d != null && d <= 3 ? `<span class='badge warn'>残${d}日</span>` : ""}</td>`;
+    hBody.appendChild(tr);
+  }
+}
+
+/* =====================================================================
+ * 連動: データ更新 → 判断 → アラート → コア状態
+ * ===================================================================== */
+async function refresh(first = false) {
+  setCoreState("processing"); setWaveByState();
+  log(first ? "初期取得を開始" : "定期更新を開始");
+  const [kpi, minutes, decisions] = await Promise.all([fetchKpis(), fetchMinutes(), fetchDecisions()]);
+
+  // ダミー運転中は値を揺らして連動を見せる（実データでは何もしない）
+  S.kpi = first ? kpi : jitterDummy(S.kpi?.isDummy ? S.kpi : kpi);
+  if (!first && !kpi.isDummy) S.kpi = kpi;
+  S.minutes = minutes;
+
+  const dummy = S.kpi.isDummy || S.minutes.isDummy;
+  $("#dummy-badge").hidden = !dummy;
+  $("#insider-badge").hidden = !S.kpi.insider;
+  const scope = S.kpi.company ? `${S.kpi.company.name} / ${S.kpi.section?.label ?? ""} ${S.kpi.section?.range ?? ""}` : "";
+  $("#scope-badge").hidden = !scope; $("#scope-badge").textContent = scope;
+  $("#conn-dot").className = `dot ${dummy ? "dummy" : "on"}`;
+  $("#conn-text").textContent = dummy ? "ダミー運転（visionX 未接続）" : "visionX 接続中";
+  $("#kpi-updated").textContent = fmtShort(S.kpi.generatedAt);
+  $("#min-updated").textContent = fmtShort(S.minutes.generatedAt);
+  log(`経営数字 ${S.kpi.metrics.length}指標 / 議事録 ${S.minutes.minutes.length}件 を取得${dummy ? "（ダミー）" : ""}`, dummy ? "warn" : "ok");
+
+  renderKpis();
+  renderMinutes();
+
+  // 判断トレース: 実トレース（decisions.json）があればそれを使い、無ければ派生
+  const fresh = decisions?.traces?.length ? decisions.traces : deriveTraces();
+  if (decisions?.traces?.length) log(`判断トレース ${fresh.length}件 を受信（KANBEI）`);
+  const newOnes = fresh.filter((t) => !S.seenTraceKeys.has(t.id + "|" + t.decision));
+  for (const t of newOnes) { S.seenTraceKeys.add(t.id + "|" + t.decision); log(`判断: ${t.purpose} → 信頼度${t.confidence}%`, t.level === "info" ? "" : t.level); }
+  // 既存の順序を保ちつつ新規を先頭へ
+  const byId = new Map(fresh.map((t) => [t.id, t]));
+  S.traces = [...newOnes, ...S.traces.filter((t) => byId.has(t.id) && !newOnes.some((n) => n.id === t.id)).map((t) => byId.get(t.id))];
+  renderTraces();
+
+  // アラート → コア
+  S.alerts = S.traces.filter((t) => t.level !== "info").map((t) => ({ level: t.level, text: `${t.level === "alert" ? "要判断" : "注意"}: ${t.purpose}` }));
+  renderAlerts();
+  const latest = S.traces[0];
+  $("#core-conf").textContent = latest ? latest.confidence : "--";
+  setConfidenceArc(latest ? latest.confidence : null);
+
+  await new Promise((r) => setTimeout(r, 900)); // 処理中表示を視認できる最短時間
+  setCoreState(S.alerts.some((a) => a.level === "alert") ? "alert" : "idle"); setWaveByState();
+  log(`更新完了。状態: ${STATE_LABEL[S.coreState][0]}、アラート ${S.alerts.length}件`);
+}
+
+buildCore();
+drawWave();
+refresh(true);
+setInterval(() => refresh(false), POLL_INTERVAL_MS);
+</script>
+</body>
+</html>
