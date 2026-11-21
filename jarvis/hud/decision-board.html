@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>JARVIS 判断監査ボード</title>
+<title>VX 経営意思決定パネル</title>
 <!--
-  JARVIS 判断監査ボード（経営ダッシュボード）
+  VX 経営意思決定パネル（VisionX 経営コクピット）
   目的: AIエージェントが「何を根拠に、どれくらいの確信で判断したか」を経営者が一目で監査できる画面。
   データ受け口は js/decision-board-data.js に分離（型定義・fetch・ダミー）。本ファイルは描画と連動のみ。
   起動: python hud/serve.py → http://127.0.0.1:8765/decision-board.html
@@ -250,7 +250,7 @@
 
   <!-- 上部 -->
   <header id="top" class="panel">
-    <div class="title">JARVIS <small>判断監査ボード / visionX</small></div>
+    <div class="title">VX <small>経営意思決定パネル / VisionX</small></div>
     <span id="dummy-badge" class="badge dummy" hidden>DUMMY DATA</span>
     <span id="insider-badge" class="badge alert" hidden>区分C 未公表数値を含む（インサイダー情報）</span>
     <span id="scope-badge" class="badge" hidden></span>
@@ -259,7 +259,8 @@
     <div class="stat">数字更新 <b id="kpi-updated">未取得</b></div>
     <div class="stat">議事録更新 <b id="min-updated">未取得</b></div>
     <div class="stat"><span id="conn-dot" class="dot"></span><span id="conn-text">接続確認中</span></div>
-    <a id="hud-link" class="badge" href="index.html" title="JARVIS HUD へ戻る（Bキー）">◂ HUD</a>
+    <a id="graph-link" class="badge" href="index.html?panel=graph" title="VisionX グラフビューを拡大表示で開く（Gキー）">◂ グラフビュー</a>
+    <a id="hud-link" class="badge" href="index.html" title="VX HUD へ戻る（Bキー）">◂ HUD</a>
   </header>
 
   <!-- 左 -->
@@ -279,7 +280,7 @@
         <div class="conf">直近判断の信頼度 <b id="core-conf">--</b>%</div>
       </div>
       <canvas id="wave"></canvas>
-      <div id="core-foot"><span id="foot-left">KANBEI / DECISION CORE</span><span id="foot-right">TRACES: 0</span></div>
+      <div id="core-foot"><span id="foot-left">VX / DECISION CORE</span><span id="foot-right">TRACES: 0</span></div>
     </div>
   </section>
 
@@ -827,7 +828,9 @@ function openTrace(id) {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") { closeModal(); return; }
   if (!$("#modal-bg").hidden) return;
-  if (e.key.toLowerCase() === "b" && !e.ctrlKey && !e.metaKey && !e.altKey) location.href = "index.html";
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key.toLowerCase() === "b") location.href = "index.html";
+  if (e.key.toLowerCase() === "g") location.href = "index.html?panel=graph";
 });
 
 buildCore();

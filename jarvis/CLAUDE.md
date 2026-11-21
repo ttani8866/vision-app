@@ -56,12 +56,13 @@ jarvis/
   hud/adapters/rin_weekly_adapter.py  RIN週次財務レポート(md)→hud/data/dashboard.json
   hud/config/                   agents/metrics/panels/state_labels/voice_commands の設定JSON
   hud/state.json                KANBEIの現在状態（jarvis_kanbei_main.py が書く。Git管理外）
-  hud/decision-board.html       判断監査ボード（経営数字＋議事録＋判断トレース。2026-11-21）
-  hud/js/decision-board-data.js 判断監査ボードのデータ受け口（型定義・fetch・ダミー。実データ差し替えはここだけ）
+  hud/decision-board.html       VX 経営意思決定パネル（経営数字＋議事録＋判断トレース。旧称 判断監査ボード。2026-11-21）
+  hud/js/decision-board-data.js 経営意思決定パネルのデータ受け口（型定義・fetch・ダミー。実データ差し替えはここだけ）
   hud/adapters/keiei_kpi_adapter.py  keiei-dashboard/data.json → hud/data/decision-board/kpi.json
   hud/adapters/minutes_adapter.py    s議事録 md → hud/data/decision-board/minutes.json
   hud/data/decision-board/      上記の生成物（区分C2を含む。Git管理外）。rebuild_all.py が毎朝7:20に再生成
   hud/docs/decision-board_実データ接続.md  起動・JSON形式・アダプタ仕様・残課題
+  呼び名: 画面と対外表記は VX（ヴィエックス）／VisionX。JARVIS はフォルダ名・開発コードネームとしてのみ残す（マーベル作品名のため対外では使わない。2026-11-21）
   tests/audio/                 テスト音声（Git管理外）
   docs/                        手順書・動作記録
 ```

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>JARVIS HUD</title>
+<title>VX HUD</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -27,10 +27,10 @@
     <span id="status-sep">/</span>
     <span id="status-dispatch"></span>
     <span id="status-sep">/</span>
-    <a id="board-link" class="panel-reload" href="decision-board.html" title="判断監査ボードへ切替（Bキー）">判断監査ボード ▸</a>
+    <a id="board-link" class="panel-reload" href="decision-board.html" title="VX 経営意思決定パネルへ切替（Bキー）">VX 経営意思決定パネル ▸</a>
   </footer>
   <script>
-    // B キーで判断監査ボードへ切替（入力欄にフォーカスがある時は無視）
+    // B キーで VX 経営意思決定パネルへ切替（入力欄にフォーカスがある時は無視）
     document.addEventListener("keydown", (e) => {
       if (e.key.toLowerCase() === "b" && !e.ctrlKey && !e.metaKey && !e.altKey && !["INPUT","TEXTAREA"].includes(document.activeElement?.tagName)) {
         location.href = "decision-board.html";
