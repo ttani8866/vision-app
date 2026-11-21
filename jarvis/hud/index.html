@@ -26,9 +26,19 @@
     <span id="status-state">STATE: IDLE</span>
     <span id="status-sep">/</span>
     <span id="status-dispatch"></span>
+    <span id="status-sep">/</span>
+    <a id="board-link" class="panel-reload" href="decision-board.html" title="判断監査ボードへ切替（Bキー）">判断監査ボード ▸</a>
   </footer>
+  <script>
+    // B キーで判断監査ボードへ切替（入力欄にフォーカスがある時は無視）
+    document.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "b" && !e.ctrlKey && !e.metaKey && !e.altKey && !["INPUT","TEXTAREA"].includes(document.activeElement?.tagName)) {
+        location.href = "decision-board.html";
+      }
+    });
+  </script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=20261010a"></script>
 </body>
 </html>
