@@ -151,7 +151,15 @@ export async function fetchMinutes() {
 export async function fetchDecisions() {
   try {
     const raw = await fetchJson(ENDPOINTS.decisions);
-    return { isDummy: !!raw.isDummy, traces: raw.traces || [] };
+    return {
+      isDummy: !!raw.isDummy,
+      source: raw.source || "kanbei",          // 誰が判断したか（画面のバッジに出す）
+      model: raw.model ?? null,
+      generatedAt: raw.generatedAt || null,
+      inputs: raw.inputs || {},
+      warnings: raw.warnings || [],
+      traces: (raw.traces || []).map((t) => ({ ...t, source: t.source || raw.source || "kanbei" })),
+    };
   } catch (e) {
     return null;
   }

@@ -4,6 +4,7 @@
 2. 判断監査ボード用アダプタ（2026-11-21 追加）
    - adapters/keiei_kpi_adapter.py --rebuild  keiei-dashboard の build_data.py を回してから kpi.json
    - adapters/minutes_adapter.py              s議事録 の md から minutes.json
+   - adapters/kanbei_decisions.py             KANBEI（claude --agent kanbei）に上の2つを読ませて decisions.json
    こちらは失敗してもグラフの生成物は残す。失敗があれば最後に exit 4 で返し、SHU 週次点検が拾えるようにする。
 """
 import subprocess, sys
@@ -26,6 +27,7 @@ for script in ("build_hubs.py", "build_meishi.py", "build_context.py", "build_se
 ADAPTERS = (
     ("経営数字 → kpi.json", ["adapters/keiei_kpi_adapter.py", "--rebuild"]),
     ("議事録 → minutes.json", ["adapters/minutes_adapter.py"]),
+    ("KANBEI 判断 → decisions.json", ["adapters/kanbei_decisions.py"]),  # claude CLI が要ログイン。失敗しても前回分を残す
 )
 failed = []
 for label, args in ADAPTERS:

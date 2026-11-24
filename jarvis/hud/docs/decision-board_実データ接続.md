@@ -109,6 +109,24 @@ python "C:\claude code\jarvis\huddapters\minutes_adapter.py"
 }
 ```
 
+## KANBEI の判断（decisions.json、2026-11-21 追加）
+
+`hud/adapters/kanbei_decisions.py` が kpi.json と minutes.json を要約して `claude --agent kanbei` に渡し、
+返ってきた JSON を DecisionTrace 型に検証・補正して `hud/data/decision-board/decisions.json` に書く。
+画面は decisions.json があればそれを優先し、トレースに「KANBEI」バッジ、上部に「判断 KANBEI 日時」を出す。
+無ければ従来どおり画面側の派生判断（「派生」バッジ、信頼度上限 75%）。
+
+- 権限: Read/Glob/Grep のみ。Bash・Write・Gmail 送信などは disallow。max-turns 3、モデルは sonnet（JARVIS_KANBEI_MODEL で変更）
+- 入力がダミーなら呼ばない。失敗時は既存の decisions.json を残して exit 1。生の返答は kanbei_last_response.txt
+- 検証: 根拠（signals）の無い判断は除外、ref が入力に無ければ警告、level は alert/warn/info 以外を info に、信頼度は 0〜100 に丸める。最大 8 件
+- 前提: claude CLI がログイン済みであること。ただし谷さんの会社アカウントは HENNGE One（SSO）経由のログインが 404 で通らない（2026-11-21、Google／メールどちらの経路も不可）。対応は情シスへの HENNGE 経路修正依頼か、Anthropic Console の API キー利用のどちらか
+- CLI が使えない間の代行: Claude Code デスクトップ（ログイン済み）のセッションで、`--dry-run` の文面と `.claude/agents/kanbei.md` をサブエージェントに読ませて JSON を書かせ、`--from-file <返答ファイル> --model-label "desktop-session"` で検証・保存する。2026-11-21 初回はこの方法で 8 件（alert 2／warn 3／info 3）を生成し、画面に KANBEI バッジ付きで表示した
+- rebuild_all.py の 3 本目として毎朝 7:20 に実行する
+
+```powershell
+python "C:\claude code\jarvis\huddapters\kanbei_decisions.py" --dry-run
+```
+
 ## 掘り下げ（2026-11-21 追加）
 
 - KPI カードをクリック: 同じ指標の全社・拠点横断の表（実績／計画／対計画／前期／対前期）、期間・出典・ファイルパス（コピー可）・異常判定の閾値、この指標を根拠にした判断の一覧
@@ -128,7 +146,7 @@ python "C:\claude code\jarvis\huddapters\minutes_adapter.py"
 
 - 見出しなしの議事録41件（役員会議事録など docx 変換のもの）は、決定・宿題の見出しが無いので載らない。載せるなら議事録側の書式を揃えるか、RIN/KANBEI に要約させて別ファイルに書く
 - 宿題の完了消込は議事録側に `[x]` を付ける運用で拾える。付けないと期限超過のまま残る
-- 判断トレース（decisions.json）は KANBEI 側の出力が無いため画面側の派生判断（上限75%）のまま
+- 判断トレースは kanbei_decisions.py で KANBEI が書く形にした。claude CLI のログインが切れると派生判断にフォールバックする
 
 ## 実データ接続のために必要な情報（初版の整理。上記で解消した項目を含む）
 

@@ -258,6 +258,7 @@
     <div class="stat">現在 <b id="clock">----/--/-- --:--:--</b></div>
     <div class="stat">数字更新 <b id="kpi-updated">未取得</b></div>
     <div class="stat">議事録更新 <b id="min-updated">未取得</b></div>
+    <div class="stat">判断 <b id="dec-updated">派生（画面側）</b></div>
     <div class="stat"><span id="conn-dot" class="dot"></span><span id="conn-text">接続確認中</span></div>
     <a id="graph-link" class="badge" href="index.html?panel=graph" title="VisionX グラフビューを拡大表示で開く（Gキー）">◂ グラフビュー</a>
     <a id="hud-link" class="badge" href="index.html" title="VX HUD へ戻る（Bキー）">◂ HUD</a>
@@ -639,7 +640,7 @@ function renderTraces() {
     const div = document.createElement("div");
     div.className = `trace ${t.level}`;
     div.innerHTML = `
-      <div class="trace-head"><span>${fmtShort(t.ts)} ${t.level !== "info" ? `<span class="badge ${t.level}">${t.level === "alert" ? "要判断" : "注意"}</span>` : ""}</span><span class="conf ${t.confidence < 60 ? "low" : ""}">信頼度 ${t.confidence}%</span></div>
+      <div class="trace-head"><span>${fmtShort(t.ts)} <span class="badge ${t.source === "kanbei" ? "ok" : ""}" title="${t.source === "kanbei" ? "KANBEI（参謀エージェント）の判断" : "画面側のルールで導いた派生判断"}">${t.source === "kanbei" ? "KANBEI" : "派生"}</span> ${t.level !== "info" ? `<span class="badge ${t.level}">${t.level === "alert" ? "要判断" : "注意"}</span>` : ""}</span><span class="conf ${t.confidence < 60 ? "low" : ""}">信頼度 ${t.confidence}%</span></div>
       <div class="node"><div class="k">PURPOSE / 目的</div><div class="v">${t.purpose}</div></div>
       <div class="node"><div class="k">SIGNALS / 入力シグナル（根拠）</div><div class="v">${t.signals.map((s) => `<span class="sig ${s.kind}">${s.kind === "kpi" ? "指標" : "議事録"}: ${s.label}</span>`).join("")}</div></div>
       <div class="node"><div class="k">CANDIDATES / 候補の評価</div><div class="v">${t.candidates.map((c) => `<div class="cand ${c.score === pickScore ? "pick" : ""}"><span class="cb"><i data-w="${Math.max(0, c.score)}"></i></span><span class="sc">${c.score}</span><span>${c.label}<span class="faint"> — ${c.note}</span></span></div>`).join("")}</div></div>
@@ -716,8 +717,14 @@ async function refresh(first = false) {
   renderMinutes();
 
   // 判断トレース: 実トレース（decisions.json）があればそれを使い、無ければ派生
-  const fresh = decisions?.traces?.length ? decisions.traces : deriveTraces();
-  if (decisions?.traces?.length) log(`判断トレース ${fresh.length}件 を受信（KANBEI）`);
+  const fresh = decisions?.traces?.length ? decisions.traces : deriveTraces().map((t) => ({ ...t, source: "derived" }));
+  if (decisions?.traces?.length) {
+    log(`判断トレース ${fresh.length}件 を受信（KANBEI、${fmtShort(decisions.generatedAt)}）`);
+    $("#dec-updated").textContent = `KANBEI ${fmtShort(decisions.generatedAt)}`;
+    for (const w of decisions.warnings || []) log(`KANBEI 出力の注意: ${w}`, "warn");
+  } else {
+    $("#dec-updated").textContent = "派生（画面側）";
+  }
   const newOnes = fresh.filter((t) => !S.seenTraceKeys.has(t.id + "|" + t.decision));
   for (const t of newOnes) { S.seenTraceKeys.add(t.id + "|" + t.decision); log(`判断: ${t.purpose} → 信頼度${t.confidence}%`, t.level === "info" ? "" : t.level); }
   // 既存の順序を保ちつつ新規を先頭へ
@@ -822,7 +829,7 @@ function openTrace(id) {
     </tbody></table>
     <h3>EXECUTION / 実行ログ</h3>
     ${t.executions.map((e) => `<div class="exe">${fmtShort(e.ts).slice(6)} ${esc(e.text)}</div>`).join("")}
-    <div class="faint" style="margin-top:10px">この判断は画面側のルールで導いた派生判断です（KANBEI の実判断ではありません）。実行は下書きまでで、送信はしません。</div>`);
+    <div class="faint" style="margin-top:10px">${t.source === "kanbei" ? "この判断は KANBEI（参謀エージェント）が kpi.json と minutes.json を読んで書いたものです。実行は下書き・提案までで、送信はしません。" : "この判断は画面側のルールで導いた派生判断です（KANBEI の実判断ではありません）。実行は下書きまでで、送信はしません。"}</div>`);
 }
 
 document.addEventListener("keydown", (e) => {
